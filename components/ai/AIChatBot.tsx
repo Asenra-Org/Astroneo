@@ -9,9 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function AIChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-  const chatState = useChat({
-    api: '/api/chat',
-  });
+  const chatState = useChat();
   
   const { messages = [], sendMessage, status = 'ready' } = chatState || {};
   const isLoading = status !== 'ready';
@@ -25,7 +23,7 @@ export default function AIChatBot() {
     if (!input.trim() || isLoading) return;
     
     if (sendMessage) {
-      sendMessage({ content: input, role: 'user' });
+      sendMessage({ text: input });
     }
     setInput('');
   };
