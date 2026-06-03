@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Disallow auth and dashboard routes for search engines
+Disallow: /auth/
+Disallow: /dashboard/
+
+Sitemap: https://astrolens.space/sitemap.xml
