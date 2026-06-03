@@ -12,12 +12,16 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-12 items-start mb-16">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-2">
               <div className="w-2 h-2 rounded-full bg-accent-gradient shadow-[0_0_12px_rgba(137,170,204,0.6)]" />
               <span className="font-display text-xl text-text-primary tracking-tight">
                 AstroLens
               </span>
             </div>
+            <a href="https://asenra.in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mb-4 opacity-60 hover:opacity-100 transition-opacity w-fit">
+              <span className="text-[11px] uppercase tracking-widest text-muted font-body">BY</span>
+              <img src="/asenra-logo.png" alt="Asenra" className="h-[60px] object-contain object-left -ml-1" />
+            </a>
             <p className="font-body text-sm text-muted max-w-sm leading-relaxed">
               Search the stars. Explore the universe. Free astronomical data for everyone.
             </p>
@@ -69,9 +73,12 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="flex flex-wrap justify-between items-center pt-8 border-t border-stroke/30 gap-4">
-          <p className="font-body text-xs text-muted">
-            © {year} AstroLens by Asenra. All rights reserved.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <img src="/asenra-icon.png" alt="Asenra" className="w-4 h-4 object-contain opacity-50" />
+            <p className="font-body text-xs text-muted pt-0.5">
+              © {year} AstroLens by Asenra. All rights reserved.
+            </p>
+          </div>
           <div className="flex items-center gap-6">
             <a
               href="https://astrolens.space"

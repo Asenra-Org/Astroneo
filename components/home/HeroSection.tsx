@@ -53,9 +53,11 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col justify-center items-center text-center px-6 w-full max-w-4xl mx-auto">
         {/* Eyebrow */}
-        <p className="blur-in text-xs text-text-primary/80 font-medium uppercase tracking-[0.4em] mb-6">
-          AstroLens Collection '26
-        </p>
+        <div className="blur-in flex items-center justify-center mb-6 opacity-80 hover:opacity-100 transition-opacity">
+          <p className="text-xs text-text-primary font-medium uppercase tracking-[0.4em]">
+            An <a href="https://asenra.in" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors no-underline">Asenra</a> Product
+          </p>
+        </div>
 
         {/* Headline */}
         <h1 className="name-reveal text-6xl md:text-8xl lg:text-9xl font-display text-text-primary mb-6 tracking-tight leading-[0.9]">
