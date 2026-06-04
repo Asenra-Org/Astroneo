@@ -1,0 +1,57 @@
+[
+  {
+    "id": "bh-001",
+    "slug": "sagittarius-a-star",
+    "name": "Sagittarius A*",
+    "type": "Supermassive Black Hole",
+    "mass": "4.3 Million Solar Masses",
+    "distance": "26,670 light-years",
+    "description": "The supermassive black hole at the center of the Milky Way galaxy. It anchors our galaxy and has a mass 4.3 million times that of our Sun.",
+    "imageUrl": "/images/blackholes/sagittarius_a_cover.png",
+    "videoUrl": "/videos/sagittarius-a.mp4"
+  },
+  {
+    "id": "bh-002",
+    "slug": "m87-star",
+    "name": "M87*",
+    "type": "Supermassive Black Hole",
+    "mass": "6.5 Billion Solar Masses",
+    "distance": "53.5 million light-years",
+    "description": "Located in the massive elliptical galaxy Messier 87, it was the first black hole ever directly imaged by the Event Horizon Telescope.",
+    "imageUrl": "/images/blackholes/m87_cover.png",
+    "videoUrl": "/videos/m87.mp4"
+  },
+  {
+    "id": "bh-003",
+    "slug": "cygnus-x-1",
+    "name": "Cygnus X-1",
+    "type": "Stellar-Mass Black Hole",
+    "mass": "21.2 Solar Masses",
+    "distance": "7,100 light-years",
+    "description": "One of the most famous X-ray sources in the sky and the first widely accepted black hole, part of a binary system with a blue supergiant star.",
+    "imageUrl": "/images/blackholes/cygnus_x1_cover.png",
+    "videoUrl": "/videos/cygnus-x-1.mp4"
+  },
+  {
+    "id": "bh-004",
+    "slug": "ton-618",
+    "name": "TON 618",
+    "type": "Ultramassive Black Hole",
+    "mass": "66 Billion Solar Masses",
+    "distance": "18.2 billion light-years",
+    "description": "One of the most massive black holes ever discovered, it powers a hyperluminous quasar that shines with the light of 140 trillion suns.",
+    "imageUrl": "/images/blackholes/ton_618_cover.png",
+    "videoUrl": "/videos/ton-618.mp4"
+  },
+  {
+    "id": "bh-005",
+    "slug": "v404-cygni",
+    "name": "V404 Cygni",
+    "type": "Microquasar",
+    "mass": "9 Solar Masses",
+    "distance": "7,800 light-years",
+    "description": "A well-studied microquasar and X-ray binary system that sporadically unleashes massive outbursts as it strips material from its companion star.",
+    "imageUrl": "/images/blackholes/v404_cygni_cover.png",
+    "videoUrl": "/videos/v404-cygni.mp4"
+  }
+]

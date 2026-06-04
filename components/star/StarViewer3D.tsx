@@ -53,20 +53,24 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 1000);
-    camera.position.z = 5;
+    camera.position.z = 6;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = isPlanet ? 1.2 : 1.5;
     mountRef.current.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.enablePan = false;
     controls.enableZoom = true;
+    controls.minDistance = 2;
+    controls.maxDistance = 15;
 
     // Core Sphere
-    const geometry = new THREE.SphereGeometry(1.5, 64, 64);
+    const geometry = new THREE.SphereGeometry(1.5, 128, 128); // Higher poly for better rim lighting
     
     // --- SHADERS FOR REALISTIC STARS ---
     const vertexShader = `
@@ -74,8 +78,8 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
       varying vec3 vPosition;
       void main() {
         vNormal = normalize(normalMatrix * normal);
-        vPosition = position;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
       }
     `;
 
@@ -111,33 +115,29 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
       }
 
       void main() {
-        // Complex swirling noise for plasma
         vec3 p = vPosition * 2.5 + vec3(0.0, uTime * 0.15, uTime * 0.1);
         float n1 = fbm(p);
         float n2 = fbm(p * 2.0 - vec3(uTime * 0.2));
         
-        // Combine noise layers for turbulence
         float n = mix(n1, n2, 0.5);
         
-        // Generate sunspots (low frequency, slow moving)
         float spots = smoothstep(0.4, 0.8, fbm(vPosition * 1.5 + vec3(uTime * 0.05)));
         
-        // Color palette based on the star's core color
         vec3 baseColor = uColor;
-        // White-hot ridges
-        vec3 hotColor = min(uColor * 2.5 + vec3(0.2), vec3(1.0)); 
-        // Deep dark spots
+        vec3 hotColor = min(uColor * 3.0 + vec3(0.3), vec3(1.0)); // Overbright for bloom
         vec3 darkColor = uColor * 0.15; 
         
-        // Base plasma mixing
         vec3 color = mix(baseColor, hotColor, smoothstep(0.3, 0.8, n));
+        color = mix(color, darkColor, spots * 0.8);
         
-        // Apply deep sunspots
-        color = mix(color, darkColor, spots * 0.7);
-        
-        // Strong Limb darkening (edges get darker, center gets brighter)
-        float intensity = max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
-        color *= mix(0.4, 1.3, pow(intensity, 0.8));
+        // Dynamic flares on the surface
+        float flares = fbm(vPosition * 5.0 - vec3(uTime * 0.3));
+        color += hotColor * smoothstep(0.7, 1.0, flares) * 1.5;
+
+        // Limb darkening (edges get darker, center gets brighter)
+        vec3 viewDir = normalize(cameraPosition - vPosition);
+        float intensity = max(dot(vNormal, viewDir), 0.0);
+        color *= mix(0.4, 1.5, pow(intensity, 0.6));
         
         gl_FragColor = vec4(color, 1.0);
       }
@@ -145,18 +145,22 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
 
     const coronaVertexShader = `
       varying vec3 vNormal;
+      varying vec3 vPosition;
       void main() {
         vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
       }
     `;
 
     const coronaFragmentShader = `
       uniform vec3 uColor;
       varying vec3 vNormal;
+      varying vec3 vPosition;
       void main() {
-        float intensity = pow(0.65 - dot(vNormal, vec3(0, 0, 1.0)), 2.5);
-        gl_FragColor = vec4(uColor, 1.0) * intensity * 1.5;
+        vec3 viewDir = normalize(cameraPosition - vPosition);
+        float intensity = pow(0.7 - max(dot(vNormal, viewDir), 0.0), 3.0);
+        gl_FragColor = vec4(uColor, 1.0) * intensity * 2.0;
       }
     `;
 
@@ -196,82 +200,125 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
       void main() {
         float n = 0.0;
         vec3 color = uColor;
+        float roughness = 0.8;
+        float specularIntensity = 0.2;
         
         if (uPlanetType == 2) {
             // Jupiter
             vec3 p = vPosition * vec3(1.5, 5.0, 1.5);
-            n = fbm(p + vec3(uTime * 0.05, 0.0, uTime * 0.05));
+            n = fbm(p + vec3(uTime * 0.02, 0.0, uTime * 0.02));
             float band = sin(vPosition.y * 12.0 + n * 2.5);
             color = mix(uColor, uColor2, smoothstep(-0.5, 0.5, band));
-            float storm = fbm(vPosition * 4.0 - vec3(uTime * 0.1));
+            float storm = fbm(vPosition * 4.0 - vec3(uTime * 0.05));
             color = mix(color, vec3(0.8, 0.5, 0.3), smoothstep(0.7, 1.0, storm) * 0.5);
+            specularIntensity = 0.1;
         } else if (uPlanetType == 3) {
             // Earth
             n = fbm(vPosition * 3.0);
-            if (n < 0.45) { color = uColor; }
-            else { color = mix(uColor2, vec3(0.8, 0.7, 0.5), smoothstep(0.45, 0.7, n)); }
-            float clouds = fbm(vPosition * 4.0 + vec3(uTime * 0.02));
-            if (clouds > 0.55) { color = mix(color, vec3(1.0), (clouds - 0.55) * 2.5); }
+            if (n < 0.45) { 
+              color = uColor; // Ocean
+              specularIntensity = 0.8; 
+              roughness = 0.2;
+            } else { 
+              color = mix(uColor2, vec3(0.8, 0.7, 0.5), smoothstep(0.45, 0.7, n)); // Land
+              specularIntensity = 0.1;
+              roughness = 0.9;
+            }
+            float clouds = fbm(vPosition * 4.0 + vec3(uTime * 0.01));
+            if (clouds > 0.55) { 
+              color = mix(color, vec3(1.0), (clouds - 0.55) * 2.5); 
+              specularIntensity = 0.05;
+            }
         } else if (uPlanetType == 1) {
             // Mars
             n = fbm(vPosition * 3.0);
             color = mix(uColor, uColor2, n);
             float craters = fbm(vPosition * 8.0);
-            color *= mix(0.7, 1.0, smoothstep(0.3, 0.6, craters));
+            color *= mix(0.6, 1.0, smoothstep(0.3, 0.6, craters));
+            specularIntensity = 0.05;
         } else if (uPlanetType == 4) {
             // Mercury
             n = fbm(vPosition * 10.0);
             float craters = fbm(vPosition * 20.0);
             color = mix(uColor, uColor2, n);
-            color *= mix(0.5, 1.0, smoothstep(0.2, 0.8, craters));
+            color *= mix(0.4, 1.0, smoothstep(0.2, 0.8, craters));
+            specularIntensity = 0.1;
         } else if (uPlanetType == 5) {
             // Venus
             vec3 p = vPosition * vec3(2.0, 4.0, 2.0);
-            n = fbm(p + vec3(uTime * 0.03, 0.0, -uTime * 0.02));
+            n = fbm(p + vec3(uTime * 0.015, 0.0, -uTime * 0.01));
             float band = sin(vPosition.y * 8.0 + n * 3.0);
             color = mix(uColor, uColor2, smoothstep(-0.4, 0.4, band));
+            specularIntensity = 0.05;
         } else if (uPlanetType == 6) {
             // Moon
             n = fbm(vPosition * 2.0);
             float craters = fbm(vPosition * 15.0);
             color = mix(uColor, uColor2, smoothstep(0.3, 0.7, n));
-            color *= mix(0.6, 1.0, smoothstep(0.4, 0.6, craters));
+            color *= mix(0.5, 1.0, smoothstep(0.4, 0.6, craters));
+            specularIntensity = 0.02;
         } else if (uPlanetType == 7) {
             // Saturn
             vec3 p = vPosition * vec3(1.0, 6.0, 1.0);
-            n = fbm(p + vec3(0.0, uTime * 0.01, 0.0));
+            n = fbm(p + vec3(0.0, uTime * 0.005, 0.0));
             float band = sin(vPosition.y * 15.0 + n * 0.5);
             color = mix(uColor, uColor2, smoothstep(-0.8, 0.8, band));
+            specularIntensity = 0.15;
         } else if (uPlanetType == 8) {
             // Uranus
             n = fbm(vPosition * vec3(1.0, 8.0, 1.0));
             color = mix(uColor, uColor2, n * 0.2); 
+            specularIntensity = 0.2;
         } else if (uPlanetType == 9) {
             // Neptune
             vec3 p = vPosition * vec3(1.5, 4.0, 1.5);
-            n = fbm(p + vec3(uTime * 0.08, 0.0, 0.0));
+            n = fbm(p + vec3(uTime * 0.04, 0.0, 0.0));
             float band = sin(vPosition.y * 10.0 + n);
             color = mix(uColor, uColor2, smoothstep(-0.5, 0.5, band));
-            float storm = fbm(vPosition * 5.0 - vec3(uTime * 0.15));
+            float storm = fbm(vPosition * 5.0 - vec3(uTime * 0.08));
             if (storm > 0.65) { color = mix(color, vec3(1.0), (storm - 0.65) * 3.0); }
+            specularIntensity = 0.2;
         } else if (uPlanetType == 10) {
             // Pluto
             n = fbm(vPosition * 3.5);
             color = mix(uColor, uColor2, smoothstep(0.3, 0.6, n));
+            specularIntensity = 0.1;
         } else {
             // Generic planet
-            n = fbm(vPosition * 3.0 + vec3(uTime * 0.02));
+            n = fbm(vPosition * 3.0 + vec3(uTime * 0.01));
             color = mix(uColor, uColor2, n);
+            specularIntensity = 0.1;
         }
         
-        // Simple directional lighting
-        vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
-        float light = max(dot(vNormal, lightDir), 0.05);
+        // Realistic Lighting Calculation
+        vec3 lightDir = normalize(vec3(1.0, 0.5, 1.0)); // Directional light from top right
+        vec3 viewDir = normalize(cameraPosition - vPosition);
+        vec3 halfVector = normalize(lightDir + viewDir);
         
-        // Ambient light
-        light += 0.15;
+        // Diffuse
+        float diff = max(dot(vNormal, lightDir), 0.0);
         
-        gl_FragColor = vec4(color * light, 1.0);
+        // Specular (Blinn-Phong)
+        float spec = pow(max(dot(vNormal, halfVector), 0.0), 128.0 * (1.0 - roughness)) * specularIntensity;
+        
+        // Rim Light (Atmosphere scattering)
+        float rim = 1.0 - max(dot(viewDir, vNormal), 0.0);
+        rim = smoothstep(0.5, 1.0, rim);
+        vec3 rimColor = mix(uColor2, vec3(1.0), 0.5);
+        
+        // Ambient Light (Simulating starlight/galaxy background)
+        vec3 ambient = vec3(0.02, 0.02, 0.05);
+        
+        // Combine lighting
+        vec3 finalColor = color * diff + ambient;
+        finalColor += vec3(1.0) * spec * diff; // Specular only on lit side
+        
+        // Add glowing rim only if there's an atmosphere (rough heuristic)
+        if (uPlanetType != 6 && uPlanetType != 4 && uPlanetType != 10) {
+          finalColor += rimColor * rim * diff * 0.8;
+        }
+        
+        gl_FragColor = vec4(finalColor, 1.0);
       }
     `;
 
@@ -307,7 +354,6 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
           uPlanetType: { value: pType }
         }
       });
-      // Store reference to planet uniforms so we can animate it
       uniforms.uTime = material.uniforms.uTime;
     } else {
       material = new THREE.ShaderMaterial({
@@ -320,49 +366,53 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
     const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-    // If it's a star, add corona
-    if (!isPlanet) {
-      const coronaGeometry = new THREE.SphereGeometry(1.8, 64, 64);
-      const coronaMaterial = new THREE.ShaderMaterial({
-        vertexShader: coronaVertexShader,
-        fragmentShader: coronaFragmentShader,
-        uniforms: {
-          uColor: { value: new THREE.Color(glowColor) }
-        },
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        side: THREE.BackSide,
-        depthWrite: false
-      });
-      const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
-      scene.add(corona);
-    }
+    // Removed the corona layer as requested
 
     // Saturn rings
     if (isSaturn) {
-      const ringGeometry = new THREE.RingGeometry(1.8, 2.5, 64);
-      const ringMaterial = new THREE.MeshStandardMaterial({
-        color: 0xd4b499,
+      const ringGeometry = new THREE.RingGeometry(1.8, 3.2, 128);
+      
+      // Simple custom shader for realistic ring scattering
+      const ringVertex = `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        void main() {
+          vUv = uv;
+          vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+          gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
+        }
+      `;
+      const ringFragment = `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        void main() {
+          float dist = distance(vUv, vec2(0.5));
+          // Create gaps in the rings
+          float alpha = smoothstep(0.4, 0.45, dist) * smoothstep(0.5, 0.48, dist);
+          alpha += smoothstep(0.25, 0.28, dist) * smoothstep(0.38, 0.35, dist) * 0.8;
+          
+          vec3 lightDir = normalize(vec3(1.0, 0.5, 1.0));
+          vec3 viewDir = normalize(cameraPosition - vPosition);
+          float scatter = max(dot(viewDir, lightDir), 0.0);
+          
+          vec3 ringColor = vec3(0.83, 0.7, 0.6);
+          // Forward scattering makes rings brighter when looking toward the light
+          vec3 finalColor = ringColor * (0.4 + pow(scatter, 4.0) * 0.6);
+          
+          gl_FragColor = vec4(finalColor, alpha * 0.85);
+        }
+      `;
+      
+      const ringMaterial = new THREE.ShaderMaterial({
+        vertexShader: ringVertex,
+        fragmentShader: ringFragment,
         transparent: true,
-        opacity: 0.8,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        depthWrite: false
       });
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
       ring.rotation.x = Math.PI / 2 - 0.2;
       scene.add(ring);
-    }
-
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-    scene.add(ambientLight);
-    
-    const pointLight = new THREE.PointLight(0xffffff, 2);
-    pointLight.position.set(5, 3, 5);
-    scene.add(pointLight);
-
-    if (!isPlanet) {
-      const starLight = new THREE.PointLight(coreColor, 2, 50);
-      scene.add(starLight);
     }
 
     const handleResize = () => {
@@ -373,19 +423,24 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
     };
     window.addEventListener('resize', handleResize);
 
-    const clock = new THREE.Clock();
+    // Using performance.now() to avoid THREE.Clock deprecation warnings/issues
+    let lastTime = performance.now();
 
     const animate = () => {
       requestAnimationFrame(animate);
       
-      const elapsedTime = clock.getElapsedTime();
-      uniforms.uTime.value = elapsedTime;
+      const currentTime = performance.now();
+      const delta = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+      
+      // Update uniform time continuously 
+      uniforms.uTime.value += delta;
 
       // Auto-rotation
       if (isPlanet) {
-        sphere.rotation.y += 0.005;
+        sphere.rotation.y += delta * 0.2;
       } else {
-        sphere.rotation.y += 0.001; // slower spin for star itself since surface boils
+        sphere.rotation.y += delta * 0.05; // slower spin for star
       }
       
       controls.update();
@@ -404,3 +459,4 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
 
   return <div ref={mountRef} style={{ width: '100%', height: '100%', minHeight: '400px', cursor: 'grab' }} />;
 }
+
