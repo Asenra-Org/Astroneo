@@ -61,10 +61,10 @@ export default function PwaPrompt() {
     <AnimatePresence>
       {showPrompt && (
         <motion.div
-          initial={{ x: "-50%", y: "-50%", scale: 0.95, opacity: 0 }}
-          animate={{ x: "-50%", y: "-50%", scale: 1, opacity: 1 }}
-          exit={{ x: "-50%", y: "-50%", scale: 0.95, opacity: 0 }}
-          className="fixed top-1/2 left-1/2 z-[60] w-[90%] sm:w-[400px]"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] w-[90%] sm:w-[400px]"
         >
           <div className="bg-surface/90 backdrop-blur-xl border border-stroke/50 rounded-2xl p-4 shadow-2xl shadow-black/50 flex items-start gap-4">
             <div className="w-12 h-12 bg-bg rounded-xl overflow-hidden shrink-0 border border-stroke/50 flex items-center justify-center">

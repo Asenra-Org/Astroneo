@@ -2,40 +2,53 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { Bot, X, Send, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AIChatBot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState('');
-  const chatState = useChat();
-  
-  const { messages = [], sendMessage, status = 'ready' } = chatState || {};
-  const isLoading = status !== 'ready';
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
+  const [inputValue, setInputValue] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-    
-    if (sendMessage) {
-      sendMessage({ text: input });
-    }
-    setInput('');
-  };
-  
+  // @ai-sdk/react v3 uses transport instead of api string.
+  // DefaultChatTransport posts to /api/chat and reads UIMessageStream responses.
+  const { messages, sendMessage, status, error } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
+    onError: (err: Error) => {
+      console.error('AstroBot error:', err);
+    },
+  });
+
+  const isLoading = status === 'streaming' || status === 'submitted';
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = inputValue.trim();
+    if (!text || isLoading) return;
+    setInputValue('');
+    await sendMessage({ text });
+  };
+
+  // Works for both old {content: string} and new {parts: [{type:'text', text}]} shapes
+  const getMessageText = (m: any): string => {
+    if (m.parts && Array.isArray(m.parts)) {
+      return m.parts
+        .filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text as string)
+        .join('');
+    }
+    if (typeof m.content === 'string') return m.content;
+    return '';
+  };
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
@@ -57,10 +70,10 @@ export default function AIChatBot() {
                 </div>
                 <div>
                   <h3 className="font-display text-text-primary text-lg leading-tight tracking-tight">AstroBot</h3>
-                  <p className="font-body text-xs text-accent">Powered by Groq AI</p>
+                  <p className="font-body text-xs text-accent">Powered by Gemini AI</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="text-muted hover:text-text-primary transition-colors p-1"
                 aria-label="Close chat"
@@ -74,40 +87,41 @@ export default function AIChatBot() {
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center text-muted space-y-3 opacity-70">
                   <Bot size={40} className="mb-2" />
-                  <p>Hi, I'm AstroBot.</p>
+                  <p>Hi, I&apos;m AstroBot.</p>
                   <p className="text-xs">Ask me anything about the universe, stars, or planets!</p>
                 </div>
               ) : (
                 messages.map((m) => (
-                  <div 
-                    key={m.id} 
+                  <div
+                    key={m.id}
                     className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div 
-                      className={`max-w-[85%] p-4 rounded-2xl leading-relaxed shadow-sm
-                        ${m.role === 'user' 
-                          ? 'bg-white/20 text-white rounded-tr-sm border border-white/10' 
+                    <div
+                      className={`max-w-[85%] p-4 rounded-2xl leading-relaxed shadow-sm ${
+                        m.role === 'user'
+                          ? 'bg-white/20 text-white rounded-tr-sm border border-white/10'
                           : 'bg-white/10 text-text-primary rounded-tl-sm border border-white/5'
-                        }`}
+                      }`}
                     >
                       <ReactMarkdown
                         components={{
-                          strong: ({node, ...props}) => <strong className="font-display font-medium text-white tracking-wide" {...props} />,
-                          ul: ({node, ...props}) => <ul className="list-disc ml-5 space-y-1 my-2" {...props} />,
-                          ol: ({node, ...props}) => <ol className="list-decimal ml-5 space-y-1 my-2" {...props} />,
-                          h1: ({node, ...props}) => <h1 className="font-display text-xl text-white mb-2" {...props} />,
-                          h2: ({node, ...props}) => <h2 className="font-display text-lg text-white mb-2 mt-3" {...props} />,
-                          h3: ({node, ...props}) => <h3 className="font-display text-base text-white mb-1 mt-2" {...props} />,
-                          p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                          li: ({node, ...props}) => <li className="pl-1" {...props} />
+                          strong: ({ node, ...props }) => <strong className="font-display font-medium text-white tracking-wide" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="list-disc ml-5 space-y-1 my-2" {...props} />,
+                          ol: ({ node, ...props }) => <ol className="list-decimal ml-5 space-y-1 my-2" {...props} />,
+                          h1: ({ node, ...props }) => <h1 className="font-display text-xl text-white mb-2" {...props} />,
+                          h2: ({ node, ...props }) => <h2 className="font-display text-lg text-white mb-2 mt-3" {...props} />,
+                          h3: ({ node, ...props }) => <h3 className="font-display text-base text-white mb-1 mt-2" {...props} />,
+                          p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                          li: ({ node, ...props }) => <li className="pl-1" {...props} />,
                         }}
                       >
-                        {m.parts ? m.parts.map(p => p.type === 'text' ? p.text : '').join('') : ''}
+                        {getMessageText(m)}
                       </ReactMarkdown>
                     </div>
                   </div>
                 ))
               )}
+
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="max-w-[85%] p-4 rounded-2xl bg-white/10 text-text-primary rounded-tl-sm border border-white/5 flex gap-1 items-center h-10">
@@ -117,26 +131,32 @@ export default function AIChatBot() {
                   </div>
                 </div>
               )}
+
+              {error && (
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] p-3 rounded-2xl bg-red-500/10 text-red-400 text-xs border border-red-500/20">
+                    ⚠ {error.message || 'Something went wrong. Please try again.'}
+                  </div>
+                </div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
             <div className="p-4 bg-black/20 backdrop-blur-md border-t border-white/10">
-              <form 
-                onSubmit={handleSubmit}
-                className="relative flex items-center"
-              >
+              <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   type="text"
-                  value={input || ''}
-                  onChange={handleInputChange}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Ask about the cosmos..."
                   className="w-full bg-white/5 border border-white/10 rounded-full py-3 pl-4 pr-12 text-sm text-text-primary placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent transition-all"
                   disabled={isLoading}
                 />
                 <button
                   type="submit"
-                  disabled={isLoading || !input?.trim()}
+                  disabled={isLoading || !inputValue.trim()}
                   className="absolute right-2 p-2 bg-accent/20 hover:bg-accent/40 text-accent rounded-full transition-colors disabled:opacity-50 disabled:hover:bg-accent/20"
                   aria-label="Send message"
                 >

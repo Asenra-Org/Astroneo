@@ -3,6 +3,7 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -15,6 +16,7 @@ type Blog = {
   readTime: string;
   category: string;
   featured: boolean;
+  image?: string;
 };
 
 const categoryColors: Record<string, string> = {
@@ -93,6 +95,13 @@ export default function BlogPage() {
                     <div className="liquid-glass rounded-3xl p-8 md:p-12 relative overflow-hidden transition-colors duration-500 group-hover:bg-bg/70">
                       <div className="absolute top-0 left-0 right-0 h-1 bg-accent-gradient opacity-80" />
                       
+                      {featured.image && (
+                        <div className="w-full h-64 md:h-80 relative mb-8 rounded-xl overflow-hidden shadow-lg border border-stroke/20">
+                           <Image src={featured.image} alt={featured.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                           <div className="absolute inset-0 bg-gradient-to-t from-bg/60 to-transparent opacity-80 pointer-events-none" />
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-3 mb-6">
                         <span 
                           className="px-3 py-1 rounded-full text-xs font-body font-medium"
@@ -133,7 +142,13 @@ export default function BlogPage() {
                 {rest.map((article) => (
                   <motion.div variants={item} key={article.slug}>
                     <Link href={`/blog/${article.slug}`} className="block group h-full">
-                      <div className="liquid-glass rounded-3xl p-8 h-full flex flex-col transition-colors duration-500 group-hover:bg-bg/70">
+                      <div className="liquid-glass rounded-3xl p-6 md:p-8 h-full flex flex-col transition-colors duration-500 group-hover:bg-bg/70">
+                        {article.image && (
+                          <div className="w-full h-48 relative mb-6 rounded-xl overflow-hidden shadow-md border border-stroke/20">
+                            <Image src={article.image} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-bg/40 to-transparent opacity-50 pointer-events-none" />
+                          </div>
+                        )}
                         <div className="mb-5">
                           <span 
                             className="inline-block px-3 py-1 rounded-full text-xs font-body font-medium"

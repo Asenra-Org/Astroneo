@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -15,6 +16,7 @@ type Blog = {
   category: string;
   featured: boolean;
   content: string;
+  image?: string;
 };
 
 async function getBlogs(): Promise<Blog[]> {
@@ -78,13 +80,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight mb-6 leading-tight">
               {article.title}
             </h1>
-            <div className="flex items-center gap-3 text-sm text-muted font-body">
+            <div className="flex items-center gap-3 text-sm text-muted font-body mb-8">
               <span>AstroLens Blog</span>
               <span>·</span>
               <span>{article.date}</span>
               <span>·</span>
               <span>{article.readTime}</span>
             </div>
+            
+            {article.image && (
+              <div className="w-full h-[40vh] md:h-[50vh] min-h-[300px] relative rounded-3xl overflow-hidden shadow-2xl border border-stroke/30">
+                 <Image src={article.image} alt={article.title} fill className="object-cover" priority />
+                 <div className="absolute inset-0 bg-gradient-to-t from-bg/40 to-transparent pointer-events-none" />
+              </div>
+            )}
           </div>
 
           {/* Divider */}

@@ -11,6 +11,8 @@ const StarViewer3D = dynamic(() => import('@/components/star/StarViewer3D'), {
   )
 });
 
+import { Move } from 'lucide-react';
+
 interface StarViewerWrapperProps {
   spectralClass?: string;
   starType?: string;
@@ -19,12 +21,16 @@ interface StarViewerWrapperProps {
 
 export default function StarViewerWrapper({ spectralClass, starType, starName }: StarViewerWrapperProps) {
   return (
-    <div className="w-full h-[400px] bg-black/40 rounded-2xl overflow-hidden relative">
+    <div className="w-full h-[400px] bg-black/40 rounded-2xl overflow-hidden relative group">
       <StarViewer3D 
         spectralClass={spectralClass} 
         starType={starType} 
         name={starName} 
       />
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md border border-white/10 text-white/90 text-sm px-4 py-2 rounded-full pointer-events-none animate-fade-out-delay shadow-lg z-20 flex items-center gap-2">
+        <Move size={16} className="opacity-70" />
+        <span>Drag to interact</span>
+      </div>
     </div>
   );
 }

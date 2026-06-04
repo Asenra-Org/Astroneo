@@ -114,7 +114,7 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
           <div className="grid grid-cols-1 lg:grid-cols-[55%_1fr] gap-10 items-start">
             {/* Left: 3D Viewer */}
             <div className="space-y-6">
-              <div className="liquid-glass rounded-3xl overflow-hidden p-2">
+              <div className="liquid-glass rounded-3xl overflow-hidden p-2 relative z-10">
                 <StarViewerWrapper 
                   spectralClass={star.spectralClass} 
                   starType={star.type}

@@ -60,6 +60,13 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = isPlanet ? 1.2 : 1.5;
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.pointerEvents = 'auto';
+    renderer.domElement.style.touchAction = 'none'; // Force no-scroll over the canvas
     mountRef.current.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -415,19 +422,23 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
       scene.add(ring);
     }
 
+    const currentMount = mountRef.current;
+
     const handleResize = () => {
-      if (!mountRef.current) return;
-      camera.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
+      if (!currentMount) return;
+      camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+      renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     };
     window.addEventListener('resize', handleResize);
 
     // Using performance.now() to avoid THREE.Clock deprecation warnings/issues
     let lastTime = performance.now();
 
+    let animationFrameId: number;
+
     const animate = () => {
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
       
       const currentTime = performance.now();
       const delta = (currentTime - lastTime) / 1000;
@@ -449,14 +460,22 @@ export default function StarViewer3D({ spectralClass, starType, name = '' }: Sta
     animate();
 
     return () => {
+      cancelAnimationFrame(animationFrameId);
+      controls.dispose();
       window.removeEventListener('resize', handleResize);
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (currentMount && renderer.domElement && currentMount.contains(renderer.domElement)) {
+        currentMount.removeChild(renderer.domElement);
       }
       renderer.dispose();
+      
+      // Explicitly clean up WebGL contexts and geometries/materials
+      geometry.dispose();
+      if (material) {
+        material.dispose();
+      }
     };
   }, [spectralClass, starType, name]);
 
-  return <div ref={mountRef} style={{ width: '100%', height: '100%', minHeight: '400px', cursor: 'grab' }} />;
+  return <div ref={mountRef} style={{ position: 'relative', width: '100%', height: '100%', minHeight: '400px', cursor: 'grab', touchAction: 'pan-y', pointerEvents: 'auto' }} />;
 }
 
