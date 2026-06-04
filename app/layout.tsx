@@ -48,13 +48,10 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-  },
 };
 
 import AIChatBot from '@/components/ai/AIChatBot';
+import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
@@ -72,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AIChatBot />
         <CookieBanner />
         <PwaPrompt />
+        <ServiceWorkerRegister />
 
         {/* Google Analytics */}
         {gaId && (
