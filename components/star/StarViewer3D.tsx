@@ -3,16 +3,63 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import GLBModelViewer from './GLBModelViewer';
+
+// Map planet names → GLB paths + viewer config.
+// Add more entries here as you download more models.
+const PLANET_GLB_CONFIG: Record<string, {
+  path: string;
+  atmosphereColor: string;
+  showAtmosphere?: boolean;
+  rotationSpeed?: number;
+  modelScale?: number;
+  cameraZ?: number;
+}> = {
+  earth:   { path: '/models/earth.glb', atmosphereColor: '#3a8fff', showAtmosphere: false, rotationSpeed: 0.12, modelScale: 1.8, cameraZ: 5 },
+  mars:    { path: '/models/mars.glb',    atmosphereColor: '#cc4422', rotationSpeed: 0.10, modelScale: 1.8, cameraZ: 5 },
+  saturn:  { path: '/models/saturn.glb',  atmosphereColor: '#d4b070', rotationSpeed: 0.08, modelScale: 2.0, cameraZ: 6 },
+  jupiter: { path: '/models/jupiter.glb', atmosphereColor: '#d4906a', rotationSpeed: 0.20, modelScale: 2.0, cameraZ: 6 },
+  moon:    { path: '/models/moon.glb',    atmosphereColor: '#888888', showAtmosphere: false, rotationSpeed: 0.05, modelScale: 1.6, cameraZ: 5 },
+  sun:     { path: '/models/sun.glb',     atmosphereColor: '#ffaa00', rotationSpeed: 0.05, modelScale: 2.0, cameraZ: 6 },
+  venus:   { path: '/models/venus.glb',   atmosphereColor: '#e3bb76', rotationSpeed: 0.06, modelScale: 1.8, cameraZ: 5 },
+  mercury: { path: '/models/mercury.glb', atmosphereColor: '#999999', showAtmosphere: false, rotationSpeed: 0.04, modelScale: 1.5, cameraZ: 5 },
+  uranus:  { path: '/models/uranus.glb',  atmosphereColor: '#7de8e8', rotationSpeed: 0.10, modelScale: 1.8, cameraZ: 5 },
+  neptune: { path: '/models/neptune.glb', atmosphereColor: '#4455dd', rotationSpeed: 0.12, modelScale: 1.8, cameraZ: 5 },
+  'solar system': { path: '/models/solar_system_animation.glb', atmosphereColor: '#ffffff', showAtmosphere: false, rotationSpeed: 0.05, modelScale: 4.5, cameraZ: 5.5 },
+};
 
 interface StarViewer3DProps {
   spectralClass?: string;
   starType?: string;
   name?: string;
+  fullScreen?: boolean;
 }
 
-export default function StarViewer3D({ spectralClass, starType, name = '' }: StarViewer3DProps) {
+export default function StarViewer3D({ spectralClass, starType, name = '', fullScreen = false }: StarViewer3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
 
+  const isPlanetType = starType === 'Planet' || starType === 'Dwarf Planet';
+  // Check if we have a model for this celestial body by matching its name against our config keys
+  const planetKey = Object.keys(PLANET_GLB_CONFIG).find((key) => name.toLowerCase().includes(key));
+  const glbConfig = planetKey ? PLANET_GLB_CONFIG[planetKey] : undefined;
+
+  // ── If a real GLB model exists for this body, render it instead ──────────
+  if (glbConfig) {
+    return (
+      <GLBModelViewer
+        modelPath={glbConfig.path}
+        planetName={name}
+        atmosphereColor={glbConfig.atmosphereColor}
+        showAtmosphere={!!glbConfig.showAtmosphere}
+        rotationSpeed={glbConfig.rotationSpeed}
+        modelScale={glbConfig.modelScale}
+        cameraZ={glbConfig.cameraZ}
+        enableZoom={!fullScreen}
+      />
+    );
+  }
+
+  // ── Fallback: shader-based renderer for stars and bodies without a model ──
   useEffect(() => {
     if (!mountRef.current) return;
 

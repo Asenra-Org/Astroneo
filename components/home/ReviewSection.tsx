@@ -71,7 +71,7 @@ export default function ReviewSection() {
             Community Voices
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto font-body">
-            Join the conversation. Share your thoughts on AstroLens and see what other stargazers are saying.
+            Join the conversation. Share your thoughts on Astroneo and see what other stargazers are saying.
           </p>
         </div>
 

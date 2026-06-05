@@ -10,7 +10,7 @@ interface StarVisualProps {
 }
 
 export default function StarVisual({ spectralClass, starType, size = 100, name = '' }: StarVisualProps) {
-  const isPlanet = starType === 'Planet' || starType === 'Dwarf Planet';
+  const isPlanet = starType === 'Planet' || starType === 'Dwarf Planet' || starType === 'Moon';
   const cls = spectralClass ? spectralClass[0].toUpperCase() : 'G';
   const planetName = name.toLowerCase();
 
@@ -75,6 +75,9 @@ export default function StarVisual({ spectralClass, starType, size = 100, name =
         boxShadow: 'inset 5px 0 15px rgba(255,255,255,0.4)' // clouds
       };
       glowColor = 'rgba(30, 144, 255, 0.2)';
+    } else if (planetName.includes('moon')) {
+      customStyle = { background: 'radial-gradient(circle at 35% 35%, #FFFFFF, #D3D3D3)' };
+      glowColor = 'rgba(255, 255, 255, 0.2)';
     } else {
       // generic planet
       customStyle = { background: 'radial-gradient(circle at 35% 35%, #999, #333)' };

@@ -8,7 +8,7 @@ export default function CookieBanner() {
 
   useEffect(() => {
     // Only show if user hasn't accepted yet
-    const consent = localStorage.getItem('astrolens_cookie_consent');
+    const consent = localStorage.getItem('astroneo_cookie_consent');
     if (!consent) {
       // Small delay so it doesn't pop up immediately on load
       const timer = setTimeout(() => setShowBanner(true), 2000);
@@ -17,12 +17,12 @@ export default function CookieBanner() {
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem('astrolens_cookie_consent', 'accepted');
+    localStorage.setItem('astroneo_cookie_consent', 'accepted');
     setShowBanner(false);
   };
 
   const handleDecline = () => {
-    localStorage.setItem('astrolens_cookie_consent', 'declined');
+    localStorage.setItem('astroneo_cookie_consent', 'declined');
     setShowBanner(false);
   };
 

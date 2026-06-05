@@ -78,7 +78,7 @@ export default function ReviewModal() {
               </button>
 
               <h2 className="font-display text-2xl text-text-primary mb-2">
-                Rate AstroLens
+                Rate Astroneo
               </h2>
               <p className="text-muted font-body text-sm mb-6">
                 Let us know what you think about the platform and how we can improve.

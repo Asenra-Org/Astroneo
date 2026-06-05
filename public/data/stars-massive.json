@@ -441,6 +441,15 @@
     "tempK": 288
   },
   {
+    "slug": "moon",
+    "type": "Moon",
+    "commonName": "Moon",
+    "description": "Earth's only natural satellite.",
+    "distanceLy": 0,
+    "apparentMag": -12.74,
+    "tempK": 250
+  },
+  {
     "slug": "mars",
     "type": "Planet",
     "commonName": "Mars",
@@ -493,6 +502,15 @@
     "distanceLy": 0.0005,
     "apparentMag": 14.4,
     "tempK": 44
+  },
+  {
+    "slug": "solar-system",
+    "type": "System",
+    "commonName": "Solar System",
+    "description": "Our planetary system consisting of the Sun and the objects that orbit it.",
+    "distanceLy": 0,
+    "apparentMag": 0,
+    "tempK": 0
   },
   {
     "slug": "hd-224750",

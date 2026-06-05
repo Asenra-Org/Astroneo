@@ -10,8 +10,8 @@ import ReviewSection from '@/components/home/ReviewSection';
 import { getFeaturedStars } from '@/lib/stars';
 
 export const metadata: Metadata = {
-  title: 'AstroLens — Search the Stars, Explore the Universe',
-  description: 'Explore any star in the night sky with AstroLens. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data. Free forever.',
+  title: 'Astroneo — Search the Stars, Explore the Universe',
+  description: 'Explore any star in the night sky with Astroneo. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data. Free forever.',
 };
 
 export default async function HomePage() {

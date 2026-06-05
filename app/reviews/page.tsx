@@ -36,7 +36,7 @@ export default function ReviewsPage() {
                 Community Reviews
               </h1>
               <p className="text-muted font-body text-lg max-w-2xl">
-                See what other stargazers are saying about AstroLens, or share your own thoughts and feedback.
+                See what other stargazers are saying about Astroneo, or share your own thoughts and feedback.
               </p>
             </motion.div>
             <motion.div
@@ -72,7 +72,7 @@ export default function ReviewsPage() {
             >
               <Star size={48} className="mx-auto text-muted/30 mb-4" />
               <h3 className="font-display text-2xl text-text-primary mb-2">No Reviews Yet</h3>
-              <p className="text-muted font-body mb-6">Be the first to share your thoughts about AstroLens!</p>
+              <p className="text-muted font-body mb-6">Be the first to share your thoughts about Astroneo!</p>
               <ReviewModal />
             </motion.div>
           ) : (

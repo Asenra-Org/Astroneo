@@ -46,7 +46,7 @@ export default function LoginPage() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
-      toast.success('Welcome to AstroLens!');
+      toast.success('Welcome to Astroneo!');
       router.push('/dashboard');
     } catch (err: any) {
       toast.error(mapAuthError(err.code));
@@ -81,13 +81,13 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3 mb-6">
             <div className="w-2 h-2 rounded-full bg-accent-gradient shadow-[0_0_12px_rgba(137,170,204,0.6)]" />
-            <span className="font-display text-xl text-text-primary tracking-tight">AstroLens</span>
+            <span className="font-display text-xl text-text-primary tracking-tight">Astroneo</span>
           </Link>
           <h1 className="font-display text-4xl text-text-primary tracking-tight mb-2">
             Welcome <em className="italic text-text-primary/70">back</em>
           </h1>
           <p className="text-muted font-body text-sm">
-            Sign in to your AstroLens account
+            Sign in to your Astroneo account
           </p>
         </div>
 

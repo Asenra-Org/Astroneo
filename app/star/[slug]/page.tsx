@@ -45,14 +45,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const tempStr = star.tempK ? `Surface temperature: ${star.tempK.toLocaleString()} K.` : '';
   
   return {
-    title: `${star.commonName} ${typeName} — Facts, Size, Distance | AstroLens`,
+    title: `${star.commonName} ${typeName} — Facts, Size, Distance | Astroneo`,
     description: `Explore ${star.commonName} in 3D. Distance: ${star.distanceLy?.toFixed(5)} light-years. ${spectralStr}${constellationStr}`,
     openGraph: {
-      title: `${star.commonName} — AstroLens`,
+      title: `${star.commonName} — Astroneo`,
       description: `${star.commonName}: ${star.spectralClass ? star.spectralClass + ' star' : typeName} ${star.constellation ? 'in ' + star.constellation : ''}. Distance: ${star.distanceLy?.toFixed(5)} ly. ${tempStr}`,
     },
     alternates: {
-      canonical: `https://astrolens.space/star/${slug}`,
+      canonical: `https://astroneo.space/star/${slug}`,
     },
   };
 }
@@ -81,8 +81,104 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
     name: star.commonName,
     alternateName: star.bayerDesignation,
     description: star.description,
-    url: `https://astrolens.space/star/${slug}`,
+    url: `https://astroneo.space/star/${slug}`,
   };
+
+  if (slug === 'solar-system') {
+    return (
+      <div className="relative bg-black min-h-screen font-sans selection:bg-accent/30">
+        <div className="fixed top-0 left-0 right-0 z-50 pointer-events-auto">
+          <Navbar />
+        </div>
+        
+        {/* Fixed background 3D model */}
+        <div className="fixed inset-0 z-0 pointer-events-auto">
+          <StarViewerWrapper starName={star.commonName} starType={star.type} fullScreen />
+        </div>
+
+        {/* Scrollable Overlay */}
+        <div className="relative z-10 flex flex-col pointer-events-none">
+          {/* Initial Screen spacer (Full viewport minus navbar) */}
+          <div className="h-screen w-full flex flex-col justify-between p-6 md:p-12">
+            <div className="pt-20 flex items-center justify-between pointer-events-auto">
+              <Link 
+                href="/explore" 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass text-muted hover:text-text-primary transition-colors text-sm font-body w-max"
+              >
+                <ChevronRight className="rotate-180" size={16} />
+                <span>Back to Explorer</span>
+              </Link>
+              <div className="liquid-glass rounded-full p-1 border border-white/10 flex items-center gap-2">
+                <LogObservationModal slug={slug} name={star.commonName} type={star.type || 'System'} />
+                <SaveStarButton slug={slug} name={star.commonName} type={star.type || 'System'} />
+              </div>
+            </div>
+
+            <div className="text-center pb-8 animate-fade-out-delay">
+              <span className="text-white/50 text-xs tracking-[0.3em] uppercase font-medium inline-block animate-bounce">Scroll to explore details</span>
+            </div>
+          </div>
+
+          {/* Details Section */}
+          <div className="bg-black/80 backdrop-blur-2xl min-h-screen p-6 md:p-12 pointer-events-auto border-t border-white/10">
+            <div className="max-w-5xl mx-auto py-12">
+              <p className="text-accent text-sm md:text-base tracking-[0.2em] uppercase font-medium mb-3 text-center">
+                {star.type}
+              </p>
+              <h1 className="font-display text-5xl md:text-8xl text-text-primary tracking-tight mb-8 drop-shadow-lg text-center">
+                {star.commonName}
+              </h1>
+              <p className="font-body text-lg md:text-xl text-text-primary/90 leading-relaxed mb-16 text-center max-w-3xl mx-auto">
+                Our planetary system consists of the Sun and everything bound to it by gravity—the planets Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune; dwarf planets such as Pluto; dozens of moons; and millions of asteroids, comets, and meteoroids.
+              </p>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-16">
+                 <div className="liquid-glass p-6 rounded-2xl border border-white/10">
+                   <span className="block text-xs text-muted font-body mb-2 uppercase tracking-widest">Age</span>
+                   <span className="block font-display text-2xl text-text-primary">4.56 Billion Yrs</span>
+                 </div>
+                 <div className="liquid-glass p-6 rounded-2xl border border-white/10">
+                   <span className="block text-xs text-muted font-body mb-2 uppercase tracking-widest">Central Star</span>
+                   <span className="block font-display text-2xl text-text-primary">The Sun (G-Type)</span>
+                 </div>
+                 <div className="liquid-glass p-6 rounded-2xl border border-white/10">
+                   <span className="block text-xs text-muted font-body mb-2 uppercase tracking-widest">Planets</span>
+                   <span className="block font-display text-2xl text-text-primary">8</span>
+                 </div>
+                 <div className="liquid-glass p-6 rounded-2xl border border-white/10">
+                   <span className="block text-xs text-muted font-body mb-2 uppercase tracking-widest">Known Moons</span>
+                   <span className="block font-display text-2xl text-text-primary">290+</span>
+                 </div>
+                 <div className="liquid-glass p-6 rounded-2xl border border-white/10">
+                   <span className="block text-xs text-muted font-body mb-2 uppercase tracking-widest">Location</span>
+                   <span className="block font-display text-2xl text-text-primary">Orion Arm</span>
+                 </div>
+                 <div className="liquid-glass p-6 rounded-2xl border border-white/10">
+                   <span className="block text-xs text-muted font-body mb-2 uppercase tracking-widest">Orbital Speed</span>
+                   <span className="block font-display text-2xl text-text-primary">220 km/s</span>
+                 </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-12 liquid-glass p-8 md:p-12 rounded-3xl border border-white/10">
+                <div>
+                  <h2 className="font-display text-3xl mb-4 text-text-primary">Inner System</h2>
+                  <p className="font-body text-text-primary/80 leading-relaxed">
+                    The inner Solar System includes the four terrestrial planets—Mercury, Venus, Earth, and Mars—which are composed primarily of rock and metal. Beyond Mars lies the asteroid belt, containing millions of rocky remnants from the Solar System's early formation.
+                  </p>
+                </div>
+                <div>
+                  <h2 className="font-display text-3xl mb-4 text-text-primary">Outer System</h2>
+                  <p className="font-body text-text-primary/80 leading-relaxed">
+                    The outer Solar System is home to the gas giants Jupiter and Saturn, composed mostly of hydrogen and helium, and the ice giants Uranus and Neptune, consisting largely of water, ammonia and methane. Beyond Neptune lies the icy Kuiper belt and the Oort cloud.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -25,7 +25,7 @@ export default function PwaPrompt() {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
       // Check if user already dismissed it recently in localStorage
-      const dismissed = localStorage.getItem('astrolens_pwa_dismissed');
+      const dismissed = localStorage.getItem('astroneo_pwa_dismissed');
       if (!dismissed) {
         setShowPrompt(true);
       }
@@ -54,7 +54,7 @@ export default function PwaPrompt() {
     setShowPrompt(false);
     // Don't show again for 7 days
     const expiry = new Date().getTime() + 7 * 24 * 60 * 60 * 1000;
-    localStorage.setItem('astrolens_pwa_dismissed', expiry.toString());
+    localStorage.setItem('astroneo_pwa_dismissed', expiry.toString());
   };
 
   return (
@@ -72,7 +72,7 @@ export default function PwaPrompt() {
             </div>
             
             <div className="flex-1">
-              <h3 className="font-display font-semibold text-text-primary text-sm mb-1">Install AstroLens</h3>
+              <h3 className="font-display font-semibold text-text-primary text-sm mb-1">Install Astroneo</h3>
               <p className="text-muted font-body text-xs leading-relaxed mb-3">
                 Add our app to your home screen for quick access and a full-screen experience.
               </p>

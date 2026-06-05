@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'AstroLens',
-    short_name: 'AstroLens',
+    name: 'Astroneo',
+    short_name: 'Astroneo',
     description: 'Explore the universe through an interactive 3D star catalog.',
     start_url: '/',
     display: 'standalone',

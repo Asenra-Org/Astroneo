@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 
 interface HlsVideoProps extends React.VideoHTMLAttributes<HTMLVideoElement> {
   src: string;
 }
 
-export default function HlsVideo({ src, ...props }: HlsVideoProps) {
+export default function HlsVideo({ src, className = '', ...props }: HlsVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -35,5 +36,12 @@ export default function HlsVideo({ src, ...props }: HlsVideoProps) {
     };
   }, [src]);
 
-  return <video ref={videoRef} {...props} />;
+  return (
+    <video 
+      ref={videoRef} 
+      onCanPlay={() => setIsLoaded(true)}
+      className={`${className} transition-opacity duration-[1500ms] ease-in-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+      {...props} 
+    />
+  );
 }

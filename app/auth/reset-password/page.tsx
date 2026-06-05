@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00D4FF', boxShadow: '0 0 12px rgba(0,212,255,0.8)' }} />
-            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#F0F0F0' }}>AstroLens</span>
+            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#F0F0F0' }}>Astroneo</span>
           </Link>
           <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '1.5rem', fontWeight: 700, color: '#F0F0F0', marginTop: '20px', marginBottom: '6px' }}>
             Reset your password

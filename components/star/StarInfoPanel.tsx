@@ -25,7 +25,7 @@ export default function StarInfoPanel({ star }: StarInfoPanelProps) {
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${star.commonName} — AstroLens`, url });
+        await navigator.share({ title: `${star.commonName} — Astroneo`, url });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(url);

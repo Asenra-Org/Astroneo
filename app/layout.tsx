@@ -21,26 +21,26 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://astrolens.space'),
+  metadataBase: new URL('https://astroneo.space'),
   title: {
-    default: 'AstroLens — Search the Stars, Explore the Universe',
-    template: '%s | AstroLens',
+    default: 'Astroneo — Search the Stars, Explore the Universe',
+    template: '%s | Astroneo',
   },
-  description: 'Explore any star in the night sky with AstroLens. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data. Free forever.',
+  description: 'Explore any star in the night sky with Astroneo. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data. Free forever.',
   keywords: ['star explorer', 'astronomy app', '3D star map', 'space exploration', 'star facts', 'night sky', 'constellation', 'Betelgeuse', 'Sirius'],
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://astrolens.space',
-    siteName: 'AstroLens',
-    title: 'AstroLens — Search the Stars, Explore the Universe',
-    description: 'Explore any star in the night sky with AstroLens. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data.',
-    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'AstroLens — Search the Stars' }],
+    url: 'https://astroneo.space',
+    siteName: 'Astroneo',
+    title: 'Astroneo — Search the Stars, Explore the Universe',
+    description: 'Explore any star in the night sky with Astroneo. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data.',
+    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'Astroneo — Search the Stars' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AstroLens — Search the Stars',
-    description: 'Explore any star in the night sky with AstroLens. Free astronomical data and 3D star viewer.',
+    title: 'Astroneo — Search the Stars',
+    description: 'Explore any star in the night sky with Astroneo. Free astronomical data and 3D star viewer.',
     images: ['/og-default.png'],
   },
   robots: {

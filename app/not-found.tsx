@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '404 — Star Not Found | AstroLens',
+  title: '404 — Star Not Found | Astroneo',
 };
 
 export default function NotFound() {

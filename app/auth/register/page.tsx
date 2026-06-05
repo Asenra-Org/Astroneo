@@ -41,7 +41,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await registerWithEmail(data.email, data.password, data.displayName);
-      toast.success('Welcome to AstroLens! Start exploring the universe');
+      toast.success('Welcome to Astroneo! Start exploring the universe');
       router.push('/dashboard');
     } catch (err: any) {
       toast.error(mapAuthError(err.code));
@@ -54,7 +54,7 @@ export default function RegisterPage() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
-      toast.success('Welcome to AstroLens!');
+      toast.success('Welcome to Astroneo!');
       router.push('/dashboard');
     } catch (err: any) {
       toast.error(mapAuthError(err.code));
@@ -91,13 +91,13 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3 mb-6">
             <div className="w-2 h-2 rounded-full bg-accent-gradient shadow-[0_0_12px_rgba(137,170,204,0.6)]" />
-            <span className="font-display text-xl text-text-primary tracking-tight">AstroLens</span>
+            <span className="font-display text-xl text-text-primary tracking-tight">Astroneo</span>
           </Link>
           <h1 className="font-display text-4xl text-text-primary tracking-tight mb-2">
             Create your <em className="italic text-text-primary/70">account</em>
           </h1>
           <p className="text-muted font-body text-sm">
-            Join AstroLens — free forever
+            Join Astroneo — free forever
           </p>
         </div>
 

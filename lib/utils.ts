@@ -25,7 +25,8 @@ export function slugify(name: string): string {
 }
 
 export function spectralToColor(spectralClass?: string): string {
-  const cls = spectralClass?.[0]?.toUpperCase() ?? 'G';
+  if (!spectralClass) return '#FFFFFF';
+  const cls = spectralClass[0]?.toUpperCase() ?? 'G';
   const colorMap: Record<string, string> = {
     O: '#9BB0FF',
     B: '#AABFFF',
@@ -39,7 +40,7 @@ export function spectralToColor(spectralClass?: string): string {
 }
 
 export function spectralToClass(spectralClass?: string): string {
-  return spectralClass?.[0]?.toUpperCase() ?? 'G';
+  return spectralClass?.[0]?.toUpperCase() ?? 'None';
 }
 
 export function getSpectralBadgeClass(spectralClass?: string): string {

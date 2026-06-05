@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!article) return { title: 'Article Not Found' };
   
   return {
-    title: `${article.title} | AstroLens Blog`,
+    title: `${article.title} | Astroneo Blog`,
     description: article.content ? article.content.slice(0, 160).replace(/[#*\n]/g, ' ').trim() : article.excerpt,
   };
 }
@@ -81,7 +81,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               {article.title}
             </h1>
             <div className="flex items-center gap-3 text-sm text-muted font-body mb-8">
-              <span>AstroLens Blog</span>
+              <span>Astroneo Blog</span>
               <span>·</span>
               <span>{article.date}</span>
               <span>·</span>

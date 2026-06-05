@@ -15,7 +15,7 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-2">
               <div className="w-2 h-2 rounded-full bg-accent-gradient shadow-[0_0_12px_rgba(137,170,204,0.6)]" />
               <span className="font-display text-xl text-text-primary tracking-tight">
-                AstroLens
+                Astroneo
               </span>
             </div>
             <a href="https://asenra.in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mb-4 opacity-60 hover:opacity-100 transition-opacity w-fit">
@@ -76,12 +76,12 @@ export default function Footer() {
           <div className="flex items-center gap-2.5">
             <img src="/asenra-icon.png" alt="Asenra" className="w-4 h-4 object-contain opacity-50" />
             <p className="font-body text-xs text-muted pt-0.5">
-              © {year} AstroLens by Asenra. All rights reserved.
+              © {year} Astroneo by Asenra. All rights reserved.
             </p>
           </div>
           <div className="flex items-center gap-6">
             <a
-              href="https://astrolens.space"
+              href="https://astroneo.space"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted hover:text-text-primary transition-colors"
@@ -90,7 +90,7 @@ export default function Footer() {
               <Globe size={18} />
             </a>
             <a
-              href="mailto:hello@astrolens.space"
+              href="mailto:hello@astroneo.space"
               className="text-muted hover:text-text-primary transition-colors"
               aria-label="Email"
             >
