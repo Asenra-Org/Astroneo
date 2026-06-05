@@ -37,7 +37,7 @@ export default function Footer() {
                 {[
                   { label: 'Explore', href: '/explore' },
                   { label: 'Blog', href: '/blog' },
-                  { label: 'About', href: '#' },
+                  { label: 'About', href: '/about' },
                 ].map(({ label, href }) => (
                   <Link 
                     key={label} 
@@ -55,8 +55,8 @@ export default function Footer() {
               </p>
               <div className="flex flex-col gap-3">
                 {[
-                  { label: 'Privacy Policy', href: '#' },
-                  { label: 'Terms', href: '#' },
+                  { label: 'Privacy Policy', href: '/privacy-policy' },
+                  { label: 'Terms', href: '/terms' },
                 ].map(({ label, href }) => (
                   <Link 
                     key={label} 
@@ -90,7 +90,7 @@ export default function Footer() {
               <Globe size={18} />
             </a>
             <a
-              href="mailto:hello@astroneo.space"
+              href="mailto:contact@astroneo.space"
               className="text-muted hover:text-text-primary transition-colors"
               aria-label="Email"
             >
