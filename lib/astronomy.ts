@@ -76,7 +76,8 @@ export function calcAltAz(
   const latRad = toRad(lat);
 
   const sinAlt = Math.sin(decRad) * Math.sin(latRad) + Math.cos(decRad) * Math.cos(latRad) * Math.cos(haRad);
-  const altitude = toDeg(Math.asin(sinAlt));
+  // Clamp sinAlt to [-1, 1] to prevent NaN from Math.asin due to floating point inaccuracies
+  const altitude = toDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
 
   const cosAz = (Math.sin(decRad) - Math.sin(toRad(altitude)) * Math.sin(latRad)) / (Math.cos(toRad(altitude)) * Math.cos(latRad));
   let azimuth = toDeg(Math.acos(Math.max(-1, Math.min(1, cosAz))));
@@ -113,8 +114,37 @@ export async function calculateVisibility(
   ra: number,
   dec: number,
   lat: number,
-  lon: number
+  lon: number,
+  starName: string = ''
 ): Promise<VisibilityResult> {
+  const isSun = starName.toLowerCase() === 'sun';
+  const isEarth = starName.toLowerCase() === 'earth';
+
+  if (isEarth) {
+    return {
+      isVisibleNow: false,
+      isVisibleTonight: false,
+      currentAltitude: -90,
+      currentDirection: 'Down',
+      bestTimeTonight: 'N/A',
+      maxAltitudeTonight: NaN,
+      reason: 'You are currently standing on it.',
+      weather: { description: 'Local', isDay: false, temperature: 0 }
+    };
+  }
+
+  if (isNaN(ra) || isNaN(dec) || ra == null || dec == null) {
+    return {
+      isVisibleNow: false,
+      isVisibleTonight: false,
+      currentAltitude: NaN,
+      currentDirection: 'N/A',
+      bestTimeTonight: 'Unknown',
+      maxAltitudeTonight: NaN,
+      reason: 'Positional data is missing for this object.',
+      weather: { description: 'Unknown', isDay: false, temperature: 0 }
+    };
+  }
   // Fetch real-time weather from Open-Meteo
   let weatherData = null;
   try {
@@ -137,39 +167,69 @@ export async function calculateVisibility(
   const currentPos = calcAltAz(ra, dec, lat, lon, now);
   const currentDirection = azimuthToDirection(currentPos.azimuth);
 
-  // Find best viewing time tonight
+  // Find best viewing time for the current/upcoming window
   let maxAlt = -90;
-  let bestHour = 0;
+  let bestDate = new Date(now);
   
-  // Check from 6 PM to 6 AM local time
-  for (let h = 18; h <= 30; h++) {
-    const testDate = new Date(now);
-    testDate.setHours(h % 24, 0, 0, 0);
-    if (h >= 24) testDate.setDate(testDate.getDate() + 1);
+  let searchDates: Date[] = [];
+  let foundWindow = false;
+
+  for (let i = 0; i <= 24; i++) {
+    // We check exact hours from now. To ensure we check on the hour, we can round the testDate
+    const testDate = new Date(now.getTime() + i * 60 * 60 * 1000);
+    if (i > 0) testDate.setMinutes(0, 0, 0); // Check exactly on the hour for future hours
+
+    const h = testDate.getHours();
     
-    const { altitude: testAlt } = calcAltAz(ra, dec, lat, lon, testDate);
-    if (testAlt > maxAlt) {
-      maxAlt = testAlt;
-      bestHour = h % 24;
+    // For sun: daytime (6 to 18). For stars: nighttime (18 to 6)
+    const isValidWindow = isSun ? (h >= 6 && h <= 18) : (h >= 18 || h < 6);
+    
+    if (isValidWindow) {
+      searchDates.push(testDate);
+      foundWindow = true;
+    } else if (foundWindow) {
+      // Once we exit the valid window, stop searching so we don't bleed into tomorrow evening
+      break;
     }
   }
 
-  const bestTimeTonight = `${String(bestHour).padStart(2, '0')}:00 local time`;
+  for (const testDate of searchDates) {
+    const { altitude: testAlt } = calcAltAz(ra, dec, lat, lon, testDate);
+    if (testAlt > maxAlt) {
+      maxAlt = testAlt;
+      bestDate = testDate;
+    }
+  }
+
   const isVisibleTonight = maxAlt > 10;
   
+  // Format best time in AM/PM
+  const hr = bestDate.getHours();
+  const ampm = hr >= 12 ? 'PM' : 'AM';
+  const displayHour = hr % 12 || 12;
+  const bestHourStr = String(displayHour);
+  const bestMinStr = String(bestDate.getMinutes()).padStart(2, '0');
+  
+  let bestTimeTonight = `${bestHourStr}:${bestMinStr} ${ampm} local time`;
+  if (bestDate.getDate() !== now.getDate()) {
+    bestTimeTonight = `Tomorrow at ${bestHourStr}:${bestMinStr} ${ampm}`;
+  }
+
   // Determine if it is visible RIGHT NOW
   let isVisibleNow = false;
   let reason = '';
 
   if (currentPos.altitude < 0) {
     reason = `Currently ${Math.abs(Math.round(currentPos.altitude))}° below the horizon in the ${currentDirection}.`;
-  } else if (isDay) {
-    reason = `It is daytime. The star is ${Math.round(currentPos.altitude)}° above the horizon, but obscured by sunlight.`;
+  } else if (isDay && !isSun) {
+    reason = `It is daytime. The object is ${Math.round(currentPos.altitude)}° above the horizon, but obscured by sunlight.`;
+  } else if (!isDay && isSun) {
+    reason = `The Sun has set. It is currently ${Math.abs(Math.round(currentPos.altitude))}° below the horizon.`;
   } else if (weatherStatus.isBad) {
     reason = `Above the horizon (${Math.round(currentPos.altitude)}° ${currentDirection}), but heavy ${weatherStatus.desc.toLowerCase()} makes it impossible to see.`;
   } else if (weatherStatus.isWarning) {
     isVisibleNow = true;
-    reason = `It is ${Math.round(currentPos.altitude)}° above the horizon in the ${currentDirection}. Weather reports ${weatherStatus.desc.toLowerCase()} which may partially obscure your view, but it's worth checking!`;
+    reason = `It is ${Math.round(currentPos.altitude)}° above the horizon in the ${currentDirection}. Weather reports ${weatherStatus.desc.toLowerCase()} which may partially obscure your view.`;
   } else {
     isVisibleNow = true;
     reason = `Perfect viewing! It is ${Math.round(currentPos.altitude)}° above the horizon in the ${currentDirection} under ${weatherStatus.desc.toLowerCase()}.`;

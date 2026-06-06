@@ -29,7 +29,7 @@ export default function VisibilityChecker({ ra, dec, starName }: VisibilityCheck
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        calculateVisibility(ra, dec, latitude, longitude)
+        calculateVisibility(ra, dec, latitude, longitude, starName)
           .then((vis) => {
             setResult(vis);
             setLoading(false);
@@ -138,7 +138,7 @@ export default function VisibilityChecker({ ra, dec, starName }: VisibilityCheck
               <p className="text-base text-text-primary font-body font-medium leading-tight">
                 {result.currentDirection}
               </p>
-              <p className="text-xs text-muted mt-1">Alt: {result.currentAltitude}°</p>
+              <p className="text-xs text-muted mt-1">Alt: {isNaN(result.currentAltitude) ? '--' : result.currentAltitude}°</p>
             </div>
           </div>
 
@@ -147,19 +147,23 @@ export default function VisibilityChecker({ ra, dec, starName }: VisibilityCheck
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
             
             <h4 className="text-xs font-display text-accent uppercase tracking-widest mb-3 flex items-center gap-2">
-              <Clock size={14} /> Tonight's Outlook
+              <Clock size={14} /> {starName.toLowerCase() === 'sun' ? "Today's Outlook" : "Tonight's Outlook"}
             </h4>
             
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-primary font-body font-medium">
-                  {result.isVisibleTonight ? 'Visible tonight' : 'Not visible tonight'}
+                  {result.isVisibleTonight ? 'Visible' : 'Not visible'}
                 </p>
-                <p className="text-xs text-muted mt-1">Best time: {result.bestTimeTonight}</p>
+                {result.maxAltitudeTonight > 0 ? (
+                  <p className="text-xs text-muted mt-1">Best time: {result.bestTimeTonight}</p>
+                ) : (
+                  <p className="text-xs text-muted mt-1">Below horizon all night</p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-lg font-display text-accent font-bold">
-                  {result.maxAltitudeTonight}°
+                  {isNaN(result.maxAltitudeTonight) ? '--' : result.maxAltitudeTonight}°
                 </p>
                 <p className="text-[10px] text-muted uppercase tracking-wider">Max Altitude</p>
               </div>
