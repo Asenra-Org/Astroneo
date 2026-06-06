@@ -123,8 +123,10 @@ export default function StarViewer3D({ spectralClass, starType, name = '', fullS
     }
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 1000);
-    camera.position.z = 7;
+    const aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
+    const fov = aspect < 1 ? 65 : 45;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 1000);
+    camera.position.z = aspect < 1 ? 14 : 7;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);

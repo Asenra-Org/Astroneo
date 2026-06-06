@@ -11,7 +11,7 @@ interface Stat {
 }
 
 const stats: Stat[] = [
-  { value: '200,000+', label: 'Stars Indexed', numericEnd: 200, suffix: 'k+' },
+  { value: '8,898', label: 'Stars Indexed', numericEnd: 8898, suffix: '' },
   { value: '88', label: 'Constellations', numericEnd: 88, suffix: '' },
   { value: 'Real-time', label: '3D Rendering' },
   { value: 'Free', label: 'Always' },

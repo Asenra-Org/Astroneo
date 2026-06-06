@@ -132,8 +132,11 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
               </div>
             </div>
 
-            <div className="text-center pb-8 animate-fade-out-delay">
-              <span className="text-white/50 text-xs tracking-[0.3em] uppercase font-medium inline-block animate-bounce">Scroll to explore details</span>
+            <div className="text-center pb-12 pt-8 pointer-events-auto animate-fade-out-delay">
+              <div className="inline-flex flex-col items-center justify-center p-4 px-8 rounded-3xl bg-black/40 backdrop-blur-md border border-white/10 md:bg-transparent md:border-transparent md:backdrop-blur-none animate-bounce shadow-lg">
+                <span className="text-white/80 text-xs tracking-[0.2em] uppercase font-medium mb-2">Swipe to Scroll</span>
+                <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+              </div>
             </div>
           </div>
 

@@ -11,7 +11,7 @@ import { getFeaturedStars } from '@/lib/stars';
 
 export const metadata: Metadata = {
   title: 'Astroneo — Search the Stars, Explore the Universe',
-  description: 'Explore any star in the night sky with Astroneo. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data. Free forever.',
+  description: 'Explore any star in the night sky with Astroneo. Search 8,800+ stars, interact with 3D models, and discover complete astronomical data. Free forever.',
 };
 
 export default async function HomePage() {
