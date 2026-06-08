@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/fetch-events",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-events",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/nightly-report",
+      "schedule": "30 23 * * *"
+    },
+    {
+      "path": "/api/cron/health-check",
+      "schedule": "0 */4 * * *"
+    }
+  ]
+}
