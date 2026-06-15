@@ -35,27 +35,28 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   const [showOnboarding, setShowOnboarding] = useState(true);
 
   const [headingOffset, setHeadingOffset] = useState(0);
-  const [usingSensors, setUsingSensors] = useState(false);
   
   // Track visible stars for click coordinates matching
   const visibleStarsRef = useRef<any[]>([]);
 
-  // Raw target inputs from sensors
+  // Viewport heading (azimuth) and pitch (tilt/altitude). Roll is fixed at 0.
   const targetSensorData = useRef({
     heading: 180,
-    pitch: 30,
+    pitch: 15,
     roll: 0
   });
 
   // Interpolated smoothed values for rendering
   const sensorData = useRef({
     heading: 180,
-    pitch: 30,
+    pitch: 15,
     roll: 0
   });
 
   const dragStart = useRef<{ x: number; y: number } | null>(null);
   const dragStartAngles = useRef<{ heading: number; pitch: number } | null>(null);
+  const isDraggingCompass = useRef(false);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     // Load stars data on mount
@@ -75,120 +76,86 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         setLoading(false);
       });
 
+    // Check if camera permission was previously granted to enable silent load
+    const cameraGranted = localStorage.getItem('skymap_camera_granted');
+    if (cameraGranted === 'true') {
+      setShowOnboarding(false);
+      silentlyStartCamera();
+    }
+
     return () => {
-      (window as any).removeEventListener('deviceorientation', handleOrientation);
-      (window as any).removeEventListener('deviceorientationabsolute', handleOrientation);
-      
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
 
-  const startCameraAndSensors = async () => {
-    setErrorMsg(null);
-    setLoading(true);
-    setShowOnboarding(false);
-
-    // 1. Request orientation permission FIRST (synchronously in click event context for iOS gesture validation)
-    try {
-      if (
-        typeof window !== 'undefined' &&
-        typeof DeviceOrientationEvent !== 'undefined' &&
-        (DeviceOrientationEvent as any).requestPermission
-      ) {
-        const permissionState = await (DeviceOrientationEvent as any).requestPermission();
-        if (permissionState === 'granted') {
-          (window as any).addEventListener('deviceorientation', handleOrientation, true);
-          setUsingSensors(true);
-        } else {
-          console.warn('Orientation permission denied.');
-          setUsingSensors(false);
-        }
-      } else if (typeof window !== 'undefined') {
-        if ('ondeviceorientationabsolute' in window) {
-          (window as any).addEventListener('deviceorientationabsolute', handleOrientation, true);
-          setUsingSensors(true);
-        } else if ('ondeviceorientation' in window) {
-          (window as any).addEventListener('deviceorientation', handleOrientation, true);
-          setUsingSensors(true);
-        } else {
-          setUsingSensors(false);
-        }
-      }
-    } catch (sensorErr) {
-      console.warn('Could not initialize orientation sensors.', sensorErr);
-      setUsingSensors(false);
-    }
-
-    // 2. Request camera access AFTER the sensor request is made to keep iOS Safari user gesture context intact
+  const silentlyStartCamera = async () => {
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' }
         });
+        streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setHasCamera(true);
         }
       }
+    } catch (err) {
+      console.warn('Silent camera start failed:', err);
+      setShowOnboarding(true);
+      localStorage.removeItem('skymap_camera_granted');
+    }
+  };
+
+  const startCamera = async () => {
+    setErrorMsg(null);
+    setLoading(true);
+    setShowOnboarding(false);
+
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          setHasCamera(true);
+          localStorage.setItem('skymap_camera_granted', 'true');
+        }
+      }
     } catch (camErr) {
       console.warn('Camera access denied or unavailable. Running in simulation mode.', camErr);
       setHasCamera(false);
+      localStorage.removeItem('skymap_camera_granted');
     }
 
     setLoading(false);
   };
 
-  const handleOrientation = (event: DeviceOrientationEvent) => {
-    let rawHeading = 180;
-    
-    if ((event as any).webkitCompassHeading !== undefined) {
-      rawHeading = (event as any).webkitCompassHeading;
-    } else if (event.alpha !== null) {
-      rawHeading = (360 - event.alpha) % 360;
-    }
-
-    // Convert compass yaw to standard absolute alpha
-    const alpha = (360 - rawHeading) % 360;
-    const beta = event.beta ?? 0;
-    const gamma = event.gamma ?? 0;
-
-    // Convert to radians for rotation matrix math
-    const alphaRad = (alpha * Math.PI) / 180;
-    const betaRad = (beta * Math.PI) / 180;
-    const gammaRad = (gamma * Math.PI) / 180;
-
-    // Euler angles c/s constants
-    const cA = Math.cos(alphaRad);
-    const sA = Math.sin(alphaRad);
-    const cB = Math.cos(betaRad);
-    const sB = Math.sin(betaRad);
-    const cG = Math.cos(gammaRad);
-    const sG = Math.sin(gammaRad);
-
-    // Calculate the camera pointing vector [x, y, z] relative to Earth coordinate system.
-    // Represents the negative Z-axis pointing out of the back camera:
-    const x_earth = -(cA * sG + sA * sB * cG);
-    const y_earth = -(sA * sG - cA * sB * cG);
-    const z_earth = -(cB * cG);
-
-    // Extract Heading (yaw) and Pitch (elevation/altitude) from the 3D vector
-    // This avoids gimbal lock and correctly aligns positive/negative pitch to camera coordinates
-    const calculatedHeading = (Math.atan2(x_earth, y_earth) * 180 / Math.PI + 360) % 360;
-    const calculatedPitch = Math.asin(Math.max(-1, Math.min(1, z_earth))) * 180 / Math.PI;
-    const calculatedRoll = gamma;
-
-    targetSensorData.current = {
-      heading: calculatedHeading,
-      pitch: calculatedPitch,
-      roll: calculatedRoll
-    };
-  };
-
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (usingSensors) return;
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    const width = canvasRef.current?.width || window.innerWidth;
+    const height = canvasRef.current?.height || window.innerHeight;
+    const panelWidth = 240;
+    const panelHeight = 44;
+    const panelX = (width - panelWidth) / 2;
+    const panelY = height - 100;
+
+    // Check if dragging compass ribbon or background sky
+    isDraggingCompass.current = (
+      clickX >= panelX &&
+      clickX <= panelX + panelWidth &&
+      clickY >= panelY &&
+      clickY <= panelY + panelHeight
+    );
+
     dragStart.current = { x: e.clientX, y: e.clientY };
     dragStartAngles.current = {
       heading: targetSensorData.current.heading,
@@ -202,9 +169,13 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
 
-    const mouseSensitivity = 0.08; // Decreased sensitivity
-    targetSensorData.current.heading = (dragStartAngles.current.heading - dx * mouseSensitivity + 360) % 360;
-    targetSensorData.current.pitch = Math.max(-85, Math.min(85, dragStartAngles.current.pitch + dy * mouseSensitivity));
+    const sensitivity = isDraggingCompass.current ? 0.15 : 0.08;
+    
+    targetSensorData.current.heading = (dragStartAngles.current.heading - dx * sensitivity + 360) % 360;
+    
+    if (!isDraggingCompass.current) {
+      targetSensorData.current.pitch = Math.max(-85, Math.min(85, dragStartAngles.current.pitch + dy * sensitivity));
+    }
   };
 
   const handleCanvasClick = (clickX: number, clickY: number) => {
@@ -239,11 +210,30 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     }
     dragStart.current = null;
     dragStartAngles.current = null;
+    isDraggingCompass.current = false;
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (usingSensors) return;
     const touch = e.touches[0];
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const clickX = touch.clientX - rect.left;
+    const clickY = touch.clientY - rect.top;
+
+    const width = canvasRef.current?.width || window.innerWidth;
+    const height = canvasRef.current?.height || window.innerHeight;
+    const panelWidth = 240;
+    const panelHeight = 44;
+    const panelX = (width - panelWidth) / 2;
+    const panelY = height - 100;
+
+    isDraggingCompass.current = (
+      clickX >= panelX &&
+      clickX <= panelX + panelWidth &&
+      clickY >= panelY &&
+      clickY <= panelY + panelHeight
+    );
+
     dragStart.current = { x: touch.clientX, y: touch.clientY };
     dragStartAngles.current = {
       heading: targetSensorData.current.heading,
@@ -257,9 +247,13 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     const dx = touch.clientX - dragStart.current.x;
     const dy = touch.clientY - dragStart.current.y;
 
-    const touchSensitivity = 0.12; // Decreased sensitivity
-    targetSensorData.current.heading = (dragStartAngles.current.heading - dx * touchSensitivity + 360) % 360;
-    targetSensorData.current.pitch = Math.max(-85, Math.min(85, dragStartAngles.current.pitch + dy * touchSensitivity));
+    const sensitivity = isDraggingCompass.current ? 0.18 : 0.12;
+    
+    targetSensorData.current.heading = (dragStartAngles.current.heading - dx * sensitivity + 360) % 360;
+    
+    if (!isDraggingCompass.current) {
+      targetSensorData.current.pitch = Math.max(-85, Math.min(85, dragStartAngles.current.pitch + dy * sensitivity));
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -278,6 +272,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     }
     dragStart.current = null;
     dragStartAngles.current = null;
+    isDraggingCompass.current = false;
   };
 
   useEffect(() => {
@@ -319,11 +314,11 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       const smoothing = 0.03; // Heavily damped to prevent rapid jitters and drift
       sensorData.current.heading = lerpAngle(sensorData.current.heading, targetSensorData.current.heading, smoothing);
       sensorData.current.pitch = lerp(sensorData.current.pitch, targetSensorData.current.pitch, smoothing);
-      sensorData.current.roll = lerp(sensorData.current.roll, targetSensorData.current.roll, smoothing);
+      sensorData.current.roll = 0; // Gyroscope is disabled, keep roll at 0
 
       const currentHeading = (sensorData.current.heading + headingOffset + 360) % 360;
       const currentPitch = sensorData.current.pitch;
-      const rollRad = (sensorData.current.roll * Math.PI) / 180;
+      const rollRad = 0; // Roll is 0
 
       const horizonYRotated = currentPitch * scaleY;
       const date = new Date();
@@ -374,7 +369,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
             if (dAz < -180) dAz += 360;
             const dAlt = pos.altitude - currentPitch;
 
-            const dx = dAz * scaleX; // Corrected sign (was -dAz)
+            const dx = dAz * scaleX;
             const dy = -dAlt * scaleY;
             projectedPoints.push({ x: dx, y: dy });
           });
@@ -437,8 +432,6 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         });
 
         ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-        ctx.lineWidth = 0.8;
         
         Object.entries(constellations).forEach(([name, list]) => {
           const sorted = [...list].sort((a, b) => a.ra - b.ra);
@@ -446,6 +439,9 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           
           ctx.beginPath();
           let first = true;
+          let sumX = 0;
+          let sumY = 0;
+          let count = 0;
           
           sorted.forEach(star => {
             const pos = calcAltAz(star.ra, star.dec, latitude, longitude, date);
@@ -459,7 +455,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
             const dAlt = alt - currentPitch;
 
             if (Math.abs(dAz) < fovX * 1.2 && Math.abs(dAlt) < fovY * 1.2) {
-              const dx = dAz * scaleX; // Corrected sign (was -dAz)
+              const dx = dAz * scaleX;
               const dy = -dAlt * scaleY;
               const rx = dx * Math.cos(rollRad) - dy * Math.sin(rollRad);
               const ry = dx * Math.sin(rollRad) + dy * Math.cos(rollRad);
@@ -472,9 +468,27 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
               } else {
                 ctx.lineTo(x, y);
               }
+              sumX += x;
+              sumY += y;
+              count++;
             }
           });
+          
+          ctx.strokeStyle = 'rgba(6, 182, 212, 0.2)'; // Neon Cyan lines
+          ctx.lineWidth = 1.0;
           ctx.stroke();
+
+          // Draw constellation name at centroid
+          if (count > 0) {
+            const avgX = sumX / count;
+            const avgY = sumY / count;
+            
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.85)'; // Premium neon cyan
+            ctx.font = 'bold 9px var(--font-inter), sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(name.toUpperCase(), avgX, avgY);
+          }
         });
         ctx.restore();
       }
@@ -614,21 +628,21 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       const groundGrad = ctx.createLinearGradient(0, horizonYRotated, 0, height * 2);
       if (hasCamera) {
-        // Semi-transparent shading over the ground camera feed to block stars below horizon cleanly
-        groundGrad.addColorStop(0, 'rgba(4, 4, 7, 0.75)');
-        groundGrad.addColorStop(0.3, 'rgba(2, 2, 4, 0.85)');
+        // Semi-transparent shading over the ground camera feed to block stars below horizon cleanly (with dark cyan tint)
+        groundGrad.addColorStop(0, 'rgba(2, 6, 10, 0.75)');
+        groundGrad.addColorStop(0.3, 'rgba(1, 4, 8, 0.85)');
         groundGrad.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
       } else {
-        // Fully solid ground
-        groundGrad.addColorStop(0, '#040407');
-        groundGrad.addColorStop(0.3, '#020204');
+        // Fully solid ground (with dark cyan tint)
+        groundGrad.addColorStop(0, '#02060a');
+        groundGrad.addColorStop(0.3, '#010305');
         groundGrad.addColorStop(1, '#000000');
       }
       ctx.fillStyle = groundGrad;
       ctx.fillRect(-width * 2, horizonYRotated, width * 4, height * 4);
 
-      // Draw wavy mountain horizon separator
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      // Draw wavy mountain horizon separator (in neon cyan)
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.25)';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       
@@ -653,7 +667,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         // Draw glassmorphic background container
         ctx.save();
         ctx.fillStyle = 'rgba(10, 10, 15, 0.65)';
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)'; // Neon cyan border
         ctx.lineWidth = 1;
         ctx.shadowColor = 'rgba(0,0,0,0.5)';
         ctx.shadowBlur = 10;
@@ -723,8 +737,8 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         }
         ctx.restore();
 
-        // Center line
-        ctx.strokeStyle = '#3b82f6';
+        // Center line (neon cyan)
+        ctx.strokeStyle = '#06b6d4';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(width / 2, panelY + 2);
@@ -771,50 +785,51 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     <div className="relative w-full h-screen bg-black overflow-hidden select-none animate-fade-in">
       {loading && (
         <div className="absolute inset-0 bg-[#020208]/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-          <RefreshCw className="w-10 h-10 text-white/40 animate-spin mb-4" />
-          <p className="text-white/50 font-body text-sm">Aligning astronomical calculations...</p>
+          <RefreshCw className="w-10 h-10 text-cyan-500/50 animate-spin mb-4" />
+          <p className="text-cyan-300/50 font-body text-sm font-medium">Aligning astronomical calculations...</p>
         </div>
       )}
 
       {showOnboarding && (
         <div className="absolute inset-0 bg-black/95 backdrop-blur-md z-40 flex flex-col items-center justify-center p-6 text-center">
-          <div className="max-w-md w-full bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-lg shadow-2xl">
+          <div className="max-w-md w-full bg-cyan-950/10 border border-cyan-500/20 p-8 rounded-3xl backdrop-blur-lg shadow-2xl">
             
             {/* Beta Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-[10px] font-mono uppercase tracking-widest rounded-full mb-6 mx-auto">
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-              <span>Experimental Beta</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-mono uppercase tracking-widest rounded-full mb-6 mx-auto">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>Beta Testing Mode</span>
             </div>
 
-            <Compass className="w-16 h-16 text-white/70 mx-auto mb-6" />
+            <Compass className="w-16 h-16 text-cyan-400/80 mx-auto mb-6 animate-pulse" />
             <h2 className="text-2xl font-display font-medium text-white mb-3">Live AR Sky Map</h2>
-            <p className="text-white/50 font-body text-sm mb-6 leading-relaxed">
-              Explore stars and planets in real-time. We need access to your device camera and compass sensors to align the map with your night sky.
+            <p className="text-white/60 font-body text-sm mb-6 leading-relaxed">
+              Explore stars, planets, and constellations in real-time. We need camera permission to render the interactive sky map overlays on top of your physical view.
             </p>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-left mb-8">
-              <h4 className="text-xs font-display text-white/80 font-medium mb-1">
+            <div className="bg-cyan-950/35 border border-cyan-500/20 rounded-2xl p-4 text-left mb-8">
+              <h4 className="text-xs font-display text-cyan-200 font-semibold mb-1 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
                 Active Beta Notice
               </h4>
-              <p className="text-white/40 font-body text-[10px] leading-relaxed">
-                This feature is currently in active testing. Sensor calibration, gyroscope precision, and camera mapping may vary depending on device hardware and magnetic interference.
+              <p className="text-cyan-300/60 font-body text-[10px] leading-relaxed">
+                This feature is in testing (beta mode) and may not work properly on all devices. Gyroscope tracking is disabled for optimal viewport stability. Move around smoothly using drag gestures or the bottom scrollbar.
               </p>
             </div>
 
             <button
-              onClick={startCameraAndSensors}
-              className="w-full py-4 bg-white text-black font-body font-medium rounded-xl hover:bg-white/95 active:scale-[0.98] transition duration-200"
+              onClick={startCamera}
+              className="w-full py-4 bg-cyan-500 text-black font-body font-bold rounded-xl hover:bg-cyan-400 active:scale-[0.98] transition duration-200"
             >
-              Enable Camera & Sensors
+              Enable AR Camera
             </button>
             <button
               onClick={() => {
                 setShowOnboarding(false);
-                setUsingSensors(false);
-                targetSensorData.current = { heading: 180, pitch: 0, roll: 0 };
-                sensorData.current = { heading: 180, pitch: 0, roll: 0 };
+                setHasCamera(false);
+                targetSensorData.current = { heading: 180, pitch: 15, roll: 0 };
+                sensorData.current = { heading: 180, pitch: 15, roll: 0 };
               }}
-              className="w-full mt-4 py-3 bg-white/5 text-white/50 font-body text-sm rounded-xl hover:bg-white/10 transition"
+              className="w-full mt-4 py-3 bg-white/5 text-white/50 border border-white/5 font-body text-sm rounded-xl hover:bg-white/10 hover:text-white transition"
             >
               Use Manual Simulation Mode
             </button>
@@ -822,22 +837,23 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         </div>
       )}
 
-      {hasCamera ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 w-full h-full object-cover z-0 opacity-70 animate-fade-in"
-        />
-      ) : (
+      {/* Video Element rendered always to prevent Ref bind issues, hidden if camera is disabled */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className={`absolute inset-0 w-full h-full object-cover z-0 opacity-70 animate-fade-in ${
+          hasCamera ? '' : 'hidden'
+        }`}
+      />
+
+      {!hasCamera && (
         <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-[#020208] via-[#050515] to-[#010105] z-0 flex items-center justify-center">
-          {!usingSensors && (
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white/40 pointer-events-none">
-              <Eye className="w-3.5 h-3.5" />
-              <span>Simulation Mode: Drag screen to look around</span>
-            </div>
-          )}
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-cyan-950/40 border border-cyan-500/20 rounded-full text-xs text-cyan-300/50 pointer-events-none backdrop-blur-md">
+            <Eye className="w-3.5 h-3.5" />
+            <span>Simulation Mode: Drag screen to look around</span>
+          </div>
         </div>
       )}
 
@@ -855,8 +871,9 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       {/* Beta Indicator */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <div className="bg-black/40 backdrop-blur-md border border-white/5 px-3 py-1 rounded-full text-[9px] font-body text-white/30 tracking-wider uppercase">
-          Beta: Sensor Accuracy May Vary
+        <div className="bg-cyan-950/80 backdrop-blur-md border border-cyan-500/20 px-3 py-1 rounded-full text-[9px] font-mono text-cyan-300 tracking-wider uppercase flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          <span>Beta: Manual Navigation Mode</span>
         </div>
       </div>
 
@@ -865,8 +882,8 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           onClick={() => setIsCalibrating(!isCalibrating)}
           className={`p-3 rounded-full border transition duration-200 ${
             isCalibrating
-              ? 'bg-white text-black border-white'
-              : 'bg-black/40 text-white/70 border-white/10 backdrop-blur-md hover:bg-black/60'
+              ? 'bg-cyan-500 text-black border-cyan-500'
+              : 'bg-black/40 text-cyan-300/80 border-white/10 backdrop-blur-md hover:bg-black/60'
           }`}
           title="Calibrate Compass"
         >
@@ -874,17 +891,17 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         </button>
         <button
           onClick={() => router.push('/')}
-          className="p-3 rounded-full bg-black/40 text-white/70 border border-white/10 backdrop-blur-md hover:bg-black/60 transition"
+          className="p-3 rounded-full bg-black/40 text-cyan-300/80 border border-white/10 backdrop-blur-md hover:bg-black/60 transition"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {isCalibrating && (
-        <div className="absolute top-20 right-6 z-20 w-64 bg-black/80 border border-white/10 p-4 rounded-2xl backdrop-blur-lg text-white">
+        <div className="absolute top-20 right-6 z-20 w-64 bg-black/90 border border-cyan-500/20 p-4 rounded-2xl backdrop-blur-lg text-white">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-body font-medium text-white/75">Calibrate Heading</span>
-            <span className="text-xs font-body text-white/50">{headingOffset > 0 ? `+${headingOffset}` : headingOffset}°</span>
+            <span className="text-xs font-body font-medium text-cyan-100">Calibrate Heading</span>
+            <span className="text-xs font-body text-cyan-400">{headingOffset > 0 ? `+${headingOffset}` : headingOffset}°</span>
           </div>
           <input
             type="range"
@@ -892,24 +909,24 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
             max="180"
             value={headingOffset}
             onChange={(e) => setHeadingOffset(parseInt(e.target.value))}
-            className="w-full accent-white bg-white/20 h-1 rounded-lg cursor-pointer"
+            className="w-full accent-cyan-500 bg-white/20 h-1 rounded-lg cursor-pointer"
           />
-          <p className="text-[10px] text-white/40 font-body mt-2 leading-relaxed">
+          <p className="text-[10px] text-cyan-300/40 font-body mt-2 leading-relaxed">
             If stars don't line up with your physical view, drag this slider to manually offset the compass heading.
           </p>
         </div>
       )}
 
-      <div className="absolute top-6 left-6 z-20 pointer-events-none bg-black/40 backdrop-blur-md border border-white/10 py-2.5 px-4 rounded-full flex items-center gap-3 text-xs font-body text-white/70 shadow-lg">
+      <div className="absolute top-6 left-6 z-20 pointer-events-none bg-black/40 backdrop-blur-md border border-cyan-500/20 py-2.5 px-4 rounded-full flex items-center gap-3 text-xs font-body text-cyan-300/80 shadow-lg">
         <div className="flex items-center gap-1.5">
-          <Compass className="w-4 h-4 text-white/50" />
+          <Compass className="w-4 h-4 text-cyan-400/50" />
           <span className="font-semibold text-white">
             {azimuthToDirection((sensorData.current.heading + headingOffset + 360) % 360)}
           </span>
-          <span className="text-white/30">|</span>
+          <span className="text-cyan-500/30">|</span>
           <span>Heading: {Math.round((sensorData.current.heading + headingOffset + 360) % 360)}°</span>
         </div>
-        <span className="text-white/20">|</span>
+        <span className="text-cyan-500/30">|</span>
         <div>Tilt: {Math.round(sensorData.current.pitch)}°</div>
       </div>
     </div>
