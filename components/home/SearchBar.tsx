@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Camera } from 'lucide-react';
 import { spectralToClass } from '@/lib/utils';
 import type { FeaturedStar } from '@/types/star';
 import StarVisual from '@/components/star/StarVisual';
@@ -102,6 +102,14 @@ export default function SearchBar() {
           spellCheck={false}
           className="flex-1 bg-transparent border-none outline-none text-text-primary placeholder:text-text-primary/40 text-sm md:text-base font-body"
         />
+        <button
+          type="button"
+          onClick={() => router.push('/sky-map')}
+          className="bg-white/5 border border-white/10 rounded-full p-3 text-white/70 hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95 transition-all shrink-0 flex items-center justify-center"
+          aria-label="Live AR Sky Map"
+        >
+          <Camera size={20} />
+        </button>
         <button
           type="submit"
           className="bg-white rounded-full p-3 text-black hover:scale-105 transition-transform shrink-0"
