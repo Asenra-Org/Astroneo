@@ -100,7 +100,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       ) {
         const permissionState = await (DeviceOrientationEvent as any).requestPermission();
         if (permissionState === 'granted') {
-          (window as any).addEventListener('deviceorientation', handleOrientation);
+          (window as any).addEventListener('deviceorientation', handleOrientation, true);
           setUsingSensors(true);
         } else {
           console.warn('Orientation permission denied.');
@@ -108,10 +108,10 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         }
       } else if (typeof window !== 'undefined') {
         if ('ondeviceorientationabsolute' in window) {
-          (window as any).addEventListener('deviceorientationabsolute', handleOrientation);
+          (window as any).addEventListener('deviceorientationabsolute', handleOrientation, true);
           setUsingSensors(true);
         } else if ('ondeviceorientation' in window) {
-          (window as any).addEventListener('deviceorientation', handleOrientation);
+          (window as any).addEventListener('deviceorientation', handleOrientation, true);
           setUsingSensors(true);
         } else {
           setUsingSensors(false);
@@ -142,28 +142,48 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   };
 
   const handleOrientation = (event: DeviceOrientationEvent) => {
-    let heading = 180;
+    let rawHeading = 180;
     
     if ((event as any).webkitCompassHeading !== undefined) {
-      heading = (event as any).webkitCompassHeading;
+      rawHeading = (event as any).webkitCompassHeading;
     } else if (event.alpha !== null) {
-      heading = (360 - event.alpha) % 360;
+      rawHeading = (360 - event.alpha) % 360;
     }
 
-    let pitch = 0;
-    if (event.beta !== null) {
-      pitch = 90 - event.beta;
-    }
+    // Convert compass yaw to standard absolute alpha
+    const alpha = (360 - rawHeading) % 360;
+    const beta = event.beta ?? 0;
+    const gamma = event.gamma ?? 0;
 
-    let roll = 0;
-    if (event.gamma !== null) {
-      roll = event.gamma;
-    }
+    // Convert to radians for rotation matrix math
+    const alphaRad = (alpha * Math.PI) / 180;
+    const betaRad = (beta * Math.PI) / 180;
+    const gammaRad = (gamma * Math.PI) / 180;
+
+    // Euler angles c/s constants
+    const cA = Math.cos(alphaRad);
+    const sA = Math.sin(alphaRad);
+    const cB = Math.cos(betaRad);
+    const sB = Math.sin(betaRad);
+    const cG = Math.cos(gammaRad);
+    const sG = Math.sin(gammaRad);
+
+    // Calculate the camera pointing vector [x, y, z] relative to Earth coordinate system.
+    // Represents the negative Z-axis pointing out of the back camera:
+    const x_earth = -(cA * sG + sA * sB * cG);
+    const y_earth = -(sA * sG - cA * sB * cG);
+    const z_earth = -(cB * cG);
+
+    // Extract Heading (yaw) and Pitch (elevation/altitude) from the 3D vector
+    // This avoids gimbal lock and correctly aligns positive/negative pitch to camera coordinates
+    const calculatedHeading = (Math.atan2(x_earth, y_earth) * 180 / Math.PI + 360) % 360;
+    const calculatedPitch = Math.asin(Math.max(-1, Math.min(1, z_earth))) * 180 / Math.PI;
+    const calculatedRoll = gamma;
 
     targetSensorData.current = {
-      heading,
-      pitch,
-      roll
+      heading: calculatedHeading,
+      pitch: calculatedPitch,
+      roll: calculatedRoll
     };
   };
 
@@ -296,7 +316,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         return (start + diff * amt + 360) % 360;
       };
 
-      const smoothing = 0.03; // Damped from 0.08 to prevent hyper-active spinning
+      const smoothing = 0.03; // Heavily damped to prevent rapid jitters and drift
       sensorData.current.heading = lerpAngle(sensorData.current.heading, targetSensorData.current.heading, smoothing);
       sensorData.current.pitch = lerp(sensorData.current.pitch, targetSensorData.current.pitch, smoothing);
       sensorData.current.roll = lerp(sensorData.current.roll, targetSensorData.current.roll, smoothing);
@@ -354,7 +374,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
             if (dAz < -180) dAz += 360;
             const dAlt = pos.altitude - currentPitch;
 
-            const dx = -dAz * scaleX;
+            const dx = dAz * scaleX; // Corrected sign (was -dAz)
             const dy = -dAlt * scaleY;
             projectedPoints.push({ x: dx, y: dy });
           });
@@ -439,7 +459,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
             const dAlt = alt - currentPitch;
 
             if (Math.abs(dAz) < fovX * 1.2 && Math.abs(dAlt) < fovY * 1.2) {
-              const dx = -dAz * scaleX;
+              const dx = dAz * scaleX; // Corrected sign (was -dAz)
               const dy = -dAlt * scaleY;
               const rx = dx * Math.cos(rollRad) - dy * Math.sin(rollRad);
               const ry = dx * Math.sin(rollRad) + dy * Math.cos(rollRad);
@@ -505,7 +525,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         const dAlt = alt - currentPitch;
 
         if (Math.abs(dAz) < fovX * 0.8 && Math.abs(dAlt) < fovY * 0.8) {
-          const dx = -dAz * scaleX;
+          const dx = dAz * scaleX; // Corrected sign (was -dAz)
           const dy = -dAlt * scaleY;
 
           const rx = dx * Math.cos(rollRad) - dy * Math.sin(rollRad);
@@ -519,7 +539,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           let glowColor = 'rgba(255, 255, 255, 0.2)';
 
           if (isSun) {
-            size = 32; // Sun size
+            size = 32;
             color = '#ffdd33';
             glowColor = 'rgba(255, 220, 50, 0.4)';
           } else if (isMoon) {
@@ -628,7 +648,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         const panelWidth = 240;
         const panelHeight = 44;
         const panelX = (width - panelWidth) / 2;
-        const panelY = height - 100; // Shift down slightly since bottom card is removed
+        const panelY = height - 100; // Sit neatly above bottom edge
 
         // Draw glassmorphic background container
         ctx.save();
