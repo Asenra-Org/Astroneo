@@ -136,6 +136,11 @@ export default function Navbar() {
               </div>
             </Link>
 
+            {/* Centered Brand Text */}
+            <span className="font-display text-sm tracking-[0.2em] text-text-primary/90 uppercase font-medium">
+              Astroneo
+            </span>
+
             {/* Menu Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

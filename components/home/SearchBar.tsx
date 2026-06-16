@@ -88,7 +88,7 @@ export default function SearchBar() {
         />
       )}
 
-      <div className="liquid-glass rounded-full pl-6 pr-2 py-2 flex items-center gap-3 relative z-10">
+      <div className="liquid-glass rounded-full pl-4 sm:pl-6 pr-1.5 sm:pr-2 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-3 relative z-10 w-full">
         <input
           ref={inputRef}
           type="text"
@@ -100,22 +100,22 @@ export default function SearchBar() {
           placeholder="Enter a star name or ID..."
           autoComplete="off"
           spellCheck={false}
-          className="flex-1 bg-transparent border-none outline-none text-text-primary placeholder:text-text-primary/40 text-sm md:text-base font-body"
+          className="flex-1 min-w-0 bg-transparent border-none outline-none text-text-primary placeholder:text-text-primary/40 text-sm sm:text-base font-body"
         />
         <button
           type="button"
           onClick={() => router.push('/sky-map')}
-          className="bg-white/5 border border-white/10 rounded-full p-3 text-white/70 hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95 transition-all shrink-0 flex items-center justify-center"
+          className="bg-white/5 border border-white/10 rounded-full p-2 sm:p-3 text-white/70 hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95 transition-all shrink-0 flex items-center justify-center"
           aria-label="Live AR Sky Map"
         >
-          <Camera size={20} />
+          <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         <button
           type="submit"
-          className="bg-white rounded-full p-3 text-black hover:scale-105 transition-transform shrink-0"
+          className="bg-white rounded-full p-2 sm:p-3 text-black hover:scale-105 transition-transform shrink-0 flex items-center justify-center"
           aria-label="Search"
         >
-          <ArrowRight size={20} />
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
 
