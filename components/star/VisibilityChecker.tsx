@@ -20,35 +20,57 @@ export default function VisibilityChecker({ ra, dec, starName }: VisibilityCheck
     setError(null);
     setResult(null);
 
+    const calculateWithCoords = (lat: number, lon: number) => {
+      calculateVisibility(ra, dec, lat, lon, starName)
+        .then((vis) => {
+          setResult(vis);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setError('Failed to calculate visibility due to a network error.');
+          setLoading(false);
+        });
+    };
+
+    const tryIpFallback = async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          calculateWithCoords(data.latitude, data.longitude);
+          return;
+        }
+      } catch (e) {
+        try {
+          const res = await fetch('https://freeipapi.com/api/json');
+          const data = await res.json();
+          if (data.latitude && data.longitude) {
+            calculateWithCoords(data.latitude, data.longitude);
+            return;
+          }
+        } catch (e2) {
+          console.warn('IP fallback failed');
+        }
+      }
+      // Ultimate fallback: New Delhi (Lat: 28.6139, Lon: 77.2090)
+      calculateWithCoords(28.6139, 77.2090);
+    };
+
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
-      setLoading(false);
+      tryIpFallback();
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
-        calculateVisibility(ra, dec, latitude, longitude, starName)
-          .then((vis) => {
-            setResult(vis);
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.error(err);
-            setError('Failed to calculate visibility due to a network error.');
-            setLoading(false);
-          });
+        calculateWithCoords(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setError('Location access denied. Enable location in your browser settings to check visibility.');
-        } else {
-          setError('Unable to get your location. Please try again.');
-        }
-        setLoading(false);
+        console.warn('GPS geolocation failed/denied, attempting IP fallback:', err);
+        tryIpFallback();
       },
-      { timeout: 10000 }
+      { timeout: 5000 }
     );
   };
 

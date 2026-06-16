@@ -20,37 +20,67 @@ export default function SkyMapPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      setError('Geolocation not supported');
-      // Default fallback: New Delhi (Lat: 28.6139, Lon: 77.2090)
-      setCoords({ latitude: 28.6139, longitude: 77.2090 });
-      setLoading(false);
-      return;
-    }
+    let resolved = false;
 
-    const options = {
-      enableHighAccuracy: false, // Disable to prevent GPS hanging indoors on iOS
-      timeout: 4000,             // Fast timeout (4 seconds)
-      maximumAge: 300000,        // Cache location for 5 minutes
+    const fetchIpLocation = async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data.latitude && data.longitude && !resolved) {
+          resolved = true;
+          setCoords({ latitude: data.latitude, longitude: data.longitude });
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        try {
+          const res = await fetch('https://freeipapi.com/api/json');
+          const data = await res.json();
+          if (data.latitude && data.longitude && !resolved) {
+            resolved = true;
+            setCoords({ latitude: data.latitude, longitude: data.longitude });
+            setLoading(false);
+            return;
+          }
+        } catch (e2) {
+          console.warn('IP Geolocation failed');
+        }
+      }
+
+      // Default fallback if GPS also hasn't resolved within 3 seconds
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          setCoords({ latitude: 28.6139, longitude: 77.2090 });
+          setLoading(false);
+        }
+      }, 3000);
     };
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        setLoading(false);
-      },
-      (err) => {
-        console.warn('Geolocation failed, falling back to default coordinates', err);
-        setError('Location access denied or timed out. Using default orientation.');
-        // Default fallback: New Delhi (Lat: 28.6139, Lon: 77.2090)
-        setCoords({ latitude: 28.6139, longitude: 77.2090 });
-        setLoading(false);
-      },
-      options
-    );
+    fetchIpLocation();
+
+    // In parallel, attempt precise browser GPS location
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolved = true;
+          setCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setLoading(false);
+        },
+        (err) => {
+          console.warn('GPS geolocation failed/denied, using IP or default fallback', err);
+          // Silently fail to avoid blocking the user
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 4500,
+          maximumAge: 300000,
+        }
+      );
+    }
   }, []);
 
   if (loading) {
