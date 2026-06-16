@@ -3,6 +3,8 @@
  * Standard formulas: LST, Hour Angle, altitude/azimuth
  */
 
+import { getPlanetCoords } from './solar-system';
+
 export interface VisibilityResult {
   isVisibleNow: boolean;
   isVisibleTonight: boolean;
@@ -117,8 +119,12 @@ export async function calculateVisibility(
   lon: number,
   starName: string = ''
 ): Promise<VisibilityResult> {
-  const isSun = starName.toLowerCase() === 'sun';
-  const isEarth = starName.toLowerCase() === 'earth';
+  const nameClean = starName.toLowerCase().replace(/^the\s+/, '').trim();
+  const isSun = nameClean === 'sun';
+  const isEarth = nameClean === 'earth';
+  const isSolarSystemBody = [
+    'sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'
+  ].includes(nameClean);
 
   if (isEarth) {
     return {
@@ -164,7 +170,16 @@ export async function calculateVisibility(
   const weatherStatus = getWeatherDescription(wCode);
 
   const now = new Date();
-  const currentPos = calcAltAz(ra, dec, lat, lon, now);
+  
+  let currentRa = ra;
+  let currentDec = dec;
+  if (isSolarSystemBody) {
+    const coords = getPlanetCoords(nameClean, now);
+    currentRa = coords.ra;
+    currentDec = coords.dec;
+  }
+  
+  const currentPos = calcAltAz(currentRa, currentDec, lat, lon, now);
   const currentDirection = azimuthToDirection(currentPos.azimuth);
 
   // Find best viewing time for the current/upcoming window
@@ -194,7 +209,14 @@ export async function calculateVisibility(
   }
 
   for (const testDate of searchDates) {
-    const { altitude: testAlt } = calcAltAz(ra, dec, lat, lon, testDate);
+    let testRa = ra;
+    let testDec = dec;
+    if (isSolarSystemBody) {
+      const coords = getPlanetCoords(nameClean, testDate);
+      testRa = coords.ra;
+      testDec = coords.dec;
+    }
+    const { altitude: testAlt } = calcAltAz(testRa, testDec, lat, lon, testDate);
     if (testAlt > maxAlt) {
       maxAlt = testAlt;
       bestDate = testDate;

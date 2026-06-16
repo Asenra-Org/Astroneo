@@ -41,7 +41,8 @@ const ORBITS: Record<string, OrbitElements> = {
   jupiter: { a: 5.203363, e: 0.048393, i: 1.3053, L: 34.4044,  varpi: 14.7539,  Omega: 100.5561, period: 11.862615 },
   saturn:  { a: 9.537070, e: 0.054150, i: 2.4845, L: 50.0774,  varpi: 92.5113,  Omega: 113.7150, period: 29.447498 },
   uranus:  { a: 19.189253, e: 0.047168, i: 0.7748, L: 313.2322, varpi: 96.6612,  Omega: 74.0060,  period: 84.016840 },
-  neptune: { a: 30.069923, e: 0.008586, i: 1.7692, L: 304.8800, varpi: 272.8461, Omega: 131.7806, period: 164.791320 }
+  neptune: { a: 30.069923, e: 0.008586, i: 1.7692, L: 304.8800, varpi: 272.8461, Omega: 131.7806, period: 164.791320 },
+  pluto:   { a: 39.481687, e: 0.248808, i: 17.14175, L: 238.92881, varpi: 224.06676, Omega: 110.30347, period: 247.940000 }
 };
 
 // Calculate heliocentric coordinates (X, Y, Z) in AU
