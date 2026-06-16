@@ -136,7 +136,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     targetSensorData.current.heading = (dragStartAngles.current.heading - dx * sensitivity + 360) % 360;
     
     if (!isDraggingCompass.current) {
-      targetSensorData.current.pitch = Math.max(-85, Math.min(85, dragStartAngles.current.pitch + dy * sensitivity));
+      targetSensorData.current.pitch = Math.max(-90, Math.min(90, dragStartAngles.current.pitch + dy * sensitivity));
     }
   };
 
@@ -241,7 +241,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     targetSensorData.current.heading = (dragStartAngles.current.heading - dx * sensitivity + 360) % 360;
     
     if (!isDraggingCompass.current) {
-      targetSensorData.current.pitch = Math.max(-85, Math.min(85, dragStartAngles.current.pitch + dy * sensitivity));
+      targetSensorData.current.pitch = Math.max(-90, Math.min(90, dragStartAngles.current.pitch + dy * sensitivity));
     }
   };
 
@@ -331,6 +331,31 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       if (pitchEl) pitchEl.textContent = `T: ${Math.round(currentPitch)}°`;
       if (fovEl) fovEl.textContent = `FOV ${Math.round(fov.current)}°`;
 
+      // Perspective projection helper (maps Alt/Az to screen coordinates)
+      const projectToScreen = (alt: number, az: number) => {
+        const altRad = (alt * Math.PI) / 180;
+        const azRad = (az * Math.PI) / 180;
+        const yawRad = (currentHeading * Math.PI) / 180;
+        const pitchRad = (currentPitch * Math.PI) / 180;
+
+        const x1 = Math.sin(azRad - yawRad) * Math.cos(altRad);
+        const y1 = Math.cos(azRad - yawRad) * Math.cos(altRad);
+        const z1 = Math.sin(altRad);
+
+        const x2 = x1;
+        const y2 = y1 * Math.cos(pitchRad) + z1 * Math.sin(pitchRad);
+        const z2 = -y1 * Math.sin(pitchRad) + z1 * Math.cos(pitchRad);
+
+        const fovRad = (fov.current * Math.PI) / 180;
+        const scale = (width / 2) / Math.tan(fovRad / 2);
+
+        return {
+          visible: y2 > 0.05,
+          x: centerX + (x2 / y2) * scale,
+          y: centerY - (z2 / y2) * scale
+        };
+      };
+
       const horizonYRotated = currentPitch * scaleY;
       const date = new Date();
 
@@ -341,19 +366,24 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       // --- 3. Draw Sky and Milky Way Glow ---
       ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rollRad);
       
-      // Sky background gradient (Deep Space Slate Dark)
-      const skyGrad = ctx.createLinearGradient(0, -height * 2, 0, horizonYRotated);
-      skyGrad.addColorStop(0, '#020205');
-      skyGrad.addColorStop(0.4, '#040612');
-      skyGrad.addColorStop(0.8, '#090d16');
-      skyGrad.addColorStop(1, '#0f172a');
+      // Sky background gradient (Steel blue daylight or Deep space dark)
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+      if (isDaytime) {
+        skyGrad.addColorStop(0, '#0f172a'); // slate-900 at zenith
+        skyGrad.addColorStop(0.4, '#1e293b'); // slate-800
+        skyGrad.addColorStop(0.8, '#475569'); // slate-600
+        skyGrad.addColorStop(1, '#89aacc'); // Soft brand blue-gray at the horizon
+      } else {
+        skyGrad.addColorStop(0, '#020205');
+        skyGrad.addColorStop(0.4, '#040612');
+        skyGrad.addColorStop(0.8, '#090d16');
+        skyGrad.addColorStop(1, '#0f172a');
+      }
       ctx.fillStyle = skyGrad;
-      ctx.fillRect(-width * 2, -height * 2, width * 4, height * 2 + horizonYRotated);
+      ctx.fillRect(0, 0, width, height);
       
-      // Milky Way (Always visible)
+      // Milky Way
       const galacticPoints = [
         { ra: 17.76, dec: -29.0 },
         { ra: 19.5, dec: 10.0 },
@@ -367,50 +397,49 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       galacticPoints.forEach(pt => {
         const pos = calcAltAz(pt.ra, pt.dec, latitude, longitude, date);
-        let dAz = pos.azimuth - currentHeading;
-        if (dAz > 180) dAz -= 360;
-        if (dAz < -180) dAz += 360;
-        const dAlt = pos.altitude - currentPitch;
-
-        const dx = dAz * scaleX;
-        const dy = -dAlt * scaleY;
-        projectedPoints.push({ x: dx, y: dy });
-      });
-
-      // Milky Way dust path
-      ctx.strokeStyle = 'rgba(150, 130, 210, 0.035)';
-      ctx.lineWidth = 140;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.shadowBlur = 60;
-      ctx.shadowColor = 'rgba(120, 100, 180, 0.06)';
-      
-      ctx.beginPath();
-      let moving = true;
-      projectedPoints.forEach(p => {
-        if (moving) {
-          ctx.moveTo(p.x, p.y);
-          moving = false;
-        } else {
-          ctx.lineTo(p.x, p.y);
+        const proj = projectToScreen(pos.altitude, pos.azimuth);
+        if (proj.visible) {
+          projectedPoints.push({ x: proj.x, y: proj.y });
         }
       });
-      ctx.stroke();
-      
-      ctx.strokeStyle = 'rgba(255, 215, 170, 0.025)';
-      ctx.lineWidth = 60;
-      ctx.shadowBlur = 25;
-      ctx.beginPath();
-      moving = true;
-      projectedPoints.forEach(p => {
-        if (moving) {
-          ctx.moveTo(p.x, p.y);
-          moving = false;
-        } else {
-          ctx.lineTo(p.x, p.y);
-        }
-      });
-      ctx.stroke();
+
+      if (projectedPoints.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(150, 130, 210, 0.035)';
+        ctx.lineWidth = 140;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowBlur = 60;
+        ctx.shadowColor = 'rgba(120, 100, 180, 0.06)';
+        
+        ctx.beginPath();
+        let moving = true;
+        projectedPoints.forEach(p => {
+          if (moving) {
+            ctx.moveTo(p.x, p.y);
+            moving = false;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        });
+        ctx.stroke();
+        
+        ctx.strokeStyle = 'rgba(255, 215, 170, 0.025)';
+        ctx.lineWidth = 60;
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        moving = true;
+        projectedPoints.forEach(p => {
+          if (moving) {
+            ctx.moveTo(p.x, p.y);
+            moving = false;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        });
+        ctx.stroke();
+        ctx.restore();
+      }
       
       ctx.restore();
 
@@ -440,31 +469,17 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           
           sorted.forEach(star => {
             const pos = calcAltAz(star.ra, star.dec, latitude, longitude, date);
-            const alt = pos.altitude;
-            const az = pos.azimuth;
+            const proj = projectToScreen(pos.altitude, pos.azimuth);
 
-            let dAz = az - currentHeading;
-            if (dAz > 180) dAz -= 360;
-            if (dAz < -180) dAz += 360;
-
-            const dAlt = alt - currentPitch;
-
-            if (Math.abs(dAz) < fovX * 1.2 && Math.abs(dAlt) < fovY * 1.2) {
-              const dx = dAz * scaleX;
-              const dy = -dAlt * scaleY;
-              const rx = dx * Math.cos(rollRad) - dy * Math.sin(rollRad);
-              const ry = dx * Math.sin(rollRad) + dy * Math.cos(rollRad);
-              const x = centerX + rx;
-              const y = centerY + ry;
-
+            if (proj.visible) {
               if (first) {
-                ctx.moveTo(x, y);
+                ctx.moveTo(proj.x, proj.y);
                 first = false;
               } else {
-                ctx.lineTo(x, y);
+                ctx.lineTo(proj.x, proj.y);
               }
-              sumX += x;
-              sumY += y;
+              sumX += proj.x;
+              sumY += proj.y;
               count++;
             }
           });
@@ -495,28 +510,22 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         if (star.slug === 'earth') return;
 
         const isStar = star.type !== 'Planet' && star.type !== 'Moon' && star.slug !== 'sun';
-        const isPlanetType = star.type === 'Planet';
+        const isPlanet = star.type === 'Planet';
 
         let alt = 0;
         let az = 0;
-        let isPlanet = false;
-        let isMoon = false;
-        let isSun = false;
 
         if (star.type === 'Planet') {
-          isPlanet = true;
           const coords = getPlanetCoords(star.slug, date);
           const pos = calcAltAz(coords.ra, coords.dec, latitude, longitude, date);
           alt = pos.altitude;
           az = pos.azimuth;
         } else if (star.type === 'Moon') {
-          isMoon = true;
           const coords = getPlanetCoords('moon', date);
           const pos = calcAltAz(coords.ra, coords.dec, latitude, longitude, date);
           alt = pos.altitude;
           az = pos.azimuth;
         } else if (star.slug === 'sun') {
-          isSun = true;
           const coords = getPlanetCoords('sun', date);
           const pos = calcAltAz(coords.ra, coords.dec, latitude, longitude, date);
           alt = pos.altitude;
@@ -527,32 +536,25 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           az = pos.azimuth;
         }
 
-        let dAz = az - currentHeading;
-        if (dAz > 180) dAz -= 360;
-        if (dAz < -180) dAz += 360;
+        const proj = projectToScreen(alt, az);
 
-        const dAlt = alt - currentPitch;
-
-        if (Math.abs(dAz) < fovX * 0.8 && Math.abs(dAlt) < fovY * 0.8) {
-          const dx = dAz * scaleX; // Corrected sign (was -dAz)
-          const dy = -dAlt * scaleY;
-
-          const rx = dx * Math.cos(rollRad) - dy * Math.sin(rollRad);
-          const ry = dx * Math.sin(rollRad) + dy * Math.cos(rollRad);
-
-          const x = centerX + rx;
-          const y = centerY + ry;
+        if (proj.visible) {
+          const x = proj.x;
+          const y = proj.y;
 
           let size = 2;
           let color = 'rgba(255, 255, 255, 0.8)';
           let glowColor = 'rgba(255, 255, 255, 0.2)';
+          
+          const isSun = star.slug === 'sun';
+          const isMoon = star.type === 'Moon';
 
           if (isSun) {
             size = 32;
             color = '#ffdd33';
             glowColor = 'rgba(255, 220, 50, 0.4)';
           } else if (isMoon) {
-            size = 30; // Enlarged Moon
+            size = 30;
             color = '#f5f5f5';
             glowColor = 'rgba(255, 255, 255, 0.35)';
           } else if (isPlanet) {
@@ -628,8 +630,13 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       // Layer 2 (Back Hills - darker slate-blue/gray)
       const backHillGrad = ctx.createLinearGradient(0, horizonYRotated - 20, 0, height * 2);
-      backHillGrad.addColorStop(0, '#0c1120');
-      backHillGrad.addColorStop(1, '#02040a');
+      if (isDaytime) {
+        backHillGrad.addColorStop(0, '#1e293b');
+        backHillGrad.addColorStop(1, '#0f172a');
+      } else {
+        backHillGrad.addColorStop(0, '#0c1120');
+        backHillGrad.addColorStop(1, '#02040a');
+      }
       ctx.fillStyle = backHillGrad;
       
       ctx.beginPath();
@@ -647,9 +654,15 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       // Layer 1 (Front Hills - slate gray/blue)
       const groundGrad = ctx.createLinearGradient(0, horizonYRotated, 0, height * 2);
-      groundGrad.addColorStop(0, '#1e293b');
-      groundGrad.addColorStop(0.2, '#131b2e');
-      groundGrad.addColorStop(1, '#080c16');
+      if (isDaytime) {
+        groundGrad.addColorStop(0, '#334155');
+        groundGrad.addColorStop(0.2, '#1e293b');
+        groundGrad.addColorStop(1, '#0f172a');
+      } else {
+        groundGrad.addColorStop(0, '#1e293b');
+        groundGrad.addColorStop(0.2, '#131b2e');
+        groundGrad.addColorStop(1, '#080c16');
+      }
       ctx.fillStyle = groundGrad;
       
       ctx.beginPath();
@@ -665,30 +678,27 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       ctx.closePath();
       ctx.fill();
 
-      // Draw pine tree silhouettes along the horizon
-      ctx.fillStyle = '#0a0f1d';
-      // Draw a tree every 6 degrees of azimuth
+      ctx.restore();
+
+      // Draw pine tree silhouettes along the horizon (absolute coords)
+      ctx.fillStyle = isDaytime ? '#0f172a' : '#0a0f1d';
       for (let treeAz = 0; treeAz < 360; treeAz += 6) {
-        let dAz = treeAz - currentHeading;
-        while (dAz > 180) dAz -= 360;
-        while (dAz < -180) dAz += 360;
-        
-        if (Math.abs(dAz) < fovX * 0.8) {
-          const dx = dAz * scaleX;
+        const proj = projectToScreen(0, treeAz);
+        if (proj.visible && proj.x >= 0 && proj.x <= width) {
           const azRad = treeAz * Math.PI / 180;
           const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
-          const hY = horizonYRotated - wave;
+          const hY = proj.y - wave;
 
           const treeHeight = 12 + Math.sin(treeAz * 10) * 4;
           const treeWidth = 6 + Math.cos(treeAz * 10) * 2;
 
           ctx.beginPath();
-          ctx.moveTo(dx, hY);
-          ctx.lineTo(dx - treeWidth / 2, hY - treeHeight * 0.6);
-          ctx.lineTo(dx - treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
-          ctx.lineTo(dx, hY - treeHeight);
-          ctx.lineTo(dx + treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
-          ctx.lineTo(dx + treeWidth / 2, hY - treeHeight * 0.6);
+          ctx.moveTo(proj.x, hY);
+          ctx.lineTo(proj.x - treeWidth / 2, hY - treeHeight * 0.6);
+          ctx.lineTo(proj.x - treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
+          ctx.lineTo(proj.x, hY - treeHeight);
+          ctx.lineTo(proj.x + treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
+          ctx.lineTo(proj.x + treeWidth / 2, hY - treeHeight * 0.6);
           ctx.closePath();
           ctx.fill();
         }
@@ -707,29 +717,25 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       ];
 
       cardinalPoints.forEach(pt => {
-        let dAz = pt.heading - currentHeading;
-        while (dAz > 180) dAz -= 360;
-        while (dAz < -180) dAz += 360;
-        
-        if (Math.abs(dAz) < fovX * 0.8) {
-          const dx = dAz * scaleX;
+        const proj = projectToScreen(0, pt.heading);
+        if (proj.visible && proj.x >= 0 && proj.x <= width) {
           const azRad = pt.heading * Math.PI / 180;
           const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
-          const yVal = horizonYRotated - wave - 16;
+          const yVal = proj.y - wave - 16;
 
           // Draw labels in soft slate-blue brand color
           ctx.fillStyle = '#89aacc';
           ctx.font = 'bold 13px var(--font-inter), sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(pt.label, dx, yVal);
+          ctx.fillText(pt.label, proj.x, yVal);
           
           // Indicator line in semi-transparent brand slate-blue
           ctx.strokeStyle = 'rgba(137, 170, 204, 0.4)';
           ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.moveTo(dx, yVal + 8);
-          ctx.lineTo(dx, horizonYRotated - wave);
+          ctx.moveTo(proj.x, yVal + 8);
+          ctx.lineTo(proj.x, proj.y - wave);
           ctx.stroke();
         }
       });
