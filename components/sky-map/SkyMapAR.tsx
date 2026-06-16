@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, Sliders, X, RefreshCw, Eye, Camera } from 'lucide-react';
+import { Compass, Sliders, X, RefreshCw, Eye } from 'lucide-react';
 import { calcAltAz, azimuthToDirection } from '@/lib/astronomy';
 import { getPlanetCoords } from '@/lib/solar-system';
 
@@ -24,15 +24,12 @@ interface SkyMapARProps {
 
 export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   const router = useRouter();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [stars, setStars] = useState<StarData[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [hasCamera, setHasCamera] = useState(false);
   const [isCalibrating, setIsCalibrating] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(true);
 
   const [headingOffset, setHeadingOffset] = useState(0);
   
@@ -56,7 +53,6 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   const dragStart = useRef<{ x: number; y: number } | null>(null);
   const dragStartAngles = useRef<{ heading: number; pitch: number } | null>(null);
   const isDraggingCompass = useRef(false);
-  const streamRef = useRef<MediaStream | null>(null);
 
   // Zoom (Field of View) and gesture tracking
   const fov = useRef(40);
@@ -99,97 +95,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         setErrorMsg('Could not load astronomical database.');
         setLoading(false);
       });
-
-    if (!mobileCheck) {
-      // Laptop/Desktop: Skip onboarding and directly load manual simulation mode
-      setShowOnboarding(false);
-      setHasCamera(false);
-    } else {
-      // Mobile: Check if camera permission was previously granted to enable silent load
-      const cameraGranted = localStorage.getItem('skymap_camera_granted');
-      if (cameraGranted === 'true') {
-        setShowOnboarding(false);
-        silentlyStartCamera();
-      }
-    }
-
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
   }, []);
-
-  const silentlyStartCamera = async () => {
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        });
-        streamRef.current = stream;
-        setHasCamera(true);
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(e => console.warn("Video play error:", e));
-          }
-        }, 50);
-      }
-    } catch (err) {
-      console.warn('Silent camera start failed:', err);
-      setShowOnboarding(true);
-      localStorage.removeItem('skymap_camera_granted');
-    }
-  };
-
-  const startCamera = async () => {
-    setErrorMsg(null);
-    setLoading(true);
-
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        });
-        streamRef.current = stream;
-        setHasCamera(true);
-        setShowOnboarding(false);
-        localStorage.setItem('skymap_camera_granted', 'true');
-        
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(e => console.warn("Video play error:", e));
-          }
-        }, 50);
-      }
-    } catch (camErr) {
-      console.warn('Camera access denied or unavailable. Running in simulation mode.', camErr);
-      setHasCamera(false);
-      setShowOnboarding(false);
-      localStorage.removeItem('skymap_camera_granted');
-    }
-
-    setLoading(false);
-  };
-
-  const toggleARMode = async () => {
-    if (hasCamera) {
-      // Stop the camera stream to enter VR Mode
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-      setHasCamera(false);
-      localStorage.setItem('skymap_camera_granted', 'false');
-    } else {
-      // Start camera to enter AR Mode
-      await startCamera();
-    }
-  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -433,99 +339,83 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       const sunPos = calcAltAz(sunCoords.ra, sunCoords.dec, latitude, longitude, date);
       const isDaytime = sunPos.altitude > 0;
 
-      // --- 3. Draw Sky and Milky Way Glow (if camera feed is disabled) ---
-      if (!hasCamera) {
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(rollRad);
-        
-        // Sky background gradient (Sky Blue for Day, Deep Space Dark for Night)
-        const skyGrad = ctx.createLinearGradient(0, -height * 2, 0, horizonYRotated);
-        if (isDaytime) {
-          skyGrad.addColorStop(0, '#114e8b');
-          skyGrad.addColorStop(0.5, '#2072b8');
-          skyGrad.addColorStop(1, '#63b2ec');
+      // --- 3. Draw Sky and Milky Way Glow ---
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rollRad);
+      
+      // Sky background gradient (Deep Space Slate Dark)
+      const skyGrad = ctx.createLinearGradient(0, -height * 2, 0, horizonYRotated);
+      skyGrad.addColorStop(0, '#020205');
+      skyGrad.addColorStop(0.4, '#040612');
+      skyGrad.addColorStop(0.8, '#090d16');
+      skyGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(-width * 2, -height * 2, width * 4, height * 2 + horizonYRotated);
+      
+      // Milky Way (Always visible)
+      const galacticPoints = [
+        { ra: 17.76, dec: -29.0 },
+        { ra: 19.5, dec: 10.0 },
+        { ra: 20.6, dec: 42.0 },
+        { ra: 1.3, dec: 62.0 },
+        { ra: 5.5, dec: 45.0 },
+        { ra: 6.8, dec: 5.0 }
+      ];
+
+      const projectedPoints: { x: number; y: number }[] = [];
+
+      galacticPoints.forEach(pt => {
+        const pos = calcAltAz(pt.ra, pt.dec, latitude, longitude, date);
+        let dAz = pos.azimuth - currentHeading;
+        if (dAz > 180) dAz -= 360;
+        if (dAz < -180) dAz += 360;
+        const dAlt = pos.altitude - currentPitch;
+
+        const dx = dAz * scaleX;
+        const dy = -dAlt * scaleY;
+        projectedPoints.push({ x: dx, y: dy });
+      });
+
+      // Milky Way dust path
+      ctx.strokeStyle = 'rgba(150, 130, 210, 0.035)';
+      ctx.lineWidth = 140;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowBlur = 60;
+      ctx.shadowColor = 'rgba(120, 100, 180, 0.06)';
+      
+      ctx.beginPath();
+      let moving = true;
+      projectedPoints.forEach(p => {
+        if (moving) {
+          ctx.moveTo(p.x, p.y);
+          moving = false;
         } else {
-          skyGrad.addColorStop(0, '#010105');
-          skyGrad.addColorStop(0.4, '#03030d');
-          skyGrad.addColorStop(0.8, '#060618');
-          skyGrad.addColorStop(1, '#0b0824');
+          ctx.lineTo(p.x, p.y);
         }
-        ctx.fillStyle = skyGrad;
-        ctx.fillRect(-width * 2, -height * 2, width * 4, height * 2 + horizonYRotated);
-        
-        // Milky Way (Only visible at Night)
-        if (!isDaytime) {
-          const galacticPoints = [
-            { ra: 17.76, dec: -29.0 },
-            { ra: 19.5, dec: 10.0 },
-            { ra: 20.6, dec: 42.0 },
-            { ra: 1.3, dec: 62.0 },
-            { ra: 5.5, dec: 45.0 },
-            { ra: 6.8, dec: 5.0 }
-          ];
-
-          const projectedPoints: { x: number; y: number }[] = [];
-
-          galacticPoints.forEach(pt => {
-            const pos = calcAltAz(pt.ra, pt.dec, latitude, longitude, date);
-            let dAz = pos.azimuth - currentHeading;
-            if (dAz > 180) dAz -= 360;
-            if (dAz < -180) dAz += 360;
-            const dAlt = pos.altitude - currentPitch;
-
-            const dx = dAz * scaleX;
-            const dy = -dAlt * scaleY;
-            projectedPoints.push({ x: dx, y: dy });
-          });
-
-          // Milky Way dust path
-          ctx.strokeStyle = 'rgba(150, 130, 210, 0.035)';
-          ctx.lineWidth = 140;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.shadowBlur = 60;
-          ctx.shadowColor = 'rgba(120, 100, 180, 0.06)';
-          
-          ctx.beginPath();
-          let moving = true;
-          projectedPoints.forEach(p => {
-            if (moving) {
-              ctx.moveTo(p.x, p.y);
-              moving = false;
-            } else {
-              ctx.lineTo(p.x, p.y);
-            }
-          });
-          ctx.stroke();
-          
-          ctx.strokeStyle = 'rgba(255, 215, 170, 0.025)';
-          ctx.lineWidth = 60;
-          ctx.shadowBlur = 25;
-          ctx.beginPath();
-          moving = true;
-          projectedPoints.forEach(p => {
-            if (moving) {
-              ctx.moveTo(p.x, p.y);
-              moving = false;
-            } else {
-              ctx.lineTo(p.x, p.y);
-            }
-          });
-          ctx.stroke();
+      });
+      ctx.stroke();
+      
+      ctx.strokeStyle = 'rgba(255, 215, 170, 0.025)';
+      ctx.lineWidth = 60;
+      ctx.shadowBlur = 25;
+      ctx.beginPath();
+      moving = true;
+      projectedPoints.forEach(p => {
+        if (moving) {
+          ctx.moveTo(p.x, p.y);
+          moving = false;
+        } else {
+          ctx.lineTo(p.x, p.y);
         }
-        
-        ctx.restore();
-      }
+      });
+      ctx.stroke();
+      
+      ctx.restore();
 
-      // Daylight blue atmospheric haze over active camera feed
-      if (hasCamera && isDaytime) {
-        ctx.fillStyle = 'rgba(32, 114, 184, 0.35)';
-        ctx.fillRect(0, 0, width, height);
-      }
-
-      // --- 4. Draw Constellation Connect-the-Dots (Only at Night) ---
-      if (!isDaytime) {
+      // --- 4. Draw Constellation Connect-the-Dots ---
+      {
         const constellations: Record<string, any[]> = {};
         stars.forEach(star => {
           if (star.constellation && star.type !== 'Planet' && star.type !== 'Moon') {
@@ -606,9 +496,6 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
         const isStar = star.type !== 'Planet' && star.type !== 'Moon' && star.slug !== 'sun';
         const isPlanetType = star.type === 'Planet';
-        
-        // Day/Night constraint: Hide stars and planets during the day
-        if (isDaytime && (isStar || isPlanetType)) return;
 
         let alt = 0;
         let az = 0;
@@ -732,151 +619,122 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       // --- 6. Draw Ground Horizon Plane (covering below-horizon stars) ---
       ctx.save();
       
-      if (hasCamera) {
-        ctx.translate(centerX, centerY);
-        ctx.rotate(rollRad);
+      // --- VR Mode Beautiful Slate Grass Landscape ---
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rollRad);
 
-        const groundGrad = ctx.createLinearGradient(0, horizonYRotated, 0, height * 2);
-        // Semi-transparent shading over the ground camera feed to block stars below horizon cleanly (with dark cyan tint)
-        groundGrad.addColorStop(0, 'rgba(2, 6, 10, 0.75)');
-        groundGrad.addColorStop(0.3, 'rgba(1, 4, 8, 0.85)');
-        groundGrad.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
-        ctx.fillStyle = groundGrad;
-        ctx.fillRect(-width * 2, horizonYRotated, width * 4, height * 4);
+      const startX = -width * 2;
+      const endX = width * 2;
 
-        // Draw wavy mountain horizon separator (in neon cyan)
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.25)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        
-        const horizonXStart = -width * 2;
-        const horizonXEnd = width * 2;
-        ctx.moveTo(horizonXStart, horizonYRotated);
-        for (let x = horizonXStart; x <= horizonXEnd; x += 30) {
-          const wave = Math.sin(x * 0.007) * 9 + Math.cos(x * 0.018) * 4 + Math.sin(x * 0.04) * 2;
-          ctx.lineTo(x, horizonYRotated - Math.abs(wave));
-        }
-        ctx.lineTo(horizonXEnd, horizonYRotated);
-        ctx.stroke();
-        ctx.restore();
-      } else {
-        // --- VR Mode Beautiful Green Grass Landscape ---
-        ctx.translate(centerX, centerY);
-        ctx.rotate(rollRad);
-
-        const startX = -width * 2;
-        const endX = width * 2;
-
-        // Layer 2 (Back Hills - darker/blurry green)
-        const backHillGrad = ctx.createLinearGradient(0, horizonYRotated - 20, 0, height * 2);
-        backHillGrad.addColorStop(0, '#0c2e16');
-        backHillGrad.addColorStop(1, '#030d06');
-        ctx.fillStyle = backHillGrad;
-        
-        ctx.beginPath();
-        ctx.moveTo(startX, horizonYRotated);
-        for (let x = startX; x <= endX; x += 30) {
-          const az = (currentHeading + x / scaleX + 360) % 360;
-          const azRad = az * Math.PI / 180;
-          const wave = Math.sin(azRad * 3 + 0.5) * 12 + Math.cos(azRad * 6) * 6 + Math.sin(azRad * 1.5) * 18;
-          ctx.lineTo(x, horizonYRotated - wave - 15);
-        }
-        ctx.lineTo(endX, height * 4);
-        ctx.lineTo(startX, height * 4);
-        ctx.closePath();
-        ctx.fill();
-
-        // Layer 1 (Front Hills - vibrant Stellarium green)
-        const groundGrad = ctx.createLinearGradient(0, horizonYRotated, 0, height * 2);
-        groundGrad.addColorStop(0, '#194d22');   // Vibrant grass green
-        groundGrad.addColorStop(0.2, '#113a1a'); // Dark forest green
-        groundGrad.addColorStop(1, '#05180a');   // Deep night green
-        ctx.fillStyle = groundGrad;
-        
-        ctx.beginPath();
-        ctx.moveTo(startX, horizonYRotated);
-        for (let x = startX; x <= endX; x += 20) {
-          const az = (currentHeading + x / scaleX + 360) % 360;
-          const azRad = az * Math.PI / 180;
-          const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
-          ctx.lineTo(x, horizonYRotated - wave);
-        }
-        ctx.lineTo(endX, height * 4);
-        ctx.lineTo(startX, height * 4);
-        ctx.closePath();
-        ctx.fill();
-
-        // Draw pine tree silhouettes along the horizon
-        ctx.fillStyle = '#0f3317';
-        // Draw a tree every 6 degrees of azimuth
-        for (let treeAz = 0; treeAz < 360; treeAz += 6) {
-          let dAz = treeAz - currentHeading;
-          while (dAz > 180) dAz -= 360;
-          while (dAz < -180) dAz += 360;
-          
-          if (Math.abs(dAz) < fovX * 0.8) {
-            const dx = dAz * scaleX;
-            const azRad = treeAz * Math.PI / 180;
-            const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
-            const hY = horizonYRotated - wave;
-
-            const treeHeight = 12 + Math.sin(treeAz * 10) * 4;
-            const treeWidth = 6 + Math.cos(treeAz * 10) * 2;
-
-            ctx.beginPath();
-            ctx.moveTo(dx, hY);
-            ctx.lineTo(dx - treeWidth / 2, hY - treeHeight * 0.6);
-            ctx.lineTo(dx - treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
-            ctx.lineTo(dx, hY - treeHeight);
-            ctx.lineTo(dx + treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
-            ctx.lineTo(dx + treeWidth / 2, hY - treeHeight * 0.6);
-            ctx.closePath();
-            ctx.fill();
-          }
-        }
-
-        // Draw red cardinal direction labels standing on hills, matching Stellarium
-        const cardinalPoints = [
-          { label: 'N', heading: 0 },
-          { label: 'NE', heading: 45 },
-          { label: 'E', heading: 90 },
-          { label: 'SE', heading: 135 },
-          { label: 'S', heading: 180 },
-          { label: 'SW', heading: 225 },
-          { label: 'W', heading: 270 },
-          { label: 'NW', heading: 315 }
-        ];
-
-        cardinalPoints.forEach(pt => {
-          let dAz = pt.heading - currentHeading;
-          while (dAz > 180) dAz -= 360;
-          while (dAz < -180) dAz += 360;
-          
-          if (Math.abs(dAz) < fovX * 0.8) {
-            const dx = dAz * scaleX;
-            const azRad = pt.heading * Math.PI / 180;
-            const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
-            const yVal = horizonYRotated - wave - 16;
-
-            // Draw red labels like Stellarium
-            ctx.fillStyle = '#ff3b30';
-            ctx.font = 'bold 13px var(--font-inter), sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(pt.label, dx, yVal);
-            
-            // Indicator line
-            ctx.strokeStyle = '#ff3b30';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(dx, yVal + 8);
-            ctx.lineTo(dx, horizonYRotated - wave);
-            ctx.stroke();
-          }
-        });
-
-        ctx.restore();
+      // Layer 2 (Back Hills - darker slate-blue/gray)
+      const backHillGrad = ctx.createLinearGradient(0, horizonYRotated - 20, 0, height * 2);
+      backHillGrad.addColorStop(0, '#0c1120');
+      backHillGrad.addColorStop(1, '#02040a');
+      ctx.fillStyle = backHillGrad;
+      
+      ctx.beginPath();
+      ctx.moveTo(startX, horizonYRotated);
+      for (let x = startX; x <= endX; x += 30) {
+        const az = (currentHeading + x / scaleX + 360) % 360;
+        const azRad = az * Math.PI / 180;
+        const wave = Math.sin(azRad * 3 + 0.5) * 12 + Math.cos(azRad * 6) * 6 + Math.sin(azRad * 1.5) * 18;
+        ctx.lineTo(x, horizonYRotated - wave - 15);
       }
+      ctx.lineTo(endX, height * 4);
+      ctx.lineTo(startX, height * 4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Layer 1 (Front Hills - slate gray/blue)
+      const groundGrad = ctx.createLinearGradient(0, horizonYRotated, 0, height * 2);
+      groundGrad.addColorStop(0, '#1e293b');
+      groundGrad.addColorStop(0.2, '#131b2e');
+      groundGrad.addColorStop(1, '#080c16');
+      ctx.fillStyle = groundGrad;
+      
+      ctx.beginPath();
+      ctx.moveTo(startX, horizonYRotated);
+      for (let x = startX; x <= endX; x += 20) {
+        const az = (currentHeading + x / scaleX + 360) % 360;
+        const azRad = az * Math.PI / 180;
+        const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
+        ctx.lineTo(x, horizonYRotated - wave);
+      }
+      ctx.lineTo(endX, height * 4);
+      ctx.lineTo(startX, height * 4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw pine tree silhouettes along the horizon
+      ctx.fillStyle = '#0a0f1d';
+      // Draw a tree every 6 degrees of azimuth
+      for (let treeAz = 0; treeAz < 360; treeAz += 6) {
+        let dAz = treeAz - currentHeading;
+        while (dAz > 180) dAz -= 360;
+        while (dAz < -180) dAz += 360;
+        
+        if (Math.abs(dAz) < fovX * 0.8) {
+          const dx = dAz * scaleX;
+          const azRad = treeAz * Math.PI / 180;
+          const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
+          const hY = horizonYRotated - wave;
+
+          const treeHeight = 12 + Math.sin(treeAz * 10) * 4;
+          const treeWidth = 6 + Math.cos(treeAz * 10) * 2;
+
+          ctx.beginPath();
+          ctx.moveTo(dx, hY);
+          ctx.lineTo(dx - treeWidth / 2, hY - treeHeight * 0.6);
+          ctx.lineTo(dx - treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
+          ctx.lineTo(dx, hY - treeHeight);
+          ctx.lineTo(dx + treeWidth * 0.8 / 2, hY - treeHeight * 0.4);
+          ctx.lineTo(dx + treeWidth / 2, hY - treeHeight * 0.6);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // Draw cardinal direction labels standing on hills
+      const cardinalPoints = [
+        { label: 'N', heading: 0 },
+        { label: 'NE', heading: 45 },
+        { label: 'E', heading: 90 },
+        { label: 'SE', heading: 135 },
+        { label: 'S', heading: 180 },
+        { label: 'SW', heading: 225 },
+        { label: 'W', heading: 270 },
+        { label: 'NW', heading: 315 }
+      ];
+
+      cardinalPoints.forEach(pt => {
+        let dAz = pt.heading - currentHeading;
+        while (dAz > 180) dAz -= 360;
+        while (dAz < -180) dAz += 360;
+        
+        if (Math.abs(dAz) < fovX * 0.8) {
+          const dx = dAz * scaleX;
+          const azRad = pt.heading * Math.PI / 180;
+          const wave = Math.sin(azRad * 4) * 16 + Math.cos(azRad * 8) * 8 + Math.sin(azRad * 2) * 12;
+          const yVal = horizonYRotated - wave - 16;
+
+          // Draw labels in soft slate-blue brand color
+          ctx.fillStyle = '#89aacc';
+          ctx.font = 'bold 13px var(--font-inter), sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pt.label, dx, yVal);
+          
+          // Indicator line in semi-transparent brand slate-blue
+          ctx.strokeStyle = 'rgba(137, 170, 204, 0.4)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(dx, yVal + 8);
+          ctx.lineTo(dx, horizonYRotated - wave);
+          ctx.stroke();
+        }
+      });
+
+      ctx.restore();
 
       // --- 7. Draw Horizontal Scrolling Compass Ribbon ---
       const drawCompassRibbon = (ctx: CanvasRenderingContext2D, width: number, height: number, heading: number) => {
@@ -1011,72 +869,10 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         </div>
       )}
 
-      {showOnboarding && (
-        <div className="absolute inset-0 bg-black/95 backdrop-blur-md z-40 flex flex-col items-center justify-center p-6 text-center">
-          <div className="max-w-md w-full liquid-glass bg-surface/65 border border-stroke p-8 rounded-3xl backdrop-blur-xl shadow-2xl flex flex-col items-center">
-            
-            {/* Beta Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 text-white/70 text-[10px] font-mono uppercase tracking-widest rounded-full mb-6 mx-auto">
-              <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
-              <span>Beta Testing Mode</span>
-            </div>
-
-            <Compass className="w-16 h-16 text-white/40 mx-auto mb-6 animate-pulse" />
-            <h2 className="text-3xl font-display text-white mb-3">Live AR Sky Map</h2>
-            <p className="text-white/50 font-body text-xs mb-6 leading-relaxed max-w-sm">
-              Explore stars, planets, and constellations in real-time. We need camera permission to render the interactive sky map overlays on top of your physical view.
-            </p>
-
-            <div className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-left mb-8">
-              <h4 className="text-xs font-display text-white/80 font-semibold mb-1 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
-                Active Beta Notice
-              </h4>
-              <p className="text-white/40 font-body text-[10px] leading-relaxed">
-                This feature is in testing (beta mode) and may not work properly on all devices. Move around smoothly using drag gestures, pinch-to-zoom, or the bottom scrollbar.
-              </p>
-            </div>
-
-            <button
-              onClick={startCamera}
-              className="w-full py-3.5 bg-white text-black font-body font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition duration-200 text-sm shadow-md"
-            >
-              Enable AR Camera
-            </button>
-            <button
-              onClick={() => {
-                setShowOnboarding(false);
-                setHasCamera(false);
-                targetSensorData.current = { heading: 180, pitch: 15, roll: 0 };
-                sensorData.current = { heading: 180, pitch: 15, roll: 0 };
-              }}
-              className="w-full mt-3 py-3 bg-white/5 text-white/50 border border-white/5 font-body text-xs rounded-xl hover:bg-white/10 hover:text-white transition"
-            >
-              Use Manual Simulation Mode
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Video Element rendered always to prevent Ref bind issues, hidden if camera is disabled */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className={`absolute inset-0 w-full h-full object-cover z-0 opacity-70 animate-fade-in ${
-          hasCamera ? '' : 'hidden'
-        }`}
-      />
-
-      {!hasCamera && (
-        <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-[#020208] via-[#050515] to-[#010105] z-0 flex items-center justify-center">
-          <div className="absolute top-24 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white/50 pointer-events-none backdrop-blur-md">
-            <Eye className="w-3.5 h-3.5" />
-            <span>VR Simulation Mode: Drag to pan & pinch to zoom</span>
-          </div>
-        </div>
-      )}
+      <div className="absolute top-24 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white/50 pointer-events-none backdrop-blur-md z-20">
+        <Eye className="w-3.5 h-3.5" />
+        <span>VR Simulation Mode: Drag to pan & pinch to zoom</span>
+      </div>
 
       <canvas
         ref={canvasRef}
@@ -1135,27 +931,6 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
         {/* Right: Actions Row */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          {/* AR / VR Mode Toggle - Mobile Only */}
-          {isMobile && (
-            <button
-              onClick={toggleARMode}
-              className="px-3.5 py-2 rounded-full bg-black/60 text-white border border-white/10 backdrop-blur-md hover:bg-black/80 active:scale-95 transition flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider shadow-lg"
-              title={hasCamera ? "Switch to VR Mode" : "Switch to AR Camera"}
-            >
-              {hasCamera ? (
-                <>
-                  <Eye className="w-4 h-4 text-white/80" />
-                  <span className="hidden sm:inline">VR Mode</span>
-                </>
-              ) : (
-                <>
-                  <Camera className="w-4 h-4 text-white/80" />
-                  <span className="hidden sm:inline">AR Camera</span>
-                </>
-              )}
-            </button>
-          )}
-
           <button
             onClick={() => setIsCalibrating(!isCalibrating)}
             className={`p-2 rounded-full border transition duration-200 backdrop-blur-md shadow-lg ${
