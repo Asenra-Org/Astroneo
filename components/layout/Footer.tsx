@@ -28,7 +28,7 @@ export default function Footer() {
           </div>
 
           {/* Links */}
-          <div className="flex gap-16">
+          <div className="flex flex-wrap gap-x-12 sm:gap-x-16 gap-y-6">
             <div>
               <p className="font-body text-xs text-muted uppercase tracking-[0.1em] font-medium mb-4">
                 Product

@@ -56,7 +56,7 @@ export default function AIChatBot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -65,7 +65,7 @@ export default function AIChatBot() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             style={{ backdropFilter: 'blur(20px)' }}
-            className="liquid-glass rounded-3xl w-[340px] sm:w-[380px] h-[500px] mb-4 flex flex-col overflow-hidden border border-white/10 shadow-2xl bg-black/60"
+            className="liquid-glass rounded-3xl w-[calc(100vw-32px)] sm:w-[380px] h-[500px] mb-4 flex flex-col overflow-hidden border border-white/10 shadow-2xl bg-black/60"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-black/40">
