@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, Sliders, X, RefreshCw, Eye } from 'lucide-react';
+import { Compass, Sliders, X, RefreshCw, RotateCcw } from 'lucide-react';
 import { calcAltAz, azimuthToDirection } from '@/lib/astronomy';
 import { getPlanetCoords } from '@/lib/solar-system';
 
@@ -359,10 +359,11 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       const horizonYRotated = currentPitch * scaleY;
       const date = new Date();
 
-      // --- 2. Calculate Day/Night Condition ---
+      // --- 2. Calculate Day/Night Condition & Sun Projection ---
       const sunCoords = getPlanetCoords('sun', date);
       const sunPos = calcAltAz(sunCoords.ra, sunCoords.dec, latitude, longitude, date);
       const isDaytime = sunPos.altitude > 0;
+      const sunProj = projectToScreen(sunPos.altitude, sunPos.azimuth);
 
       // --- 3. Draw Sky and Milky Way Glow ---
       ctx.save();
@@ -370,9 +371,9 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       // Sky background gradient (Steel blue daylight or Deep space dark)
       const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
       if (isDaytime) {
-        skyGrad.addColorStop(0, '#0f172a'); // slate-900 at zenith
-        skyGrad.addColorStop(0.4, '#1e293b'); // slate-800
-        skyGrad.addColorStop(0.8, '#475569'); // slate-600
+        skyGrad.addColorStop(0, '#203a5e'); // Deep premium steel blue at zenith
+        skyGrad.addColorStop(0.4, '#3a5e8c'); // Medium steel blue
+        skyGrad.addColorStop(0.8, '#6086b4'); // Light steel blue
         skyGrad.addColorStop(1, '#89aacc'); // Soft brand blue-gray at the horizon
       } else {
         skyGrad.addColorStop(0, '#020205');
@@ -382,6 +383,31 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       }
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, width, height);
+
+      // Draw large radial sun glow in daytime to simulate atmospheric scattering
+      if (isDaytime && sunProj.visible) {
+        ctx.save();
+        const glowRadius = Math.min(width, height) * 0.45;
+        const sunGlow = ctx.createRadialGradient(
+          sunProj.x,
+          sunProj.y,
+          16,
+          sunProj.x,
+          sunProj.y,
+          glowRadius
+        );
+        sunGlow.addColorStop(0, 'rgba(255, 253, 240, 0.4)');
+        sunGlow.addColorStop(0.2, 'rgba(255, 242, 215, 0.2)');
+        sunGlow.addColorStop(0.6, 'rgba(137, 170, 204, 0.08)');
+        sunGlow.addColorStop(1, 'rgba(137, 170, 204, 0)');
+        ctx.fillStyle = sunGlow;
+        ctx.shadowColor = 'rgba(255, 245, 220, 0.2)';
+        ctx.shadowBlur = 40;
+        ctx.beginPath();
+        ctx.arc(sunProj.x, sunProj.y, glowRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+      }
       
       // Milky Way
       const galacticPoints = [
@@ -875,10 +901,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         </div>
       )}
 
-      <div className="absolute top-24 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white/50 pointer-events-none backdrop-blur-md z-20">
-        <Eye className="w-3.5 h-3.5" />
-        <span>VR Simulation Mode: Drag to pan & pinch to zoom</span>
-      </div>
+
 
       <canvas
         ref={canvasRef}
@@ -900,6 +923,18 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       >
         FOV 40°
       </div>
+
+      {/* Recenter Button next to compass ribbon */}
+      <button
+        onClick={() => {
+          targetSensorData.current = { heading: 180, pitch: 15, roll: 0 };
+          fov.current = 40;
+        }}
+        className="absolute bottom-[56px] left-[calc(50%+132px)] w-11 h-11 bg-black/60 border border-white/10 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-black/80 active:scale-95 transition pointer-events-auto backdrop-blur-md shadow-lg z-20"
+        title="Recenter View"
+      >
+        <RotateCcw className="w-4 h-4" />
+      </button>
 
       {/* Bottom overlay elements like Stellarium */}
       <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-center pointer-events-none text-white/70 font-mono text-xs">
