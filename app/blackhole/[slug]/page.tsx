@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import fs from 'fs';
 import path from 'path';
+import type { Metadata } from 'next';
 import BlackHoleVideo from '@/components/blackhole/BlackHoleVideo';
 import Navbar from '@/components/layout/Navbar';
 import Link from 'next/link';
@@ -33,11 +34,38 @@ export async function generateStaticParams() {
   }
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  let blackhole: BlackHole | null = null;
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'data', 'blackholes.json');
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const blackholes: BlackHole[] = JSON.parse(raw);
+    blackhole = blackholes.find(bh => bh.slug === slug) || null;
+  } catch (error) {
+    console.error('Error generating metadata for black hole:', error);
+  }
+
+  if (!blackhole) return { title: 'Black Hole Not Found' };
+
+  return {
+    title: `${blackhole.name} Black Hole — Mass, Distance, Location | Astroneo`,
+    description: `Explore the ${blackhole.name} supermassive black hole in interactive 3D. Mass: ${blackhole.mass}. Distance: ${blackhole.distance}. Learn key facts and specifications.`,
+    openGraph: {
+      title: `${blackhole.name} — Astroneo`,
+      description: `${blackhole.name}: ${blackhole.type} black hole. Mass: ${blackhole.mass}. Distance: ${blackhole.distance}.`,
+    },
+    alternates: {
+      canonical: `https://astroneo.space/blackhole/${slug}`,
+    },
+  };
+}
+
 export default async function BlackHoleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   let blackhole: BlackHole | null = null;
+  const { slug } = await params;
   
   try {
-    const { slug } = await params;
     const filePath = path.join(process.cwd(), 'public', 'data', 'blackholes.json');
     const raw = fs.readFileSync(filePath, 'utf-8');
     const blackholes: BlackHole[] = JSON.parse(raw);
@@ -50,8 +78,23 @@ export default async function BlackHoleDetailPage({ params }: { params: Promise<
     notFound();
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'AstronomicalObject',
+    name: blackhole.name,
+    description: blackhole.description,
+    url: `https://astroneo.space/blackhole/${slug}`,
+    additionalType: 'https://en.wikipedia.org/wiki/Black_hole',
+    mass: blackhole.mass,
+    distance: blackhole.distance,
+  };
+
   return (
     <div className="relative min-h-screen bg-black overflow-hidden selection:bg-accent/30">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Absolute Navbar so it floats over the video */}
       <div className="absolute top-0 left-0 right-0 z-50">
         <Navbar />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { signOutUser } from '@/lib/auth';
@@ -19,41 +19,12 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [isScrollable, setIsScrollable] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    const checkScrollable = () => {
-      if (scrollContainerRef.current) {
-        setIsScrollable(scrollContainerRef.current.scrollWidth > scrollContainerRef.current.clientWidth);
-      }
-    };
-    // Check initially and after a slight delay to ensure fonts/layout are loaded
-    checkScrollable();
-    const timeoutId = setTimeout(checkScrollable, 500);
-    window.addEventListener('resize', checkScrollable);
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', checkScrollable);
-    };
-  }, [pathname]); // Re-check when path changes
-
-  const handleNavScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      if (scrollWidth > clientWidth) {
-        const progress = scrollLeft / (scrollWidth - clientWidth);
-        setScrollProgress(progress);
-      }
-    }
-  };
 
   const handleSignOut = async () => {
     try {
@@ -67,19 +38,16 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Explore', href: '/explore' },
-    { name: 'Upcoming', href: '/upcoming-events' },
-    { name: 'Black Holes', href: '/blackholes' },
-    { name: 'Solar System', href: '/star/solar-system' },
+    { name: 'About Us', href: '/about' },
+    { name: 'Privacy Policy', href: '/privacy-policy' },
   ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-4 md:pt-6 px-4 w-full">
       <div className="relative max-w-full flex flex-col items-center">
         <div
-          ref={scrollContainerRef}
-          onScroll={handleNavScroll}
           className={cn(
-            "inline-flex items-center rounded-full backdrop-blur-md border border-white/10 bg-surface px-1.5 sm:px-2 py-1.5 sm:py-2 transition-shadow duration-300 max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+            "inline-flex items-center rounded-full backdrop-blur-md border border-white/10 bg-surface px-1.5 sm:px-2 py-1.5 sm:py-2 transition-shadow duration-300 max-w-full",
             scrolled && "shadow-md shadow-black/40"
           )}
         >
@@ -101,7 +69,7 @@ export default function Navbar() {
                   key={link.name}
                   href={link.href}
                   className={cn(
-                    "text-[11px] sm:text-sm rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition-colors whitespace-nowrap shrink-0",
+                    "text-[10px] sm:text-sm rounded-full px-2 sm:px-4 py-1.5 sm:py-2 transition-colors whitespace-nowrap shrink-0",
                     isActive 
                       ? "text-text-primary bg-stroke/50" 
                       : "text-muted hover:text-text-primary hover:bg-stroke/50"
@@ -120,9 +88,9 @@ export default function Navbar() {
           <div className="flex items-center gap-1 sm:gap-2 shrink-0 pr-1">
             {user ? (
               <>
-                <Link href="/dashboard" className="group relative inline-flex text-[11px] sm:text-sm rounded-full shrink-0">
+                <Link href="/dashboard" className="group relative inline-flex text-[10px] sm:text-sm rounded-full shrink-0">
                   <span className="absolute -inset-[2px] rounded-full accent-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative flex items-center gap-1 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-surface rounded-full backdrop-blur-md text-text-primary transition-colors group-hover:bg-bg/80 whitespace-nowrap">
+                  <div className="relative flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 bg-surface rounded-full backdrop-blur-md text-text-primary transition-colors group-hover:bg-bg/80 whitespace-nowrap">
                     <User size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span>My Space</span>
                   </div>
@@ -136,9 +104,9 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <Link href="/auth/login" className="group relative inline-flex text-[11px] sm:text-sm rounded-full shrink-0">
+              <Link href="/auth/login" className="group relative inline-flex text-[10px] sm:text-sm rounded-full shrink-0">
                 <span className="absolute -inset-[2px] rounded-full accent-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative flex items-center gap-1 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-surface rounded-full backdrop-blur-md text-text-primary transition-colors group-hover:bg-bg/80 whitespace-nowrap">
+                <div className="relative flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 bg-surface rounded-full backdrop-blur-md text-text-primary transition-colors group-hover:bg-bg/80 whitespace-nowrap">
                   <span>Sign In</span>
                   <ArrowUpRight size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </div>
@@ -146,13 +114,6 @@ export default function Navbar() {
             )}
           </div>
         </div>
-
-        {/* Right fade indicator with animated bar for mobile scrolling */}
-        {isScrollable && scrollProgress < 0.95 && (
-          <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none flex items-center justify-end pr-2 md:hidden rounded-r-full z-10" style={{ background: 'linear-gradient(to left, rgba(2,2,8,1) 0%, rgba(2,2,8,0) 100%)' }}>
-            <div className="w-[3px] h-6 bg-gradient-to-b from-cyan-200 to-cyan-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-          </div>
-        )}
       </div>
     </nav>
   );

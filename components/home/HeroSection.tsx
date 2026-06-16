@@ -75,25 +75,44 @@ export default function HeroSection() {
           <SearchBar />
         </div>
 
-        {/* Quick Links */}
-        <div className="blur-in flex gap-6 justify-center flex-wrap">
-          {['Betelgeuse', 'Sirius', 'Vega', 'Polaris'].map((name) => (
-            <Link
-              key={name}
-              href={`/star/${name.toLowerCase()}`}
-              className="text-xs text-muted hover:text-text-primary transition-colors uppercase tracking-widest border-b border-transparent hover:border-stroke pb-1"
-            >
-              {name}
-            </Link>
-          ))}
+        {/* Highlighted Explore Shortcuts */}
+        <div className="blur-in flex gap-x-8 sm:gap-x-10 gap-y-4 justify-center flex-wrap items-center mb-4 mt-2">
+          {[
+            { 
+              name: 'Solar System', 
+              href: '/star/solar-system' 
+            },
+            { 
+              name: 'Black Holes', 
+              href: '/blackholes' 
+            },
+            { 
+              name: 'Upcoming Events', 
+              href: '/upcoming-events' 
+            }
+          ].map((page) => {
+            return (
+              <Link
+                key={page.name}
+                href={page.href}
+                className="group relative flex items-baseline transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+              >
+                <span className="text-[10px] sm:text-[11px] font-sans font-medium uppercase tracking-[0.35em] text-zinc-400 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] transition-all duration-300">
+                  {page.name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
       {/* Scroll Indicator */}
-      <div className="relative z-10 flex flex-col items-center gap-3 mt-8">
-        <span className="text-[10px] text-muted uppercase tracking-[0.2em]">Scroll</span>
-        <div className="w-px h-10 bg-stroke relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-accent-gradient animate-scroll-down" />
+      <div className="group relative z-10 flex flex-col items-center gap-3 mt-8 cursor-pointer">
+        <span className="text-[10px] font-sans font-medium tracking-[0.45em] text-zinc-300 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] transition-all duration-300 uppercase">
+          Scroll
+        </span>
+        <div className="w-px h-12 bg-white/10 group-hover:bg-white/20 transition-colors duration-300 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-white to-transparent animate-scroll-down" />
         </div>
       </div>
     </section>

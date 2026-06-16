@@ -37,27 +37,30 @@ interface StarViewer3DProps {
   fullScreen?: boolean;
 }
 
-export default function StarViewer3D({ spectralClass, starType, name = '', fullScreen = false }: StarViewer3DProps) {
-  const mountRef = useRef<HTMLDivElement>(null);
-
-  const isPlanetType = starType === 'Planet' || starType === 'Dwarf Planet';
-  const planetKey = Object.keys(PLANET_GLB_CONFIG).find((key) => name.toLowerCase().includes(key));
+export default function StarViewer3D(props: StarViewer3DProps) {
+  const planetKey = Object.keys(PLANET_GLB_CONFIG).find((key) => props.name?.toLowerCase().includes(key));
   const glbConfig = planetKey ? PLANET_GLB_CONFIG[planetKey] : undefined;
 
   if (glbConfig) {
     return (
       <GLBModelViewer
         modelPath={glbConfig.path}
-        planetName={name}
+        planetName={props.name || ''}
         atmosphereColor={glbConfig.atmosphereColor}
         showAtmosphere={!!glbConfig.showAtmosphere}
         rotationSpeed={glbConfig.rotationSpeed}
         modelScale={glbConfig.modelScale}
         cameraZ={glbConfig.cameraZ}
-        enableZoom={!fullScreen}
+        enableZoom={!props.fullScreen}
       />
     );
   }
+
+  return <ThreeJSStarViewer {...props} />;
+}
+
+function ThreeJSStarViewer({ spectralClass, starType, name = '', fullScreen = false }: StarViewer3DProps) {
+  const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;

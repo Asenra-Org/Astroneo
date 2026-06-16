@@ -60,7 +60,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`} data-scroll-behavior="smooth">
       <head>
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8875670540225414" crossOrigin="anonymous"></script>
         {adsenseId && (
           <meta name="google-adsense-account" content={adsenseId} />
         )}

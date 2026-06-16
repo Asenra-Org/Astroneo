@@ -5,4 +5,20 @@ Allow: /
 Disallow: /auth/
 Disallow: /dashboard/
 
-Sitemap: https://astrolens.space/sitemap.xml
+# Allow AI crawlers explicitly for GEO (Generative Engine Optimization)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://astroneo.space/sitemap.xml

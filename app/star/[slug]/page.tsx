@@ -107,6 +107,10 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
   if (slug === 'solar-system') {
     return (
       <div className="relative bg-black min-h-screen font-sans selection:bg-accent/30">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <div className="fixed top-0 left-0 right-0 z-50 pointer-events-auto">
           <Navbar />
         </div>

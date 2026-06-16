@@ -14,20 +14,6 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   allowedDevOrigins: ['192.168.1.8', 'localhost:3000'],
-  async redirects() {
-    return [
-      {
-        source: '/blog',
-        destination: '/upcoming-events',
-        permanent: true,
-      },
-      {
-        source: '/blog/:slug',
-        destination: '/upcoming-events',
-        permanent: true,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
