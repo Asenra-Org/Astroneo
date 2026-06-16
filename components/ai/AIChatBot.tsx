@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { Bot, X, Send, Sparkles } from 'lucide-react';
@@ -8,8 +9,12 @@ import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AIChatBot() {
+  const pathname = usePathname();
+  if (pathname === '/sky-map') return null;
+
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
+
 
   // @ai-sdk/react v3 uses transport instead of api string.
   // DefaultChatTransport posts to /api/chat and reads UIMessageStream responses.
