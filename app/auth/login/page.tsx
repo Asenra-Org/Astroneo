@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,6 +21,8 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -34,7 +36,7 @@ export default function LoginPage() {
     try {
       await signInWithEmail(data.email, data.password);
       toast.success('Welcome back!');
-      router.push('/dashboard');
+      router.push(redirectTo);
     } catch (err: any) {
       toast.error(mapAuthError(err.code));
     } finally {
@@ -47,7 +49,7 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       toast.success('Welcome to Astroneo!');
-      router.push('/dashboard');
+      router.push(redirectTo);
     } catch (err: any) {
       toast.error(mapAuthError(err.code));
     } finally {
