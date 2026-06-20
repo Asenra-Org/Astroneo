@@ -10,14 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AIChatBot() {
   const pathname = usePathname();
-  if (pathname === '/sky-map') return null;
-
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-
-  // @ai-sdk/react v3 uses transport instead of api string.
-  // DefaultChatTransport posts to /api/chat and reads UIMessageStream responses.
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: '/api/chat' }),
     onError: (err: Error) => {
@@ -26,7 +21,6 @@ export default function AIChatBot() {
   });
 
   const isLoading = status === 'streaming' || status === 'submitted';
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,6 +28,9 @@ export default function AIChatBot() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // Hide on sky-map page (hooks must all be called before any return)
+  if (pathname === '/sky-map') return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +51,7 @@ export default function AIChatBot() {
     if (typeof m.content === 'string') return m.content;
     return '';
   };
+
 
   return (
     <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
