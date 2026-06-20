@@ -41,7 +41,8 @@
     "distance": "18.2 billion light-years",
     "description": "One of the most massive black holes ever discovered, it powers a hyperluminous quasar that shines with the light of 140 trillion suns.",
     "imageUrl": "/images/blackholes/ton_618_cover.png",
-    "videoUrl": "/videos/ton-618.mp4"
+    "videoUrl": "/videos/ton-618.mp4",
+    "yoyo": false
   },
   {
     "id": "bh-005",
@@ -52,6 +53,7 @@
     "distance": "7,800 light-years",
     "description": "A well-studied microquasar and X-ray binary system that sporadically unleashes massive outbursts as it strips material from its companion star.",
     "imageUrl": "/images/blackholes/v404_cygni_cover.png",
-    "videoUrl": "/videos/v404-cygni.mp4"
+    "videoUrl": "/videos/v404-cygni.mp4",
+    "yoyo": false
   }
 ]

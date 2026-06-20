@@ -18,6 +18,7 @@ interface BlackHole {
   distance: string;
   description: string;
   videoUrl: string;
+  yoyo?: boolean;
 }
 
 export async function generateStaticParams() {
@@ -101,7 +102,7 @@ export default async function BlackHoleDetailPage({ params }: { params: Promise<
       </div>
 
       {/* Full-screen video background */}
-      <BlackHoleVideo src={blackhole.videoUrl} />
+      <BlackHoleVideo src={blackhole.videoUrl} yoyo={blackhole.yoyo !== false} />
 
       {/* UI Overlay */}
       <main className="relative z-10 flex flex-col min-h-screen p-6 md:p-12 bg-gradient-to-t from-black via-black/40 to-transparent">
