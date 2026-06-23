@@ -38,6 +38,7 @@ export default function Footer() {
                   { label: 'Explore', href: '/explore' },
                   { label: 'Blog', href: '/blog' },
                   { label: 'About', href: '/about' },
+                  { label: 'Contact', href: '/contact' },
                 ].map(({ label, href }) => (
                   <Link 
                     key={label} 
@@ -56,7 +57,8 @@ export default function Footer() {
               <div className="flex flex-col gap-3">
                 {[
                   { label: 'Privacy Policy', href: '/privacy-policy' },
-                  { label: 'Terms', href: '/terms' },
+                  { label: 'Terms of Service', href: '/terms' },
+                  { label: 'Contact', href: '/contact' },
                 ].map(({ label, href }) => (
                   <Link 
                     key={label} 
