@@ -48,8 +48,8 @@ export default function ContactPage() {
               <p className="text-muted font-body text-sm leading-relaxed">
                 For general questions, feedback, or anything else:
               </p>
-              <a href="mailto:contact@astroneo.space" className="text-accent font-body text-sm hover:underline break-all">
-                contact@astroneo.space
+              <a href="mailto:contact@asenra.in" className="text-accent font-body text-sm hover:underline break-all">
+                contact@asenra.in
               </a>
             </div>
 
@@ -61,8 +61,8 @@ export default function ContactPage() {
               <p className="text-muted font-body text-sm leading-relaxed">
                 Found something broken? Please report bugs so we can fix them quickly:
               </p>
-              <a href="mailto:contact@astroneo.space?subject=Bug Report" className="text-accent font-body text-sm hover:underline break-all">
-                contact@astroneo.space
+              <a href="mailto:contact@asenra.in?subject=Bug Report" className="text-accent font-body text-sm hover:underline break-all">
+                contact@asenra.in
               </a>
             </div>
 
@@ -84,7 +84,7 @@ export default function ContactPage() {
               Fill in the form below and we'll get back to you by email.
             </p>
             <form
-              action="mailto:contact@astroneo.space"
+              action="mailto:contact@asenra.in"
               method="get"
               encType="text/plain"
               className="space-y-6"
@@ -171,7 +171,7 @@ export default function ContactPage() {
                 },
                 {
                   q: 'How do I report incorrect data?',
-                  a: 'Please email us at contact@astroneo.space with the specific data point you believe is incorrect and the source you are referencing. We review all data reports seriously.'
+                  a: 'Please email us at contact@asenra.in with the specific data point you believe is incorrect and the source you are referencing. We review all data reports seriously.'
                 },
                 {
                   q: 'Do you accept advertising or sponsorships?',

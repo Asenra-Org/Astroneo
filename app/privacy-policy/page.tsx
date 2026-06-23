@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
             <p className="leading-relaxed mb-6">
               This Privacy Policy explains what personal data we collect when you use our website and services, 
               why we collect it, how we use it, and what rights you have over your data. If you have questions 
-              about this policy, please contact us at <a href="mailto:contact@astroneo.space" className="text-accent hover:underline">contact@astroneo.space</a>.
+              about this policy, please contact us at <a href="mailto:contact@asenra.in" className="text-accent hover:underline">contact@asenra.in</a>.
             </p>
 
             <h2 className="text-2xl font-display mt-10 mb-4">2. Data We Collect</h2>
@@ -144,7 +144,7 @@ export default function PrivacyPolicyPage() {
               <li><strong className="text-text-primary">Right to Withdraw Consent:</strong> Where processing is based on consent, you can withdraw it at any time.</li>
             </ul>
             <p className="leading-relaxed mb-6">
-              To exercise any of these rights, please contact us at <a href="mailto:contact@astroneo.space" className="text-accent hover:underline">contact@astroneo.space</a>. 
+              To exercise any of these rights, please contact us at <a href="mailto:contact@asenra.in" className="text-accent hover:underline">contact@asenra.in</a>. 
               We will respond within 30 days. You also have the right to lodge a complaint with a supervisory authority 
               (e.g., the ICO in the UK, or your national data protection authority in the EU).
             </p>
@@ -153,7 +153,7 @@ export default function PrivacyPolicyPage() {
             <p className="leading-relaxed mb-6">
               Astroneo is not directed at children under the age of 13. We do not knowingly collect personal data 
               from children under 13. If you believe a child under 13 has provided us with personal data, please 
-              contact us immediately at <a href="mailto:contact@astroneo.space" className="text-accent hover:underline">contact@astroneo.space</a> and 
+              contact us immediately at <a href="mailto:contact@asenra.in" className="text-accent hover:underline">contact@asenra.in</a> and 
               we will take steps to delete the information promptly.
             </p>
 
@@ -171,7 +171,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <address className="not-italic bg-white/5 border border-white/10 rounded-2xl p-6 text-muted text-sm leading-relaxed">
               <strong className="text-text-primary block mb-2">Astroneo</strong>
-              Email: <a href="mailto:contact@astroneo.space" className="text-accent hover:underline">contact@astroneo.space</a><br />
+              Email: <a href="mailto:contact@asenra.in" className="text-accent hover:underline">contact@asenra.in</a><br />
               Website: <a href="https://astroneo.space" className="text-accent hover:underline">astroneo.space</a>
             </address>
           </div>

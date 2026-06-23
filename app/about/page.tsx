@@ -54,7 +54,7 @@ export default function AboutPage() {
     description: 'A free astronomy platform for exploring the universe through interactive star maps, 3D models, and real astronomical data.',
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'contact@astroneo.space',
+      email: 'contact@asenra.in',
       contactType: 'customer support',
     },
   };
@@ -188,11 +188,11 @@ export default function AboutPage() {
               Our team typically responds within 1–2 business days.
             </p>
             <a
-              href="mailto:contact@astroneo.space"
+              href="mailto:contact@asenra.in"
               className="inline-flex items-center gap-2 bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 rounded-xl px-6 py-3 font-body font-medium text-sm transition-all"
             >
               <Mail size={16} />
-              contact@astroneo.space
+              contact@asenra.in
             </a>
           </div>
 
