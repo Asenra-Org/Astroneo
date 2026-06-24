@@ -5,7 +5,7 @@ import { Telescope, Globe2, BookOpen, Users, Mail, Star } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'About Astroneo | Our Mission to Make Space Accessible',
-  description: 'Astroneo is a free astronomy platform for exploring 200,000+ stars, black holes, and celestial objects. Learn about our mission, technology, and team.',
+  description: 'Astroneo is a free astronomy platform for exploring 8,800+ stars, black holes, and celestial objects. Learn about our mission, technology, and team.',
   alternates: { canonical: 'https://astroneo.space/about' },
   openGraph: {
     title: 'About Astroneo | Our Mission to Make Space Accessible',
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 const stats = [
-  { value: '200,000+', label: 'Stars in our catalog' },
+  { value: '8,800+', label: 'Stars in our catalog' },
   { value: '50+',      label: 'Black hole profiles' },
   { value: 'Free',     label: 'Always and forever' },
   { value: 'AI',       label: 'Powered exploration' },
@@ -101,7 +101,7 @@ export default function AboutPage() {
             </p>
             <p className="text-lg leading-relaxed mb-6">
               Astroneo was built to change that. We created a platform where anyone with an internet connection can 
-              search our catalog of over 200,000 stars, explore detailed profiles of black holes including Sagittarius A* 
+              search our catalog of over 8,800 stars, explore detailed profiles of black holes including Sagittarius A* 
               and M87*, interact with 3D simulations of cosmic objects, use an augmented reality sky map tied to their 
               real-time GPS location, and read science-accurate educational articles written in plain language.
             </p>
@@ -116,7 +116,7 @@ export default function AboutPage() {
               astronomy experience on the web:
             </p>
             <ul className="space-y-3 mb-8 text-muted">
-              <li><strong className="text-text-primary">Star Search & Explorer:</strong> Search and browse our catalog of 200,000+ real stars, each with spectral classification, distance, luminosity, temperature, and constellation data sourced from the HYG stellar database.</li>
+              <li><strong className="text-text-primary">Star Search & Explorer:</strong> Search and browse our catalog of 8,800+ real stars, each with spectral classification, distance, luminosity, temperature, and constellation data sourced from the HYG stellar database.</li>
               <li><strong className="text-text-primary">Black Hole Profiles:</strong> Detailed, accurate profiles of famous black holes — including Sagittarius A* (the supermassive black hole at the center of the Milky Way), M87* (the first black hole ever imaged), Cygnus X-1, V404 Cygni, and TON 618 — with visualizations and scientific data.</li>
               <li><strong className="text-text-primary">Interactive Sky Map:</strong> A real-time augmented reality sky map that uses your device's GPS and orientation to show you exactly what stars and constellations are above you at any moment.</li>
               <li><strong className="text-text-primary">3D Simulations:</strong> Explore 3D interactive models of black holes, complete with accretion disks and relativistic jet visualizations.</li>
