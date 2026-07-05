@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Camera } from 'lucide-react';
+import { ArrowRight, Compass } from 'lucide-react';
 import { spectralToClass } from '@/lib/utils';
 import type { FeaturedStar } from '@/types/star';
 import StarVisual from '@/components/star/StarVisual';
@@ -97,7 +97,7 @@ export default function SearchBar() {
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 150)}
           onKeyDown={handleKeyDown}
-          placeholder="Enter a star name or ID..."
+          placeholder="Enter a star name or planet name..."
           autoComplete="off"
           spellCheck={false}
           className="flex-1 min-w-0 bg-transparent border-none outline-none text-text-primary placeholder:text-text-primary/40 text-sm sm:text-base font-body"
@@ -108,7 +108,7 @@ export default function SearchBar() {
           className="bg-white/5 border border-white/10 rounded-full p-2 sm:p-3 text-white/70 hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95 transition-all shrink-0 flex items-center justify-center"
           aria-label="Live AR Sky Map"
         >
-          <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Compass className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         <button
           type="submit"

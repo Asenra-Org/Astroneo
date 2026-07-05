@@ -41,6 +41,8 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
+  const [arMode, setArMode] = useState(false);
+  const [arError, setArError] = useState<string | null>(null);
 
   const [headingOffset, setHeadingOffset] = useState(0);
 
@@ -95,10 +97,10 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     // Generate stable background star field (faint, un-catalogued stars)
     const rand = mulberry32(42);
     const bgStars = [];
-    for (let i = 0; i < 1800; i++) {
+    for (let i = 0; i < 3000; i++) {
       bgStars.push({
         az: rand() * 360,
-        alt: rand() * 90, // sky only
+        alt: (rand() * 180) - 90, // full sphere so there is no sharp cutoff curve
         r: rand() * 1.2 + 0.4,
         opacity: rand() * 0.55 + 0.1,
         twinklePhase: rand() * Math.PI * 2,
@@ -124,7 +126,72 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       });
   }, []);
 
+  const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
+    let heading = 180;
+    
+    // iOS uses webkitCompassHeading
+    if ((event as any).webkitCompassHeading !== undefined) {
+      heading = (event as any).webkitCompassHeading;
+    } 
+    // Android uses alpha
+    else if (event.alpha !== null) {
+      heading = 360 - event.alpha;
+    }
+
+    let pitch = event.beta || 15;
+    // Cap pitch based on how we hold the phone for sky mapping (usually tilting up)
+    pitch = Math.max(-90, Math.min(90, pitch - 90)); // Offset by 90deg to match holding phone flat vs up
+
+    targetSensorData.current.heading = heading;
+    targetSensorData.current.pitch = pitch;
+  };
+
+  useEffect(() => {
+    const handleAbsolute = (event: any) => {
+      if (arMode && event.alpha !== null) {
+        targetSensorData.current.heading = 360 - event.alpha;
+        targetSensorData.current.pitch = Math.max(-90, Math.min(90, (event.beta || 90) - 90));
+      }
+    };
+
+    if (arMode) {
+      window.addEventListener('deviceorientationabsolute', handleAbsolute, true);
+    }
+    return () => {
+      window.removeEventListener('deviceorientationabsolute', handleAbsolute, true);
+      window.removeEventListener('deviceorientation', handleDeviceOrientation as EventListener, true);
+    };
+  }, [arMode]);
+
+  const toggleARMode = async () => {
+    if (arMode) {
+      setArMode(false);
+      window.removeEventListener('deviceorientation', handleDeviceOrientation as EventListener, true);
+      return;
+    }
+
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      try {
+        const permissionState = await (DeviceOrientationEvent as any).requestPermission();
+        if (permissionState === 'granted') {
+          window.addEventListener('deviceorientation', handleDeviceOrientation as EventListener, true);
+          setArMode(true);
+          setArError(null);
+        } else {
+          setArError('Compass permission denied');
+        }
+      } catch (error) {
+        setArError('Compass not supported on this device');
+      }
+    } else {
+      window.addEventListener('deviceorientation', handleDeviceOrientation as EventListener, true);
+      setArMode(true);
+      setArError(null);
+    }
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (arMode) return;
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     const clickX = e.clientX - rect.left;
@@ -202,6 +269,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (arMode) return;
     e.preventDefault();
     if (e.touches.length === 2) {
       const t1 = e.touches[0];
@@ -393,28 +461,60 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       const isTwilight = sunPos.altitude > -8 && sunPos.altitude <= 0;
       const twilightFactor = isTwilight ? (sunPos.altitude + 8) / 8 : (isDaytime ? 1 : 0);
 
-      // --- 3. Sky gradient ---
+      // --- 3. Sky gradient (Hyper-Realistic based on Sun Altitude) ---
+      // We map the sun's altitude to a precise set of atmospheric colors
+      const sunAlt = sunPos.altitude;
       ctx.save();
       const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
-      if (isDaytime) {
-        // Daytime: steel-blue sky
-        skyGrad.addColorStop(0, '#0a1628');
-        skyGrad.addColorStop(0.35, '#172d55');
-        skyGrad.addColorStop(0.7, '#2a5080');
-        skyGrad.addColorStop(1, '#3c6e9e');
-      } else if (isTwilight) {
-        // Twilight: orange-purple gradient near horizon
-        skyGrad.addColorStop(0, '#010208');
-        skyGrad.addColorStop(0.5, '#0f0820');
-        skyGrad.addColorStop(0.8, '#2d1018');
-        skyGrad.addColorStop(1, `rgba(${Math.round(80 * twilightFactor)}, ${Math.round(40 * twilightFactor)}, 20, 1)`);
+      
+      let topColor = [1, 1, 8];
+      let midColor = [3, 6, 15];
+      let botColor = [11, 18, 34];
+
+      const lerpColor = (c1: number[], c2: number[], t: number) => 
+        c1.map((c, i) => Math.round(c + (c2[i] - c) * t));
+
+      const toRgb = (c: number[]) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+
+      if (sunAlt < -18) {
+        // Deep Night
+        topColor = [1, 1, 5]; midColor = [2, 4, 10]; botColor = [5, 10, 20];
+      } else if (sunAlt >= -18 && sunAlt < -6) {
+        // Astronomical/Nautical Twilight
+        const t = (sunAlt + 18) / 12;
+        topColor = lerpColor([1, 1, 5], [5, 10, 30], t);
+        midColor = lerpColor([2, 4, 10], [15, 20, 45], t);
+        botColor = lerpColor([5, 10, 20], [35, 30, 60], t);
+      } else if (sunAlt >= -6 && sunAlt < 0) {
+        // Civil Twilight / Sunrise/Sunset
+        const t = (sunAlt + 6) / 6;
+        topColor = lerpColor([5, 10, 30], [25, 45, 90], t);
+        midColor = lerpColor([15, 20, 45], [90, 65, 80], t);
+        botColor = lerpColor([35, 30, 60], [220, 110, 40], t);
+      } else if (sunAlt >= 0 && sunAlt < 10) {
+        // Golden Hour / Early Morning / Late Afternoon
+        const t = sunAlt / 10;
+        topColor = lerpColor([25, 45, 90], [50, 100, 180], t);
+        midColor = lerpColor([90, 65, 80], [110, 150, 220], t);
+        botColor = lerpColor([220, 110, 40], [255, 230, 180], t);
+      } else if (sunAlt >= 10 && sunAlt < 30) {
+        // Morning / Afternoon (e.g. 7 AM or 4 PM)
+        const t = (sunAlt - 10) / 20;
+        topColor = lerpColor([50, 100, 180], [30, 130, 220], t);
+        midColor = lerpColor([110, 150, 220], [90, 180, 240], t);
+        botColor = lerpColor([255, 230, 180], [180, 220, 255], t);
       } else {
-        // Night: deep space
-        skyGrad.addColorStop(0, '#010108');
-        skyGrad.addColorStop(0.45, '#03060f');
-        skyGrad.addColorStop(0.8, '#060b18');
-        skyGrad.addColorStop(1, '#0b1222');
+        // High Noon / Midday (e.g. 2 PM)
+        const t = Math.min((sunAlt - 30) / 30, 1);
+        topColor = lerpColor([30, 130, 220], [20, 90, 200], t);
+        midColor = lerpColor([90, 180, 240], [60, 150, 230], t);
+        botColor = lerpColor([180, 220, 255], [140, 200, 255], t);
       }
+
+      skyGrad.addColorStop(0, toRgb(topColor));
+      skyGrad.addColorStop(0.5, toRgb(midColor));
+      skyGrad.addColorStop(1, toRgb(botColor));
+
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, width, height);
       ctx.restore();
@@ -457,7 +557,9 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         ctx.restore();
       }
 
-      // --- 6. Milky Way band — removed, will be replaced with blended image ---
+      // --- 6. Milky Way band (Procedural Glow) ---
+      // Removed procedural band as it created an ugly "half sphere" shape.
+
 
       // --- 7. Background star field (faint, seeded, twinkling) ---
       if (!isDaytime) {
@@ -469,7 +571,11 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           const twinkle = Math.sin(t + bs.twinklePhase) * 0.3 + 0.7;
           const alpha = bs.opacity * twinkle * (isTwilight ? twilightFactor * 0.6 : 1);
           ctx.globalAlpha = alpha;
-          ctx.fillStyle = '#e0e8ff';
+          // Subtly color background stars too
+          const colors = ['#e0e8ff', '#fff5e0', '#d0e0ff', '#ffffff'];
+          const color = colors[Math.floor((bs.az + bs.alt) % 4)];
+          ctx.fillStyle = color;
+          
           ctx.beginPath();
           ctx.arc(proj.x, proj.y, bs.r, 0, Math.PI * 2);
           ctx.fill();
@@ -593,28 +699,44 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           // Magnitude-based star sizing
           const mag = star.apparentMag ?? 3.0;
           size = Math.max(1.0, 4.8 - mag * 0.9);
+          // Spectral color tinting based on magnitude to simulate B-V index roughly
+          if (mag < 0.5) { color = '#fff8e8'; glowColor = 'rgba(255, 235, 180, 0.6)'; } // Yellow-white
+          else if (mag < 1.0) { color = '#e8f0ff'; glowColor = 'rgba(180, 210, 255, 0.6)'; } // Blue-white
+          else if (mag < 1.5) { color = '#fff0d8'; glowColor = 'rgba(255, 210, 150, 0.5)'; } // Orange
+          else if (mag < 2.0) { color = '#ffe4d0'; glowColor = 'rgba(255, 170, 120, 0.4)'; } // Red-orange
+          else { color = '#ffffff'; glowColor = 'rgba(200,215,255,0.25)'; }
           glowSize = size + 2.5;
-          // Spectral color tinting
-          if (mag < 0.5) { color = '#fff8e8'; glowColor = 'rgba(255,245,220,0.45)'; }
-          else if (mag < 1.5) { color = '#fff0d8'; glowColor = 'rgba(255,235,200,0.35)'; }
-          else { color = '#e8eeff'; glowColor = 'rgba(200,215,255,0.2)'; }
         }
 
-        // Glow
+        // Apply realistic rendering
         ctx.save();
-        ctx.shadowBlur = isSun ? 60 : isMoon ? 30 : isPlanet ? 18 : size * 5;
-        ctx.shadowColor = glowColor;
-        ctx.beginPath();
-        ctx.arc(x, y, size + glowSize, 0, 2 * Math.PI);
-        ctx.fillStyle = glowColor;
-        ctx.fill();
-        ctx.restore();
+        
+        // Render atmospheric twinkling for bright stars
+        const starMag = star.apparentMag ?? 3.0;
+        if (starMag < 1.5 && !isPlanet && !isSun && !isMoon) {
+           const twinkle = Math.sin(frameCount * 0.05 + x) * 0.15 + 0.85;
+           ctx.globalAlpha = twinkle;
+        }
 
-        // Body
         ctx.beginPath();
-        ctx.arc(x, y, size, 0, 2 * Math.PI);
-        ctx.fillStyle = color;
+        ctx.arc(x, y, glowSize, 0, 2 * Math.PI);
+        const grad = ctx.createRadialGradient(x, y, size * 0.2, x, y, glowSize);
+        grad.addColorStop(0, color);
+        grad.addColorStop(0.3, color.replace('1)', '0.8)'));
+        grad.addColorStop(1, glowColor);
+        ctx.fillStyle = grad;
+        // Use screen composite for bright glowing stars to pop against the sky
+        if (starMag < 1.5) ctx.globalCompositeOperation = 'screen';
         ctx.fill();
+
+        // Core of the star for extreme sharpness
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.4, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        ctx.restore();
 
         // Label
         const labelY = y + size + 14;
@@ -635,161 +757,43 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       visibleStarsRef.current = currentVisibleStars;
 
-      // --- 10. Ground / Horizon (realistic mountain + tree silhouettes) ---
+      // --- 10. Ground / Horizon (Flat and Clean) ---
+      // Removed the wavy mountains ("half sphere") as it confused the user.
       ctx.save();
-      ctx.translate(centerX, 0); // Horizontal centering only (no roll)
+      ctx.translate(centerX, 0);
 
-      const groundStartX = -width * 3;
-      const groundEndX = width * 3;
+      const groundStartX = -width * 1.5;
+      const groundEndX = width * 1.5;
 
-      // Helper: compute mountain wave at a given azimuth
-      const getMountainWave = (az: number, scale: number, seed: number) => {
-        const r = az * Math.PI / 180;
-        return (
-          Math.sin(r * 2.3 + seed) * scale * 0.45 +
-          Math.cos(r * 4.7 + seed * 1.3) * scale * 0.25 +
-          Math.sin(r * 8.1 + seed * 0.7) * scale * 0.15 +
-          Math.sin(r * 1.1 + seed * 2.1) * scale * 0.20
-        );
-      };
-
-      // Layer 3 – Distant mountains (darkest, bluest)
-      {
-        const grad = ctx.createLinearGradient(0, horizonY - 80, 0, height * 2);
-        if (isDaytime) {
-          grad.addColorStop(0, '#1a2744');
-          grad.addColorStop(0.4, '#111a30');
-          grad.addColorStop(1, '#080e1e');
-        } else {
-          grad.addColorStop(0, '#0a1020');
-          grad.addColorStop(0.5, '#060b16');
-          grad.addColorStop(1, '#02040b');
-        }
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(groundStartX, horizonY);
-        for (let px = groundStartX; px <= groundEndX; px += 35) {
-          const az = (currentHeading + (px / scaleX) + 360) % 360;
-          const wave = getMountainWave(az, 60, 1.2);
-          ctx.lineTo(px, horizonY - 28 - wave);
-        }
-        ctx.lineTo(groundEndX, height * 3);
-        ctx.lineTo(groundStartX, height * 3);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      // Layer 2 – Mid mountains (slightly lighter)
-      {
-        const grad = ctx.createLinearGradient(0, horizonY - 45, 0, height * 2);
-        if (isDaytime) {
-          grad.addColorStop(0, '#253355');
-          grad.addColorStop(0.3, '#18243e');
-          grad.addColorStop(1, '#0d1627');
-        } else {
-          grad.addColorStop(0, '#10182a');
-          grad.addColorStop(0.4, '#090f1e');
-          grad.addColorStop(1, '#040812');
-        }
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(groundStartX, horizonY);
-        for (let px = groundStartX; px <= groundEndX; px += 22) {
-          const az = (currentHeading + (px / scaleX) + 360) % 360;
-          const wave = getMountainWave(az, 38, 3.5);
-          ctx.lineTo(px, horizonY - 8 - wave);
-        }
-        ctx.lineTo(groundEndX, height * 3);
-        ctx.lineTo(groundStartX, height * 3);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      // Layer 1 – Foreground hills (closest, darkest)
-      {
-        const grad = ctx.createLinearGradient(0, horizonY, 0, height * 2);
-        if (isDaytime) {
-          grad.addColorStop(0, '#1c2940');
-          grad.addColorStop(0.25, '#131d30');
-          grad.addColorStop(1, '#080d1c');
-        } else {
-          grad.addColorStop(0, '#0e1525');
-          grad.addColorStop(0.25, '#080e1b');
-          grad.addColorStop(1, '#02040e');
-        }
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(groundStartX, horizonY);
-        for (let px = groundStartX; px <= groundEndX; px += 14) {
-          const az = (currentHeading + (px / scaleX) + 360) % 360;
-          const wave = getMountainWave(az, 22, 6.8);
-          ctx.lineTo(px, horizonY + 2 - wave);
-        }
-        ctx.lineTo(groundEndX, height * 3);
-        ctx.lineTo(groundStartX, height * 3);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      ctx.restore();
-
-      // --- 11. Pine tree silhouettes (world-anchored) ---
-      const treeColor = isDaytime ? '#0c1326' : '#070c18';
-      for (let treeAz = 0; treeAz < 360; treeAz += 4.5) {
-        const proj = projectToScreen(0, treeAz);
-        if (!proj.visible || proj.x < -width || proj.x > width * 2) continue;
-
-        const azRad = treeAz * Math.PI / 180;
-        // Use same foreground wave for consistency
-        const wave = (
-          Math.sin(azRad * 2.3 + 6.8) * 22 * 0.45 +
-          Math.cos(azRad * 4.7 + 6.8 * 1.3) * 22 * 0.25 +
-          Math.sin(azRad * 8.1 + 6.8 * 0.7) * 22 * 0.15 +
-          Math.sin(azRad * 1.1 + 6.8 * 2.1) * 22 * 0.20
-        );
-        const baseY = proj.y + 2 - wave;
-
-        // Vary tree heights per-tree using seeded random
-        const treeRand = mulberry32(Math.round(treeAz * 100));
-        const treeH = 14 + treeRand() * 18;
-        const treeW = 5 + treeRand() * 6;
-
-        ctx.fillStyle = treeColor;
-        ctx.beginPath();
-        // Base trunk line
-        ctx.moveTo(proj.x, baseY);
-        // Three-tiered pine
-        ctx.lineTo(proj.x - treeW * 0.45, baseY - treeH * 0.35);
-        ctx.lineTo(proj.x - treeW * 0.35, baseY - treeH * 0.35);
-        ctx.lineTo(proj.x - treeW * 0.55, baseY - treeH * 0.62);
-        ctx.lineTo(proj.x - treeW * 0.3, baseY - treeH * 0.62);
-        ctx.lineTo(proj.x, baseY - treeH);
-        ctx.lineTo(proj.x + treeW * 0.3, baseY - treeH * 0.62);
-        ctx.lineTo(proj.x + treeW * 0.55, baseY - treeH * 0.62);
-        ctx.lineTo(proj.x + treeW * 0.35, baseY - treeH * 0.35);
-        ctx.lineTo(proj.x + treeW * 0.45, baseY - treeH * 0.35);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      // --- 12. Horizon atmosphere edge glow ---
-      ctx.save();
-      const edgeGrad = ctx.createLinearGradient(0, horizonY - 12, 0, horizonY + 18);
+      const groundGrad = ctx.createLinearGradient(0, horizonY, 0, height * 2);
       if (isDaytime) {
-        edgeGrad.addColorStop(0, 'rgba(180, 220, 255, 0)');
-        edgeGrad.addColorStop(0.5, 'rgba(200, 230, 255, 0.12)');
-        edgeGrad.addColorStop(1, 'rgba(150, 195, 240, 0)');
+        groundGrad.addColorStop(0, '#1a2744');
+        groundGrad.addColorStop(1, '#080e1e');
       } else if (isTwilight) {
-        edgeGrad.addColorStop(0, 'rgba(255, 140, 50, 0)');
-        edgeGrad.addColorStop(0.5, `rgba(255, ${Math.round(80 + 80 * twilightFactor)}, ${Math.round(30 * twilightFactor)}, ${0.35 * twilightFactor})`);
-        edgeGrad.addColorStop(1, 'rgba(200, 80, 20, 0)');
+        groundGrad.addColorStop(0, '#0d1222');
+        groundGrad.addColorStop(1, '#02040b');
       } else {
-        edgeGrad.addColorStop(0, 'rgba(60, 100, 180, 0)');
-        edgeGrad.addColorStop(0.5, 'rgba(60, 100, 180, 0.07)');
-        edgeGrad.addColorStop(1, 'rgba(60, 100, 180, 0)');
+        groundGrad.addColorStop(0, '#060a12');
+        groundGrad.addColorStop(1, '#010205');
       }
-      ctx.fillStyle = edgeGrad;
-      ctx.fillRect(0, horizonY - 12, width, 30);
+
+      ctx.fillStyle = groundGrad;
+      ctx.beginPath();
+      ctx.moveTo(groundStartX, horizonY);
+      ctx.lineTo(groundEndX, horizonY);
+      ctx.lineTo(groundEndX, height * 3);
+      ctx.lineTo(groundStartX, height * 3);
+      ctx.closePath();
+      ctx.fill();
+
+      // Simple horizon edge line
+      ctx.strokeStyle = isDaytime ? 'rgba(100, 150, 220, 0.4)' : 'rgba(50, 80, 140, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(groundStartX, horizonY);
+      ctx.lineTo(groundEndX, horizonY);
+      ctx.stroke();
+
       ctx.restore();
 
       // --- 13. Cardinal direction labels ---
@@ -917,22 +921,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       drawCompassRibbon(ctx, width, height, currentHeading);
 
-      // --- 15. Subtle reticle ---
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 9, 0, 2 * Math.PI);
-      ctx.stroke();
-      // crosshair
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.10)';
-      ctx.beginPath();
-      ctx.moveTo(centerX - 18, centerY); ctx.lineTo(centerX - 10, centerY);
-      ctx.moveTo(centerX + 10, centerY); ctx.lineTo(centerX + 18, centerY);
-      ctx.moveTo(centerX, centerY - 18); ctx.lineTo(centerX, centerY - 10);
-      ctx.moveTo(centerX, centerY + 10); ctx.lineTo(centerX, centerY + 18);
-      ctx.stroke();
-      ctx.restore();
+      // Removed subtle reticle per user request
 
       animFrameId = requestAnimationFrame(render);
     };
@@ -1024,6 +1013,18 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
         </div>
 
         <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            onClick={toggleARMode}
+            className={`px-3 py-1.5 rounded-full border transition duration-200 backdrop-blur-md shadow-lg text-[10px] font-bold tracking-wide uppercase ${
+              arMode
+                ? 'bg-[#e0ff40]/20 text-[#e0ff40] border-[#e0ff40]/50 shadow-[0_0_10px_rgba(224,255,64,0.3)]'
+                : 'bg-black/40 text-white/80 border-white/10 hover:bg-black/60'
+            }`}
+            title="Toggle AR Mode"
+          >
+            {arMode ? 'AR On' : 'AR Off'}
+          </button>
+          
           <button
             onClick={() => setIsCalibrating(!isCalibrating)}
             className={`p-2 rounded-full border transition duration-200 backdrop-blur-md shadow-lg ${

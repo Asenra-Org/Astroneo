@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { User, LogOut, ArrowUpRight, Menu, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import PushNotificationToggle from '@/components/ui/PushNotificationToggle';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -93,6 +94,7 @@ export default function Navbar() {
 
           {/* CTA */}
           <div className="flex items-center gap-2 shrink-0 pr-1">
+            <PushNotificationToggle />
             {user ? (
               <>
                 <Link href="/dashboard" className="group relative inline-flex text-sm rounded-full shrink-0">
@@ -181,6 +183,9 @@ export default function Navbar() {
 
               {/* Auth actions inside dropdown */}
               <div className="flex flex-col gap-2">
+                <div className="flex justify-end px-2 mb-2">
+                  <PushNotificationToggle />
+                </div>
                 {user ? (
                   <div className="flex flex-col gap-2">
                     <Link 

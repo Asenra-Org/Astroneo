@@ -6,6 +6,7 @@ import StarInfoPanel from '@/components/star/StarInfoPanel';
 import VisibilityChecker from '@/components/star/VisibilityChecker';
 import SimilarStars from '@/components/star/SimilarStars';
 import StarViewerWrapper from '@/components/star/StarViewerWrapper';
+import StarCompareSection from '@/components/star/StarCompareSection';
 import type { FeaturedStar } from '@/types/star';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
@@ -235,15 +236,19 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
 
           {/* Two-column layout */}
           <div className="grid grid-cols-1 lg:grid-cols-[55%_1fr] gap-10 items-start">
-            {/* Left: 3D Viewer */}
+            {/* Left: 3D Viewer + Compare */}
             <div className="space-y-6">
-              <div className="liquid-glass rounded-3xl overflow-hidden p-2 relative z-10">
-                <StarViewerWrapper 
-                  spectralClass={star.spectralClass} 
-                  starType={star.type}
-                  starName={star.commonName} 
-                />
-              </div>
+              {slug === 'karan-patil' ? (
+                <div className="liquid-glass rounded-3xl overflow-hidden p-2 relative z-10">
+                  <StarViewerWrapper 
+                    spectralClass={star.spectralClass} 
+                    starType={star.type}
+                    starName={star.commonName} 
+                  />
+                </div>
+              ) : (
+                <StarCompareSection star={star} />
+              )}
               {slug !== 'karan-patil' && (
                 <VisibilityChecker ra={star.ra} dec={star.dec} starName={star.commonName} />
               )}
