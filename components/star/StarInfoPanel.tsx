@@ -89,13 +89,52 @@ export default function StarInfoPanel({ star }: StarInfoPanelProps) {
       </div>
 
       {/* Description */}
-      {star.description && (
-        <div className="liquid-glass rounded-3xl p-6 mb-6">
-          <p className="text-muted font-body text-sm leading-relaxed">
-            {star.description}
-          </p>
-        </div>
-      )}
+      <div className="liquid-glass rounded-3xl p-6 mb-6">
+        <p className="text-muted font-body text-sm leading-relaxed">
+          {star.description || (() => {
+            if (star.type === 'Planet' || star.type === 'Moon' || star.type === 'Dwarf Planet') {
+              return `${star.commonName} is a ${star.type.toLowerCase()} located in our solar system.`;
+            }
+
+            const typeDesc = star.spectralClass 
+              ? `a ${star.spectralClass}-type ${star.isVariable ? 'variable ' : ''}star` 
+              : `a ${star.isVariable ? 'variable ' : ''}star`;
+              
+            const locationDesc = star.constellation 
+              ? `located in the constellation of ${star.constellation}` 
+              : 'located in the night sky';
+
+            let distDesc = '';
+            if (star.distanceLy !== undefined) {
+              distDesc = ` Sitting at a distance of approximately ${formatDistance(star.distanceLy)} from Earth, `;
+            } else {
+              distDesc = ` `;
+            }
+
+            const magDesc = star.apparentMag !== undefined 
+              ? `it shines with an apparent magnitude of ${star.apparentMag.toFixed(2)}, making it an interesting target for observation.`
+              : 'its brightness has been cataloged by astronomers.';
+
+            const physicalDesc = [];
+            if (star.tempK) physicalDesc.push(`a surface temperature of ${formatTemp(star.tempK)}`);
+            if (star.massSOL) physicalDesc.push(`a mass ${star.massSOL.toFixed(2)} times that of our Sun`);
+            if (star.radiusSOL) physicalDesc.push(`a radius ${star.radiusSOL.toFixed(2)} times solar`);
+            
+            let physStr = '';
+            if (physicalDesc.length > 0) {
+              // join with commas, and 'and' for the last one
+              const joined = physicalDesc.length > 1 
+                ? physicalDesc.slice(0, -1).join(', ') + ', and ' + physicalDesc.slice(-1)
+                : physicalDesc[0];
+              physStr = ` This celestial object has ${joined}.`;
+            }
+
+            const catalogDesc = star.hipId ? ` It is officially recorded in the Hipparcos catalog as HIP ${star.hipId}.` : '';
+
+            return `${star.commonName} is ${typeDesc} ${locationDesc}.${distDesc}${magDesc}${physStr}${catalogDesc}`;
+          })()}
+        </p>
+      </div>
 
       {/* Data table */}
       <div className="liquid-glass rounded-3xl p-2 mb-6">

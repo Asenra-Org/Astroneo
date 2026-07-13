@@ -96,9 +96,17 @@ export default function ExplorePage() {
             <h1 className="font-display text-5xl md:text-6xl text-text-primary tracking-tight mb-3">
               Explore the <em className="italic text-text-primary/70">Universe</em>
             </h1>
-            <p className="font-body text-muted">
-              {filtered.length} stars · Browse, filter, and discover
+            <p className="font-body text-muted mb-6">
+              {filtered.length} celestial objects · Browse, filter, and discover our extensive database of stars, planets, and moons.
             </p>
+            <div className="prose prose-invert prose-p:text-muted/80 prose-p:leading-relaxed max-w-3xl font-body text-sm mb-6">
+              <p>
+                Welcome to the Astroneo Star Explorer. Use the filters below to navigate through over 8,800 celestial objects cataloged from the Hipparcos mission. 
+                You can filter stars by constellation to find objects in specific regions of the night sky, or by spectral class (O, B, A, F, G, K, M) to find stars 
+                of specific temperatures and colors—from hot, massive blue giants to cool, dim red dwarfs. Click on any star to view its complete properties, 
+                including its distance from Earth, apparent magnitude, and a fully interactive 3D model.
+              </p>
+            </div>
           </motion.div>
 
           {/* Filters */}

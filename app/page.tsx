@@ -7,6 +7,7 @@ import HowItWorks from '@/components/home/HowItWorks';
 import StatsBar from '@/components/home/StatsBar';
 import CTASection from '@/components/home/CTASection';
 import ReviewSection from '@/components/home/ReviewSection';
+import SEOContent from '@/components/home/SEOContent';
 import { getFeaturedStars } from '@/lib/stars';
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default async function HomePage() {
         <HowItWorks />
         <StatsBar />
         <ReviewSection />
+        <SEOContent />
         <CTASection />
       </main>
       <Footer />

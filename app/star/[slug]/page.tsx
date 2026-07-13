@@ -63,9 +63,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const spectralStr = star.spectralClass ? `Spectral class ${star.spectralClass}. ` : '';
   const tempStr = star.tempK ? `Surface temperature: ${star.tempK.toLocaleString()} K.` : '';
   
+  const isGeneric = star.commonName.startsWith('HIP ');
+
   return {
     title: `${star.commonName} ${typeName} — Facts, Size, Distance | Astroneo`,
     description: `Explore ${star.commonName} in 3D. Distance: ${star.distanceLy?.toFixed(5)} light-years. ${spectralStr}${constellationStr}`,
+    robots: isGeneric ? { index: false, follow: false } : undefined,
     openGraph: {
       title: `${star.commonName} — Astroneo`,
       description: `${star.commonName}: ${star.spectralClass ? star.spectralClass + ' star' : typeName} ${star.constellation ? 'in ' + star.constellation : ''}. Distance: ${star.distanceLy?.toFixed(5)} ly. ${tempStr}`,
