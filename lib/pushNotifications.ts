@@ -11,13 +11,14 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export async function subscribeToPush(userId?: string) {
+export async function subscribeToPush(userId?: string, preferences?: string[]) {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     throw new Error('Push notifications are not supported by this browser.');
   }
 
   // Register service worker if not already registered
-  const registration = await navigator.serviceWorker.register('/sw.js');
+  await navigator.serviceWorker.register('/sw.js');
+  const registration = await navigator.serviceWorker.ready;
 
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapidPublicKey) {
@@ -34,7 +35,7 @@ export async function subscribeToPush(userId?: string) {
   // Send the subscription to our backend
   const response = await fetch('/api/push/subscribe', {
     method: 'POST',
-    body: JSON.stringify({ subscription, userId }),
+    body: JSON.stringify({ subscription, userId, preferences }),
     headers: { 'Content-Type': 'application/json' },
   });
 
@@ -43,4 +44,20 @@ export async function subscribeToPush(userId?: string) {
   }
 
   return subscription;
+}
+
+export async function getPushPreferences() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return null;
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return null;
+
+  const response = await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(subscription.endpoint)}`);
+  if (!response.ok) return null;
+
+  const data = await response.json();
+  return data.preferences || null;
 }

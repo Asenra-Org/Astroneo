@@ -4,6 +4,7 @@ import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { adminDb } from '@/lib/firebase-admin';
 import { z } from 'zod';
+import webpush from 'web-push';
 
 export const dynamic = 'force-dynamic'; // Prevent caching
 export const maxDuration = 60; // Allow enough time for both APIs + AI parsing
@@ -91,6 +92,7 @@ export async function GET(request: Request) {
     let rssSavedCount = 0;
     let nasaSavedCount = 0;
     const addedIds: string[] = [];
+    const newEventsToNotify: any[] = [];
 
     // 2. Fetch and Parse RSS Feed
     try {
@@ -143,8 +145,20 @@ ${JSON.stringify(items, null, 2)}`
       // Add RSS events to batch
       for (const event of parsedEvents) {
         const eventId = event.link ? event.link.replace(/[^a-zA-Z0-9]/g, '-') : event.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase().slice(0, 50);
-        const docRef = collectionRef.doc(eventId.slice(-50));
+        const docId = eventId.slice(-50);
+        const docRef = collectionRef.doc(docId);
         const imageUrl = IMAGE_MAP[event.primaryBody] || IMAGE_MAP['default'];
+
+        // Check if new event
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) {
+          newEventsToNotify.push({
+            title: event.title,
+            description: event.description,
+            type: event.type,
+            url: `/upcoming-events`
+          });
+        }
 
         batch.set(docRef, {
           id: eventId.slice(-50),
@@ -209,6 +223,16 @@ ${JSON.stringify(items, null, 2)}`
             createdAt: new Date().toISOString(),
           };
 
+          const docSnap = await docRef.get();
+          if (!docSnap.exists) {
+            newEventsToNotify.push({
+              title: eventData.title,
+              description: eventData.description,
+              type: eventData.type,
+              url: `/upcoming-events`
+            });
+          }
+
           batch.set(docRef, eventData, { merge: true });
           nasaSavedCount++;
           addedIds.push(eventId);
@@ -223,6 +247,50 @@ ${JSON.stringify(items, null, 2)}`
     // 4. Commit batch if we have anything to write
     if (addedIds.length > 0) {
       await batch.commit();
+    }
+
+    // 5. Send Push Notifications for new events
+    if (newEventsToNotify.length > 0) {
+      try {
+        const subscriptionsSnapshot = await adminDb.collection('push_subscriptions').get();
+        
+        if (!subscriptionsSnapshot.empty) {
+          webpush.setVapidDetails(
+            process.env.VAPID_MAILTO || 'mailto:admin@astrolense.com',
+            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+            process.env.VAPID_PRIVATE_KEY!
+          );
+
+          const sendPromises: Promise<any>[] = [];
+
+          for (const event of newEventsToNotify) {
+            const payload = JSON.stringify({
+              title: event.title,
+              body: event.description.length > 100 ? event.description.substring(0, 97) + '...' : event.description,
+              url: event.url
+            });
+
+            subscriptionsSnapshot.docs.forEach((doc) => {
+              const subData = doc.data();
+              const preferences = subData.preferences || ['conjunction', 'meteor_shower', 'eclipse', 'close_approach', 'other'];
+
+              if (preferences.includes(event.type)) {
+                sendPromises.push(
+                  webpush.sendNotification(subData.subscription, payload).catch(async (err: any) => {
+                    if (err.statusCode === 410 || err.statusCode === 404) {
+                      await doc.ref.delete();
+                    }
+                  })
+                );
+              }
+            });
+          }
+
+          await Promise.allSettled(sendPromises);
+        }
+      } catch (pushError) {
+        console.error('Failed to send push notifications:', pushError);
+      }
     }
 
     return NextResponse.json({ 

@@ -249,6 +249,14 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
                     starName={star.commonName} 
                   />
                 </div>
+              ) : (['sun', 'moon', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(star.commonName.toLowerCase())) ? (
+                <div className="liquid-glass rounded-3xl overflow-hidden p-2 relative z-10">
+                  <StarViewerWrapper 
+                    spectralClass={star.spectralClass} 
+                    starType={star.type}
+                    starName={star.commonName} 
+                  />
+                </div>
               ) : (
                 <StarCompareSection star={star} />
               )}

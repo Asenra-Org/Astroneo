@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { FeaturedStar } from '@/types/star';
 
 // ─── Shader source (simplex noise + plasma + planet) ─────────────────────────
@@ -133,16 +134,43 @@ function getStarColors(star: FeaturedStar) {
 
 // ─── Compute display scales based on radiusSOL ───────────────────────────────
 const BASE = 1.5;
-const MAX_RATIO = 6;
 
-function computeScales(starA: FeaturedStar, starB: FeaturedStar | null): { scaleA: number; scaleB: number } {
-  if (!starB) return { scaleA: BASE, scaleB: BASE };
-  const rA = starA.radiusSOL ?? 1;
-  const rB = starB.radiusSOL ?? 1;
-  if (rA === rB) return { scaleA: BASE, scaleB: BASE };
-  const ratio = Math.min(Math.max(rA, rB) / Math.min(rA, rB), MAX_RATIO);
-  if (rA >= rB) return { scaleA: BASE, scaleB: BASE / ratio };
-  return { scaleA: BASE / ratio, scaleB: BASE };
+const PLANET_RADII_SOL: Record<string, number> = {
+  'the sun': 1, 'sun': 1,
+  'jupiter': 0.10045, 'saturn': 0.0838, 'uranus': 0.0363, 'neptune': 0.0352,
+  'earth': 0.00917, 'venus': 0.0087, 'mars': 0.00486, 'mercury': 0.0035,
+  'moon': 0.0025, 'pluto': 0.0017
+};
+
+function computeScales(starA: FeaturedStar, starB: FeaturedStar | null): { scaleA: number; scaleB: number; isCompressed: boolean } {
+  if (!starB) return { scaleA: BASE, scaleB: BASE, isCompressed: false };
+  
+  const getRadius = (star: FeaturedStar) => {
+    const name = star.commonName.toLowerCase();
+    if (PLANET_RADII_SOL[name]) return PLANET_RADII_SOL[name];
+    return star.radiusSOL ?? 1;
+  };
+
+  const rA = getRadius(starA);
+  const rB = getRadius(starB);
+  if (rA === rB) return { scaleA: BASE, scaleB: BASE, isCompressed: false };
+  
+  // Use true scale ratio for accurate physical comparison
+  const trueRatio = Math.max(rA, rB) / Math.min(rA, rB);
+  
+  let ratio = trueRatio;
+  let isCompressed = false;
+  
+  // If the size difference is extremely massive, compress the scale logarithmically 
+  // so the smaller object doesn't become completely invisible and we can still see 
+  // relative differences between tiny objects (e.g. Earth vs Sun against Betelgeuse).
+  if (trueRatio > 25) {
+    ratio = 25 + Math.pow(trueRatio - 25, 0.35) * 6;
+    isCompressed = true;
+  }
+  
+  if (rA >= rB) return { scaleA: BASE, scaleB: BASE / ratio, isCompressed };
+  return { scaleA: BASE / ratio, scaleB: BASE, isCompressed };
 }
 
 // ─── Build a Three.js Group for a star/planet ────────────────────────────────
@@ -154,80 +182,122 @@ interface StarObject {
 
 function buildStarObject(star: FeaturedStar, scale: number, scene: THREE.Scene): StarObject {
   const group = new THREE.Group();
-  const { coreColor, glowColor, uNoiseScale, uSpeed, isPlanet } = getStarColors(star);
   const name = star.commonName.toLowerCase();
-  const isSaturn = name.includes('saturn');
+  
+  const solarSystemBodies = ['the sun', 'sun', 'moon', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'solar system'];
+  const isSolarSystemBody = solarSystemBodies.includes(name);
 
-  const geo = new THREE.SphereGeometry(scale, 96, 96);
-  const timeUniform = { value: 0 };
+  let tickFn = (dt: number) => {};
+  let disposeFn = () => { scene.remove(group); };
 
-  let mat: THREE.ShaderMaterial;
-  let rotSpeed = 0.2;
+  if (isSolarSystemBody) {
+    let glbName = name === 'solar system' ? 'solar_system_animation' : name;
+    if (glbName === 'the sun') glbName = 'sun';
+    
+    let rotSpeed = 0.15;
+    if (glbName === 'sun') rotSpeed = 0.02;
+    if (glbName === 'moon') rotSpeed = 0.05;
 
-  if (isPlanet) {
-    const pType = getPlanetType(name);
-    let c2 = glowColor;
-    mat = new THREE.ShaderMaterial({
-      vertexShader: VERT,
-      fragmentShader: PLANET_FRAG,
-      uniforms: {
-        uTime:       { value: 0 },
-        uColor:      { value: new THREE.Color(coreColor) },
-        uColor2:     { value: new THREE.Color(c2) },
-        uPlanetType: { value: pType },
-      },
+    const loader = new GLTFLoader();
+    let mixer: THREE.AnimationMixer | null = null;
+    let modelMesh: THREE.Object3D | null = null;
+
+    loader.load(`/models/${glbName}.glb`, (gltf) => {
+      const model = gltf.scene;
+      modelMesh = model;
+      
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+      
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      
+      model.scale.setScalar((scale * 2) / maxDim);
+      
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(model);
+        gltf.animations.forEach((clip) => {
+          mixer!.clipAction(clip).play();
+        });
+      }
+      
+      group.add(model);
     });
-    rotSpeed = 0.15;
+
+    scene.add(group);
+    tickFn = (dt: number) => {
+      group.rotation.y += dt * rotSpeed;
+      if (mixer) mixer.update(dt);
+    };
+    disposeFn = () => {
+      scene.remove(group);
+      if (modelMesh) {
+        modelMesh.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const m = child as THREE.Mesh;
+            if (m.geometry) m.geometry.dispose();
+            if (m.material) {
+              if (Array.isArray(m.material)) m.material.forEach(mat => mat.dispose());
+              else m.material.dispose();
+            }
+          }
+        });
+      }
+    };
   } else {
-    mat = new THREE.ShaderMaterial({
-      vertexShader: VERT,
-      fragmentShader: STAR_FRAG,
-      uniforms: {
-        uTime:       { value: 0 },
-        uColor:      { value: new THREE.Color(coreColor) },
-        uGlowColor:  { value: new THREE.Color(glowColor) },
-        uNoiseScale: { value: uNoiseScale },
-        uSpeed:      { value: uSpeed },
-        uActivity:   { value: 0 },
-      },
-    });
-    rotSpeed = 0;
+    const { coreColor, glowColor, uNoiseScale, uSpeed, isPlanet } = getStarColors(star);
+    const geo = new THREE.SphereGeometry(scale, 96, 96);
+    let mat: THREE.ShaderMaterial;
+    let rotSpeed = 0.2;
+
+    if (isPlanet) {
+      const pType = getPlanetType(name);
+      mat = new THREE.ShaderMaterial({
+        vertexShader: VERT,
+        fragmentShader: PLANET_FRAG,
+        uniforms: {
+          uTime:       { value: 0 },
+          uColor:      { value: new THREE.Color(coreColor) },
+          uColor2:     { value: new THREE.Color(glowColor) },
+          uPlanetType: { value: pType },
+        },
+      });
+      rotSpeed = 0.15;
+    } else {
+      mat = new THREE.ShaderMaterial({
+        vertexShader: VERT,
+        fragmentShader: STAR_FRAG,
+        uniforms: {
+          uTime:       { value: 0 },
+          uColor:      { value: new THREE.Color(coreColor) },
+          uGlowColor:  { value: new THREE.Color(glowColor) },
+          uNoiseScale: { value: uNoiseScale },
+          uSpeed:      { value: uSpeed },
+          uActivity:   { value: 0 },
+        },
+      });
+      rotSpeed = 0;
+    }
+
+    const sphere = new THREE.Mesh(geo, mat);
+    group.add(sphere);
+
+    scene.add(group);
+
+    tickFn = (dt: number) => {
+      mat.uniforms.uTime.value += dt;
+      if (isPlanet) sphere.rotation.y += dt * rotSpeed;
+    };
+
+    disposeFn = () => {
+      scene.remove(group);
+      geo.dispose();
+      mat.dispose();
+    };
   }
 
-  const sphere = new THREE.Mesh(geo, mat);
-  group.add(sphere);
-
-
-
-  // Saturn rings
-  let ringMesh: THREE.Mesh | null = null;
-  if (isSaturn) {
-    const ringGeo = new THREE.RingGeometry(scale * 1.45, scale * 2.6, 128);
-    const ringMat = new THREE.ShaderMaterial({
-      vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-      fragmentShader: `varying vec2 vUv;void main(){float dist=distance(vUv,vec2(0.5));float alpha=smoothstep(0.4,0.45,dist)*smoothstep(0.5,0.48,dist);alpha+=smoothstep(0.25,0.28,dist)*smoothstep(0.38,0.35,dist)*0.8;gl_FragColor=vec4(0.83,0.7,0.6,alpha*0.85);}`,
-      transparent: true, side: THREE.DoubleSide, depthWrite: false,
-    });
-    ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh.rotation.x = Math.PI / 2 - 0.2;
-    group.add(ringMesh);
-  }
-
-  scene.add(group);
-
-  const tick = (dt: number) => {
-    mat.uniforms.uTime.value += dt;
-    if (isPlanet) sphere.rotation.y += dt * rotSpeed;
-  };
-
-  const dispose = () => {
-    scene.remove(group);
-    geo.dispose();
-    mat.dispose();
-    if (ringMesh) { (ringMesh.geometry as THREE.BufferGeometry).dispose(); (ringMesh.material as THREE.Material).dispose(); }
-  };
-
-  return { group, tick, dispose };
+  return { group, tick: tickFn, dispose: disposeFn };
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -254,12 +324,16 @@ export default function CompareTwoViewer({ starA, starB, onClear }: CompareTwoVi
     currentXB: number;
     scaleA: number;
     scaleB: number;
+    isCompressed: boolean;
   }>({
     objA: null, objB: null,
     targetXA: 0, targetXB: 999,
     currentXA: 0, currentXB: 999,
     scaleA: BASE, scaleB: BASE,
+    isCompressed: false,
   });
+
+  const [isScaleCompressed, setIsScaleCompressed] = useState(false);
 
   // Ref to latest starB so we can access it in the animation loop
   const starBRef = useRef<FeaturedStar | null>(starB);
@@ -273,9 +347,11 @@ export default function CompareTwoViewer({ starA, starB, onClear }: CompareTwoVi
 
     if (starB) {
       // Compute new scales
-      const { scaleA, scaleB } = computeScales(starA, starB);
+      const { scaleA, scaleB, isCompressed } = computeScales(starA, starB);
       s.scaleA = scaleA;
       s.scaleB = scaleB;
+      s.isCompressed = isCompressed;
+      setIsScaleCompressed(isCompressed);
       const sep = scaleA + scaleB + 4.5;  // Extra gap so blooms don't merge
       s.targetXA = -sep / 2;
       s.targetXB = sep / 2;
@@ -291,8 +367,10 @@ export default function CompareTwoViewer({ starA, starB, onClear }: CompareTwoVi
         s.objB.dispose();
         s.objB = null;
       }
-      const { scaleA } = computeScales(starA, null);
+      const { scaleA, isCompressed } = computeScales(starA, null);
       s.scaleA = scaleA;
+      s.isCompressed = isCompressed;
+      setIsScaleCompressed(isCompressed);
       if (s.objA) s.objA.group.scale.setScalar(1);
       s.targetXA = 0;
       s.targetXB = 999;
@@ -314,6 +392,12 @@ export default function CompareTwoViewer({ starA, starB, onClear }: CompareTwoVi
     const camera = new THREE.PerspectiveCamera(aspect < 1 ? 65 : 45, aspect, 0.1, 1000);
     camera.position.z = aspect < 1 ? 14 : 8;
     cameraRef.current = camera;
+    
+    // Add lighting for GLTF models
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x334466, 1.0));
+    const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.8);
+    sunLight.position.set(5, 3, 5);
+    scene.add(sunLight);
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(mount.clientWidth, mount.clientHeight);
@@ -488,40 +572,9 @@ export default function CompareTwoViewer({ starA, starB, onClear }: CompareTwoVi
           pointerEvents: 'none',
           zIndex: 20,
           whiteSpace: 'nowrap',
-        }}
-      >
-        {starB && (
-          <span style={{
-            display: 'inline-block',
-            padding: '3px 10px',
-            background: 'rgba(0,0,0,0.65)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.14)',
-            borderRadius: 999,
-            color: 'rgba(255,255,255,0.85)',
-            fontSize: 11,
-            fontFamily: 'inherit',
-            letterSpacing: '0.04em',
-            fontWeight: 500,
-          }}>
-            {starA.commonName}
-          </span>
-        )}
-      </div>
-
-      {/* ── Floating label for Star B + X button ── */}
-      <div
-        ref={labelBRef}
-        style={{
-          position: 'absolute',
-          transform: 'translateX(-50%)',
-          opacity: 0,
-          zIndex: 20,
-          whiteSpace: 'nowrap',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: 4,
         }}
       >
         {starB && (
@@ -539,38 +592,101 @@ export default function CompareTwoViewer({ starA, starB, onClear }: CompareTwoVi
               fontFamily: 'inherit',
               letterSpacing: '0.04em',
               fontWeight: 500,
-              pointerEvents: 'none',
             }}>
-              {starB.commonName}
+              {starA.commonName}
             </span>
-            {onClear && (
-              <button
-                onClick={onClear}
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.65)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.7)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontSize: 12,
-                  lineHeight: 1,
-                }}
-                title="Remove comparison"
-              >
-                ✕
-              </button>
-            )}
+            <svg width="10" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 4 }}>
+              <path d="M12 2v20M19 15l-7 7-7-7"/>
+            </svg>
           </>
         )}
       </div>
+
+      {/* ── Floating label for Star B + X button ── */}
+      <div
+        ref={labelBRef}
+        style={{
+          position: 'absolute',
+          transform: 'translateX(-50%)',
+          opacity: 0,
+          zIndex: 20,
+          whiteSpace: 'nowrap',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        {starB && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{
+                display: 'inline-block',
+                padding: '3px 10px',
+                background: 'rgba(0,0,0,0.65)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: 999,
+                color: 'rgba(255,255,255,0.85)',
+                fontSize: 11,
+                fontFamily: 'inherit',
+                letterSpacing: '0.04em',
+                fontWeight: 500,
+                pointerEvents: 'none',
+              }}>
+                {starB.commonName}
+              </span>
+              {onClear && (
+                <button
+                  onClick={onClear}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.65)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    color: 'rgba(255,255,255,0.7)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: 12,
+                    lineHeight: 1,
+                  }}
+                  title="Remove comparison"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <svg width="10" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 4 }}>
+              <path d="M12 2v20M19 15l-7 7-7-7"/>
+            </svg>
+          </>
+        )}
+      </div>
+
+      {/* ── Compression Disclaimer ── */}
+      {isScaleCompressed && (
+        <div style={{
+          position: 'absolute',
+          bottom: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontSize: '11px',
+          color: 'rgba(255,255,255,0.4)',
+          letterSpacing: '0.05em',
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap',
+          textAlign: 'center',
+          zIndex: 10,
+        }}>
+          *Sizes adjusted for visibility due to extreme physical differences
+        </div>
+      )}
     </div>
   );
 }
