@@ -4,6 +4,7 @@ import './globals.css';
 import Providers from './providers';
 import Script from 'next/script';
 import CookieBanner from '@/components/layout/CookieBanner';
+import { config } from '@/lib/config';
 import PwaPrompt from '@/components/pwa/PwaPrompt';
 
 const instrumentSerif = Instrument_Serif({
@@ -54,8 +55,7 @@ import AIChatBot from '@/components/ai/AIChatBot';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
-  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
+  const { gaId, adsenseId } = config;
 
   return (
     <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`} data-scroll-behavior="smooth">
