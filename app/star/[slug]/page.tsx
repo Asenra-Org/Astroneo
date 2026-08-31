@@ -8,54 +8,18 @@ import SimilarStars from '@/components/star/SimilarStars';
 import StarViewerWrapper from '@/components/star/StarViewerWrapper';
 import StarCompareSection from '@/components/star/StarCompareSection';
 import type { FeaturedStar } from '@/types/star';
+import { isIndexableStar } from '@/lib/indexable';
+import { getAllStars, getStarBySlug } from '@/lib/starCatalog';
+import { getStarArticle } from '@/lib/starArticles';
+import StarArticleBody from '@/components/star/StarArticleBody';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import SaveStarButton from '@/components/star/SaveStarButton';
 import LogObservationModal from '@/components/star/LogObservationModal';
 
-let cachedStars: FeaturedStar[] | null = null;
-
-async function getAllStars(): Promise<FeaturedStar[]> {
-  if (cachedStars) return cachedStars;
-  try {
-    const fs = await import('fs');
-    const path = await import('path');
-    const filePath = path.join(process.cwd(), 'public', 'data', 'stars-massive.json');
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    cachedStars = JSON.parse(raw);
-    return cachedStars!;
-  } catch (err) {
-    console.error("FAILED to read stars-massive.json:", err);
-    return [];
-  }
-}
-
-async function getStarBySlug(slug: string): Promise<FeaturedStar | null> {
-  if (slug === 'karan-patil') {
-    return {
-      id: 999999,
-      slug: 'karan-patil',
-      commonName: 'Karan Patil',
-      type: 'Founder-Class Engineer',
-      spectralClass: 'O',
-      distanceLy: 0.0000001,
-      description: "The ultimate Founder-Class entity at the absolute center of the Asenra universe. Its gravitational pull effortlessly attracts all the attention in the room, radiating an aura of intense, visionary self-obsession. This 'Super Star' operates under the strict belief that the entire digital cosmos revolves exclusively around it. Approach with caution: ego density is critically high, and it may spontaneously collapse into a black hole if someone mentions a competitor.",
-      tempK: 9999999,
-      massSuns: 1000000,
-      radiusSuns: 1000000,
-      bayerDesignation: 'Founder',
-      constellation: 'Asenra',
-      ra: 100,
-      dec: 100
-    } as unknown as FeaturedStar;
-  }
-  const stars = await getAllStars();
-  return stars.find(s => s.slug === slug) ?? null;
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const star = await getStarBySlug(slug);
+  const star = getStarBySlug(slug);
   if (!star) return { title: 'Star Not Found' };
 
   const typeName = star.type === 'Planet' ? 'Planet' : star.type === 'Moon' ? 'Moon' : star.type === 'Dwarf Planet' ? 'Dwarf Planet' : 'Star';
@@ -63,15 +27,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const spectralStr = star.spectralClass ? `Spectral class ${star.spectralClass}. ` : '';
   const tempStr = star.tempK ? `Surface temperature: ${star.tempK.toLocaleString()} K.` : '';
   
-  const isGeneric = star.commonName.startsWith('HIP ');
+  // Only pages with real editorial content are offered to search engines. Catalog
+  // stubs stay live for visitors but are noindex,follow — see lib/indexable.js.
+  const indexable = isIndexableStar(star);
+  const distanceStr = star.distanceLy !== undefined
+    ? `${Math.round(star.distanceLy).toLocaleString()} light-years from Earth. `
+    : '';
 
   return {
     title: `${star.commonName} ${typeName} — Facts, Size, Distance | Astroneo`,
-    description: `Explore ${star.commonName} in 3D. Distance: ${star.distanceLy?.toFixed(5)} light-years. ${spectralStr}${constellationStr}`,
-    robots: isGeneric ? { index: false, follow: false } : undefined,
+    description: `${star.commonName}: ${spectralStr}${distanceStr}${constellationStr}`.trim(),
+    robots: indexable ? undefined : { index: false, follow: true },
     openGraph: {
       title: `${star.commonName} — Astroneo`,
-      description: `${star.commonName}: ${star.spectralClass ? star.spectralClass + ' star' : typeName} ${star.constellation ? 'in ' + star.constellation : ''}. Distance: ${star.distanceLy?.toFixed(5)} ly. ${tempStr}`,
+      description: `${star.commonName}: ${star.spectralClass ? star.spectralClass + ' star' : typeName}${star.constellation ? ' in ' + star.constellation : ''}. ${distanceStr}${tempStr}`.trim(),
     },
     alternates: {
       canonical: `https://astroneo.space/star/${slug}`,
@@ -81,11 +50,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function StarDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const star = await getStarBySlug(slug);
+  const star = getStarBySlug(slug);
 
   if (!star) notFound();
 
-  const allStars = await getAllStars();
+  const allStars = getAllStars();
+  const article = await getStarArticle(slug);
   const cls = star.spectralClass?.[0]?.toUpperCase() ?? 'G';
   
   let similarStars = [];
@@ -101,10 +71,39 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'AstronomicalObject',
-    name: star.commonName,
-    alternateName: star.bayerDesignation,
-    description: star.description,
+    '@type': article ? 'Article' : 'AstronomicalObject',
+    ...(article
+      ? {
+          headline: `${star.commonName} — Facts, Size and Distance`,
+          description: article.summary,
+          datePublished: article.reviewed,
+          dateModified: article.reviewed,
+          author: {
+            '@type': 'Person',
+            name: 'Karan Patil',
+            url: 'https://astroneo.space/about#author',
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Astroneo',
+            logo: { '@type': 'ImageObject', url: 'https://astroneo.space/icon-192.png' },
+          },
+          about: {
+            '@type': 'Thing',
+            name: star.commonName,
+            alternateName: star.bayerDesignation,
+          },
+          citation: article.sources.map((source) => source.url),
+        }
+      : {
+          name: star.commonName,
+          alternateName: star.bayerDesignation,
+          description: star.description,
+        }),
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://astroneo.space/star/${slug}`,
+    },
     url: `https://astroneo.space/star/${slug}`,
   };
 
@@ -190,6 +189,12 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
                  </div>
               </div>
 
+              {article && (
+                <div className="mb-4">
+                  <StarArticleBody article={article} objectName={star.commonName} />
+                </div>
+              )}
+
               <div className="grid md:grid-cols-2 gap-12 liquid-glass p-8 md:p-12 rounded-3xl border border-white/10">
                 <div>
                   <h2 className="font-display text-3xl mb-4 text-text-primary">Inner System</h2>
@@ -241,15 +246,7 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
           <div className="grid grid-cols-1 lg:grid-cols-[55%_1fr] gap-10 items-start">
             {/* Left: 3D Viewer + Compare */}
             <div className="space-y-6">
-              {slug === 'karan-patil' ? (
-                <div className="liquid-glass rounded-3xl overflow-hidden p-2 relative z-10">
-                  <StarViewerWrapper 
-                    spectralClass={star.spectralClass} 
-                    starType={star.type}
-                    starName={star.commonName} 
-                  />
-                </div>
-              ) : (['sun', 'moon', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(star.commonName.toLowerCase())) ? (
+              {(['sun', 'moon', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(star.commonName.toLowerCase())) ? (
                 <div className="liquid-glass rounded-3xl overflow-hidden p-2 relative z-10">
                   <StarViewerWrapper 
                     spectralClass={star.spectralClass} 
@@ -260,19 +257,17 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
               ) : (
                 <StarCompareSection star={star} />
               )}
-              {slug !== 'karan-patil' && (
-                <VisibilityChecker ra={star.ra} dec={star.dec} starName={star.commonName} />
-              )}
+              <VisibilityChecker ra={star.ra} dec={star.dec} starName={star.commonName} />
             </div>
 
             {/* Right: Info Panel */}
             <div className="space-y-6">
               <StarInfoPanel star={star} />
-              {slug !== 'karan-patil' && (
-                <SimilarStars stars={similarStars} spectralClass={star.spectralClass} type={star.type} />
-              )}
+              <SimilarStars stars={similarStars} spectralClass={star.spectralClass} type={star.type} />
             </div>
           </div>
+
+          {article && <StarArticleBody article={article} objectName={star.commonName} />}
         </div>
       </main>
 

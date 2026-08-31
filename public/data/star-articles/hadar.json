@@ -1,0 +1,35 @@
+{
+  "summary": "The second Pointer to the Southern Cross — a triple system of massive blue giants roughly a hundred times further away than its apparent neighbour.",
+  "sections": [
+    {
+      "heading": "The other Pointer",
+      "body": "Hadar, also called Agena and formally Beta Centauri, shines at magnitude 0.61 and forms one half of the Southern Pointers with Alpha Centauri. Drawing a line through the two and extending it leads to Crux, which is the standard method of locating the Southern Cross and distinguishing it from the similar-looking False Cross nearby.\n\nThe pairing is entirely an accident of perspective, and a dramatic one. Alpha Centauri is 4.37 light-years away, the nearest star system to the Sun. Hadar is around 390 light-years distant — roughly ninety times further. They appear side by side and have nothing to do with each other."
+    },
+    {
+      "heading": "Three massive stars",
+      "body": "Hadar is a triple system. The main component is a pair of B1 giants, each around 10 to 12 solar masses, orbiting in a highly eccentric 357-day path that swings them between roughly 4 and 40 astronomical units apart. A third B-type star orbits the inner pair much further out.\n\nCombined, the system emits something like 41,000 times the Sun's light at surface temperatures near 25,000 K. Both main components are Beta Cephei variables, pulsating on periods of a few hours as opacity variations from iron-group elements drive waves through their envelopes. Stars this massive live only around ten to twenty million years, so all three are young and all three are heading for core collapse."
+    },
+    {
+      "heading": "Naming",
+      "body": "The star carries two traditional names. Hadar derives from an Arabic word associated with the ground or a settled place; Agena appears to come from Latin roots meaning the knee, describing its position on the figure of the centaur. Both were in use for centuries, and the International Astronomical Union settled on Hadar as the formal designation in 2016 while Agena remains common in older charts and navigation tables.\n\nAs one of the fifty-seven navigational stars used in celestial navigation, Hadar had genuine working importance in the southern hemisphere long before it had a settled name."
+    }
+  ],
+  "observing": {
+    "bestMonths": "March to August, from latitudes south of about 30°N",
+    "difficulty": "Naked eye where visible",
+    "howToFind": "Find the two bright stars pointing toward the Southern Cross. Hadar is the nearer of the two Pointers to the Cross itself, and appears distinctly bluer than golden Alpha Centauri beside it."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "IAU Catalog of Star Names",
+      "publisher": "International Astronomical Union",
+      "url": "https://www.iau.org/public/themes/naming_stars/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

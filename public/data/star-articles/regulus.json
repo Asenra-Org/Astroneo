@@ -1,0 +1,35 @@
+{
+  "summary": "A star spinning so fast it is visibly egg-shaped and close to flying apart — sitting almost exactly on the path the Moon and planets follow.",
+  "sections": [
+    {
+      "heading": "Close to the breaking point",
+      "body": "Regulus rotates at roughly 320 kilometres per second at its equator, completing a full turn in under sixteen hours. That is around 96% of the speed at which centrifugal force would overcome its own gravity and begin tearing material off the surface.\n\nThe consequence is visible in its shape. The star's equatorial radius is roughly 32% larger than its polar radius, making it a distinctly flattened spheroid rather than a sphere. The bulged equator, being further from the centre, experiences weaker surface gravity and runs several thousand degrees cooler than the poles — an effect called gravity darkening, which makes the star's apparent brightness and colour depend on the angle you view it from."
+    },
+    {
+      "heading": "The companion that caused it",
+      "body": "Stars do not usually spin this fast, and Regulus did not always. It has a close companion in a roughly 40-day orbit: a white dwarf of around 0.3 solar masses, detected through the primary's velocity wobble rather than seen directly.\n\nThe history this implies is that the companion was once the more massive of the two. As it evolved and swelled it spilled its outer envelope onto Regulus, and that infalling material carried angular momentum with it, spinning the receiving star up to near breakup. The donor was stripped down to its exposed core, the white dwarf that remains. Regulus is the visible half of a completed mass transfer, and the whole system is at least quadruple, with a distant pair of faint stars also bound to it."
+    },
+    {
+      "heading": "On the ecliptic",
+      "body": "Regulus lies within about half a degree of the ecliptic — closer than any other first-magnitude star. The Moon and planets therefore pass directly across it with some regularity, and lunar occultations of Regulus are among the most accessible events of their kind for amateur observers.\n\nIts position also gave it prominence in ancient astronomy. It was one of the four Royal Stars of Persia, and its Latin name means \"little king\" — a translation of earlier names identifying it as the heart of the lion, which is precisely where it sits in Leo. Copernicus is credited with giving it the name it now carries."
+    }
+  ],
+  "observing": {
+    "bestMonths": "February to June from both hemispheres",
+    "difficulty": "Naked eye — bright and blue-white",
+    "howToFind": "Look for the Sickle of Leo, a backwards question mark of stars forming the lion's head and mane. Regulus is the bright star at the base of the hook, marking the animal's heart."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Rapid rotation and gravity darkening in Regulus",
+      "publisher": "CHARA Array, Georgia State University",
+      "url": "https://www.chara.gsu.edu/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

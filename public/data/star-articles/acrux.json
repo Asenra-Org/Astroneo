@@ -1,0 +1,35 @@
+{
+  "summary": "The brightest star of the Southern Cross and the southernmost first-magnitude star in the sky — a multiple system of hot blue giants.",
+  "sections": [
+    {
+      "heading": "The foot of the Cross",
+      "body": "Acrux is Alpha Crucis, the brightest of the four stars forming Crux, the Southern Cross. At magnitude 0.76 it ranks around thirteenth brightest overall, and it sits at a declination of about −63 degrees, which makes it the most southerly first-magnitude star there is.\n\nThat position sets a firm limit on visibility. Acrux never rises above the horizon north of roughly 27 degrees latitude, so it is entirely absent from the skies of Europe, North America, most of China and Japan, and much of India. It was known to ancient Mediterranean astronomers, however — precession has shifted it south since, and Crux was visible from Greece and Egypt several thousand years ago."
+    },
+    {
+      "heading": "Three stars, at least",
+      "body": "A telescope splits Acrux into two components about four arcseconds apart. Acrux A is a B0.5 subgiant of roughly 17 solar masses; Acrux B is a B1 main-sequence star near 14 solar masses. Both are extremely hot, with surfaces above 25,000 K, and their combined output is on the order of 25,000 times the Sun's — again mostly in the ultraviolet.\n\nAcrux A is itself a spectroscopic binary with a companion on a 76-day orbit, bringing the confirmed count to at least three. These are young, massive stars belonging to the Scorpius–Centaurus association, the nearest large group of recently formed massive stars, and none of them will last long. Stars of this mass burn out in a few tens of millions of years and end as supernovae."
+    },
+    {
+      "heading": "A star on five flags",
+      "body": "The Southern Cross is the most recognisable asterism of the southern sky, and it appears on the national flags of Australia, New Zealand, Brazil, Papua New Guinea and Samoa. Acrux is represented on all of them, generally as the largest or lowest star of the group.\n\nBrazil's flag is the unusual case: rather than a stylised arrangement, it depicts a specific sky — the view over Rio de Janeiro on 15 November 1889, the day the republic was proclaimed — with each star standing for a state. Acrux represents São Paulo. It is one of the few national flags that is also a dated astronomical chart."
+    }
+  ],
+  "observing": {
+    "bestMonths": "March to August, from latitudes south of about 27°N",
+    "difficulty": "Naked eye; a 75 mm telescope splits the pair",
+    "howToFind": "Find the compact cross-shaped group of four bright stars in the southern sky — it is smaller than most people expect. Acrux is the brightest, at the bottom of the cross. Nearby sits the Coalsack, a dark nebula obvious as a starless patch against the Milky Way."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "The Scorpius–Centaurus association",
+      "publisher": "European Southern Observatory",
+      "url": "https://www.eso.org/public/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -1,0 +1,44 @@
+{
+  "summary": "The closest star to the Sun — a small, magnetically violent red dwarf with at least three known planets, one of them in the habitable zone.",
+  "sections": [
+    {
+      "heading": "Our nearest neighbour",
+      "body": "Proxima Centauri lies 4.2465 light-years away, closer than any other star, and has held that title since Robert Innes identified its enormous proper motion in 1915. It will keep it for roughly the next 25,000 years.\n\nDespite the proximity it is invisible to the unaided eye. Proxima is an M5.5 red dwarf of about 0.12 solar masses and 0.15 solar radii — only modestly larger than Jupiter — with a surface temperature near 3,000 K. It emits well under one percent of the Sun's light, most of it in the infrared. At magnitude 11, the nearest star to Earth requires a telescope."
+    },
+    {
+      "heading": "A flare star",
+      "body": "Proxima is fully convective, meaning the entire star churns rather than having the layered structure of the Sun. This tangles its magnetic field badly, and the field releases that stress in flares which are extraordinary for an object so small. An event recorded in 2019 by ALMA and partner instruments brightened the star by a factor of thousands in the ultraviolet over a few seconds.\n\nThis matters enormously for the planets. A flare that would be a minor event at the Earth–Sun distance is, for a world orbiting a dim star at close range, a repeated blast of ultraviolet and X-rays capable of stripping an atmosphere over geological time. Any assessment of habitability here has to reckon with the star's temperament, not just its warmth."
+    },
+    {
+      "heading": "Proxima b and its siblings",
+      "body": "In 2016 the Pale Red Dot campaign announced Proxima b: at least 1.07 Earth masses, orbiting every 11.2 days at about five percent of the Earth–Sun distance. Because Proxima is so faint, that tight orbit still places the planet in the habitable zone, where liquid water could exist given a suitable atmosphere.\n\nTwo more candidates have followed — Proxima c, a cold super-Earth on a roughly five-year orbit, and Proxima d, announced in 2022 at around a quarter of Earth's mass on a five-day orbit. Proxima b remains the closest potentially habitable planet known and the only one plausibly within reach of a fast robotic probe, which is why it anchors concepts like Breakthrough Starshot. Whether it has retained an atmosphere after billions of years of flaring is the open question, and one that direct imaging in the coming decade may finally answer."
+    },
+    {
+      "heading": "Part of a triple system",
+      "body": "Proxima is gravitationally bound to Alpha Centauri A and B, orbiting the pair at a distance of about 13,000 astronomical units with a period near 550,000 years. The binding is weak enough that the relationship was debated for decades; precise radial-velocity measurements published in 2017 settled it.\n\nFrom Proxima, Alpha Centauri A and B would appear as two brilliant stars — far brighter than anything in our own night sky, though nowhere near daylight. The Sun, meanwhile, would be a modest magnitude 0.4 star in the constellation Cassiopeia, turning that familiar W into a slightly different shape."
+    }
+  ],
+  "observing": {
+    "bestMonths": "April to July from the southern hemisphere and low northern latitudes",
+    "difficulty": "Telescope required — magnitude 11, and it does not stand out",
+    "howToFind": "Locate Alpha Centauri in Centaurus, then star-hop about two degrees southwest using a detailed chart. Proxima is entirely unremarkable in the eyepiece; the reward is in knowing what you are looking at."
+  },
+  "sources": [
+    {
+      "title": "A terrestrial planet candidate in a temperate orbit around Proxima Centauri",
+      "publisher": "Nature — Anglada-Escudé et al., 2016",
+      "url": "https://www.nature.com/articles/nature19106"
+    },
+    {
+      "title": "Exoplanet Exploration",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/exoplanets/"
+    },
+    {
+      "title": "Pale Red Dot campaign",
+      "publisher": "European Southern Observatory",
+      "url": "https://www.eso.org/public/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

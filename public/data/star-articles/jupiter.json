@@ -1,0 +1,40 @@
+{
+  "summary": "More massive than every other planet combined, with a storm larger than Earth and a moon that may hold twice our planet's water.",
+  "sections": [
+    {
+      "heading": "Scale",
+      "body": "Jupiter contains about 318 Earth masses — more than two and a half times all the other planets in the solar system put together. It is 142,984 km across at the equator, and around 1,300 Earths would fit inside it.\n\nIt also spins faster than anything else of its size, completing a rotation in just under ten hours. That speed visibly flattens it: the equatorial diameter exceeds the polar by about 7%, which is obvious in any decent telescope image. There is no surface to land on. Hydrogen and helium simply grow denser with depth until, under enormous pressure, the hydrogen becomes metallic and electrically conducting — the layer that generates the strongest planetary magnetic field in the solar system, a magnetosphere that would appear larger than the full Moon in our sky if it were visible."
+    },
+    {
+      "heading": "The Great Red Spot",
+      "body": "The Great Red Spot is an anticyclonic storm wide enough to swallow Earth, with winds around its perimeter reaching several hundred kilometres per hour. Continuous observations go back to 1830, and Giovanni Cassini's descriptions from 1665 may refer to the same feature, which would make it at least three and a half centuries old.\n\nIt is shrinking. In the late nineteenth century it spanned roughly 40,000 km; it is now closer to half that and has become rounder. Whether this is a long decline toward disappearance or part of a cycle is unknown. Juno's measurements show the storm extends at least 300 km down into the atmosphere, far deeper than expected, which helps explain its longevity — there is no solid surface beneath to create the friction that breaks up terrestrial hurricanes within days."
+    },
+    {
+      "heading": "The Galilean moons",
+      "body": "Galileo's discovery of four moons orbiting Jupiter in 1610 demonstrated that not everything circled Earth, and it is difficult to overstate how much that single observation contributed to displacing the geocentric model.\n\nThe four are worlds in their own right. Io is the most volcanically active body known, its interior kneaded by tidal forces from Jupiter and its neighbours. Europa has a smooth ice shell over a saltwater ocean that likely holds more than twice the water in all of Earth's oceans combined. Ganymede is the largest moon in the solar system — bigger than Mercury — and the only one with its own magnetic field. Callisto is heavily cratered and geologically quiet, an ancient surface preserved largely unchanged.\n\nEuropa is the reason NASA launched Europa Clipper in 2024. Liquid water, a rocky sea floor and chemical energy from tidal heating make it one of the strongest candidates for life beyond Earth, and the mission will make dozens of close passes to assess exactly that."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Around opposition, roughly every 13 months",
+    "difficulty": "Naked eye; binoculars show the moons",
+    "howToFind": "Jupiter is usually the brightest object in the sky after Venus, and shines steadily rather than twinkling. Steadily-held binoculars reveal up to four Galilean moons as points in a line, and their positions visibly change from night to night — the same view Galileo had, with better optics."
+  },
+  "sources": [
+    {
+      "title": "Jupiter",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/jupiter/"
+    },
+    {
+      "title": "Juno mission",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/juno/"
+    },
+    {
+      "title": "Europa Clipper",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/europa-clipper/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

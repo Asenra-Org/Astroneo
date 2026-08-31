@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
@@ -20,15 +19,7 @@ interface BlackHole {
   imageUrl?: string;
 }
 
-export default function BlackHolesPage() {
-  const [blackholes, setBlackholes] = useState<BlackHole[]>([]);
-
-  useEffect(() => {
-    fetch('/data/blackholes.json')
-      .then(r => r.json())
-      .then(setBlackholes)
-      .catch(console.error);
-  }, []);
+export default function BlackHolesPage({ blackholes }: { blackholes: BlackHole[] }) {
 
   const container = {
     hidden: { opacity: 0 },
@@ -60,9 +51,22 @@ export default function BlackHolesPage() {
             <h1 className="font-display text-5xl md:text-6xl text-text-primary tracking-tight mb-3">
               Explore <em className="italic text-text-primary/70">Black Holes</em>
             </h1>
-            <p className="font-body text-muted">
-              Discover the most mysterious and massive objects in the universe.
-            </p>
+            <div className="font-body text-muted leading-[1.8] max-w-3xl space-y-4">
+              <p>
+                A black hole is not an object that pulls harder than other objects of the same
+                mass. It is a region where mass has been concentrated into so small a volume that
+                escaping from close to its centre would require exceeding the speed of light. If
+                the Sun were replaced by a black hole of identical mass, Earth&rsquo;s orbit would
+                not change at all.
+              </p>
+              <p>
+                The five profiled below cover the range of what has actually been observed: the
+                first object accepted as a black hole, the first one photographed, our own
+                galaxy&rsquo;s central engine, a system that erupts every few decades, and one of
+                the most massive ever measured. Each page explains how we know what we know about
+                it, and lists its sources.
+              </p>
+            </div>
           </motion.div>
 
           {/* Grid */}

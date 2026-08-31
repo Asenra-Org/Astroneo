@@ -1,0 +1,40 @@
+{
+  "summary": "A black hole that spends decades doing nothing, then erupts for a few weeks as one of the brightest X-ray sources in the sky.",
+  "sections": [
+    {
+      "heading": "A star that was not a nova",
+      "body": "V404 Cygni was catalogued in 1938 as a nova — a star that brightened dramatically and faded. Novae are usually one-off events on the surface of a white dwarf, so the entry sat unremarkable for fifty years.\n\nThen in 1989 the Japanese satellite Ginga detected a powerful X-ray outburst from the same position, and follow-up work showed the object was not a nova at all. It is a black hole of roughly nine solar masses in a close binary with a low-mass star somewhat smaller than the Sun, orbiting every 6.5 days. At about 7,800 light-years, it is one of the nearest black holes known.\n\nEarlier recorded outbursts in 1938 and 1956 were retrospectively recognised as the same phenomenon, giving a rough sense of the cycle: quiet for decades, then violent."
+    },
+    {
+      "heading": "How the cycle works",
+      "body": "The companion star is close enough that the black hole strips material from it. But that material does not fall straight in. It accumulates in an accretion disk, and for long stretches the disk is cool, relatively inert, and radiates very little. The system sits in quiescence, nearly invisible.\n\nAs matter builds up, the disk's density and temperature rise until it crosses a threshold where hydrogen ionises. Ionised gas is far more viscous, angular momentum transports outward much more efficiently, and material that had been slowly accumulating suddenly pours inward. The inner disk heats to millions of degrees and the system erupts in X-rays.\n\nThe disk then drains, cools, and drops back into quiescence to start refilling. This is essentially the same disk instability that drives dwarf nova outbursts around white dwarfs, operating around a black hole with correspondingly more energy available."
+    },
+    {
+      "heading": "The 2015 outburst",
+      "body": "In June 2015, after 26 years of quiet, V404 Cygni erupted again. For a short period it was one of the brightest X-ray sources in the entire sky, and observatories worldwide redirected to it.\n\nWhat made it scientifically valuable was the violence of the variability. The brightness changed by large factors on timescales of minutes, sometimes seconds — behaviour that let astronomers probe the innermost accretion region in a way steady sources do not allow. Optical flares were bright enough to be followed by amateur astronomers with modest equipment, which is rare for a black hole.\n\nRadio observations of the jets produced a further surprise. Rather than firing in a fixed direction, the jets appeared to wobble, changing orientation over minutes. The favoured explanation is that the inner accretion disk is misaligned with the black hole's spin axis, and frame dragging — the twisting of spacetime by a rotating mass, a genuinely relativistic effect — causes it to precess, swinging the jets around with it. Observing that in something as small and distant as a stellar-mass black hole was not expected."
+    }
+  ],
+  "observing": {
+    "bestMonths": "July to November from the northern hemisphere",
+    "difficulty": "Effectively invisible in quiescence; reachable by amateurs during outburst",
+    "howToFind": "In quiescence V404 Cygni sits around magnitude 18, requiring a substantial telescope and a precise chart. During the 2015 outburst it reached roughly magnitude 11, within range of a modest amateur setup. Variable star organisations issue alerts when it brightens, and monitoring it is one of the genuine ways amateur observers contribute to black hole astronomy."
+  },
+  "sources": [
+    {
+      "title": "V404 Cygni observations",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/universe/black-holes/"
+    },
+    {
+      "title": "Black hole X-ray binaries",
+      "publisher": "Chandra X-ray Observatory",
+      "url": "https://chandra.harvard.edu/"
+    },
+    {
+      "title": "Alerts and observing campaigns",
+      "publisher": "American Association of Variable Star Observers",
+      "url": "https://www.aavso.org/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

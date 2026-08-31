@@ -1,0 +1,39 @@
+{
+  "summary": "An ice giant knocked onto its side, with the coldest atmosphere in the solar system and a magnetic field that makes no sense.",
+  "sections": [
+    {
+      "heading": "Rolling on its side",
+      "body": "Uranus has an axial tilt of about 98 degrees. Rather than spinning upright like most planets, it rolls along its orbital path, with its poles alternately pointed almost directly at the Sun.\n\nThe seasons this produces are extreme. Each pole receives 42 years of continuous sunlight followed by 42 years of unbroken darkness, over an 84-year orbit. The usual explanation is one or more giant impacts early in the planet's history, though the fact that its moons and rings orbit in the same tilted plane complicates a simple single-collision story — whatever happened, it happened early enough that the debris re-formed around the new axis."
+    },
+    {
+      "heading": "An ice giant, not a gas giant",
+      "body": "Uranus and Neptune are classified separately from Jupiter and Saturn for good reason. Where the gas giants are overwhelmingly hydrogen and helium, the ice giants have a modest hydrogen-helium envelope over a hot, dense fluid mantle of water, ammonia and methane.\n\n\"Ice\" here is a term of composition, not temperature: this material is a hot, electrically conducting fluid, nothing like ice as you would recognise it. Methane in the upper atmosphere absorbs red light and reflects blue-green, which gives the planet its cyan colour. Its cloud tops reach −224 °C, the coldest measured atmosphere of any planet — colder even than Neptune's, despite being a billion and a half kilometres closer to the Sun. Uranus radiates almost no internal heat, and why it does not remains unexplained."
+    },
+    {
+      "heading": "A magnetic field at the wrong angle",
+      "body": "Earth's magnetic field is roughly aligned with its rotation axis and centred on the planet. Uranus's is tilted about 59 degrees from its rotation axis and offset substantially from the centre, emerging near the south pole rather than from the middle.\n\nThe field is thought to be generated in a shallow conducting layer of the icy mantle rather than a deep central core, which would account for the geometry. The consequence is a magnetosphere that tumbles chaotically as the planet rotates, connecting and disconnecting from the solar wind on a daily cycle — behaviour with no counterpart elsewhere in the solar system."
+    },
+    {
+      "heading": "Visited once, briefly",
+      "body": "Voyager 2 passed Uranus in January 1986 and remains the only spacecraft ever to visit. Almost everything known about the planet in detail comes from that single flyby, supplemented since by Hubble and ground-based observation.\n\nThe timing was unlucky. The encounter came days before the Challenger disaster, so the results received comparatively little public attention, and Voyager arrived during solstice with one pole facing the Sun, giving it a bland, nearly featureless view. Later observations have shown a considerably more dynamic atmosphere. A dedicated Uranus orbiter was ranked the highest-priority large planetary mission by the most recent US decadal survey, but nothing has yet been funded and launched."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Around opposition, once a year",
+    "difficulty": "Binoculars or a small telescope — technically naked-eye at magnitude 5.7 under superb skies",
+    "howToFind": "Uranus is at the very edge of naked-eye visibility and requires a finder chart. In binoculars it looks like a faint star; a telescope at 100× or more reveals a small, distinctly blue-green disk that does not sharpen to a point the way stars do. That colour is the giveaway."
+  },
+  "sources": [
+    {
+      "title": "Uranus",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/uranus/"
+    },
+    {
+      "title": "Voyager mission",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/voyager/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

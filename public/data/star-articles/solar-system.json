@@ -1,0 +1,35 @@
+{
+  "summary": "One ordinary star, eight planets, and a vast amount of leftover debris — assembled 4.6 billion years ago and substantially rearranged since.",
+  "sections": [
+    {
+      "heading": "How it formed",
+      "body": "About 4.6 billion years ago a cloud of gas and dust collapsed, probably nudged by a nearby supernova. Conservation of angular momentum spun the collapsing cloud into a flattened disk with a dense centre, and when that centre reached about 10 million K, fusion began and the Sun switched on.\n\nThe leftover disk built the planets. Close to the Sun, only rock and metal could stay solid, producing the small dense terrestrial worlds. Beyond the frost line — roughly where the asteroid belt now sits — water, ammonia and methane could freeze, providing far more solid material and allowing Jupiter and Saturn to grow massive enough to capture hydrogen and helium directly. Nearly all of the original cloud ended up in the Sun; the planets are built from the fraction of a percent left over."
+    },
+    {
+      "heading": "The planets moved",
+      "body": "The solar system did not stay in the arrangement it formed in. Several lines of evidence — the orbital structure of the Kuiper Belt, the distribution of asteroid types, the cratering record on the Moon — point to substantial migration of the giant planets early on.\n\nModels in this family, of which the Nice model is the best known, have Jupiter and Saturn crossing a resonance that destabilised the outer system, scattering Uranus and Neptune outward and flinging icy bodies in every direction. Neptune may have formed considerably closer to the Sun than it now orbits. The resulting bombardment would have battered the inner planets, and the debris that survived is the Kuiper Belt we observe today. The tidy diagram of concentric orbits is a snapshot of a system that has been substantially rearranged."
+    },
+    {
+      "heading": "Mostly empty, and mostly not planets",
+      "body": "The Sun holds 99.86% of the solar system's mass. Jupiter accounts for most of the small remainder, and everything else — the other seven planets, every moon, the entire asteroid belt, all the comets — shares what is left.\n\nThe distances are equally hard to convey. Diagrams cannot be drawn to scale and remain legible. If the Sun were a football, Earth would be a peppercorn about 26 metres away and Neptune a small pea nearly 800 metres off. Beyond the planets, the Kuiper Belt extends outward from Neptune's orbit, and further still the hypothesised Oort Cloud — a spherical shell of icy bodies possibly reaching a light-year out, the source of long-period comets. Voyager 1, the most distant human object, crossed into interstellar space in 2012 and will not reach the Oort Cloud's inner edge for roughly three hundred years."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Year-round; five planets are naked-eye visible at some point each year",
+    "difficulty": "Naked eye for five planets; a telescope for the rest",
+    "howToFind": "Mercury, Venus, Mars, Jupiter and Saturn are all visible without equipment and have been known since antiquity. The way to identify one is that planets shine with a steady light while stars twinkle, because a planet presents a small disk rather than a point and atmospheric turbulence cannot disrupt all of it at once. All of them lie close to the ecliptic, the same arc the Sun and Moon follow."
+  },
+  "sources": [
+    {
+      "title": "Our Solar System",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/solar-system/"
+    },
+    {
+      "title": "Voyager mission status",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/voyager/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

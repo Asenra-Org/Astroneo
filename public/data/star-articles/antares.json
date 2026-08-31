@@ -1,0 +1,39 @@
+{
+  "summary": "The red heart of Scorpius — a supergiant so large it would swallow the orbit of Mars, and named for its resemblance to the planet it rivals.",
+  "sections": [
+    {
+      "heading": "The rival of Mars",
+      "body": "The name comes from the Greek for \"rival of Ares\", and it is descriptive rather than poetic. Antares sits close to the ecliptic, the path the planets follow across the sky, so Mars passes near it regularly. When it does, two objects of similar brightness and near-identical colour sit side by side, and telling them apart at a glance is genuinely difficult.\n\nThe resemblance is coincidental. Mars is a small rocky planet reflecting sunlight from a rusted surface. Antares is a red supergiant glowing at around 3,660 K, cool enough by stellar standards that its output shifts strongly into the red and infrared. Different physics, similar result."
+    },
+    {
+      "heading": "Scale",
+      "body": "Antares has a radius of roughly 680 times the Sun's. Placed at the centre of our solar system, its surface would extend beyond the orbit of Mars and approach the asteroid belt. Mercury, Venus, Earth and Mars would all be inside the star.\n\nThat volume contains only about 12 solar masses of material, spread so thinly that the outer atmosphere is a better vacuum than most laboratories can produce. The star probably started out heavier still, somewhere around 15 to 18 solar masses, and has been shedding material through a slow, dense wind for millions of years. Its total energy output is near 75,000 times the Sun's, though because so much of it emerges in the infrared, the star looks less overwhelming to the eye than that figure implies."
+    },
+    {
+      "heading": "The green companion",
+      "body": "Antares has a hot blue-white companion, Antares B, a B2.5 main-sequence star orbiting at a separation of about 2.9 arcseconds. Splitting it is a classic amateur test object: the separation is easy, but the four-magnitude brightness difference and the primary's glare mean you need steady air and reasonable aperture.\n\nObservers who succeed almost always describe the companion as green. No star is actually green — stellar spectra do not produce that impression on their own. What you are seeing is a physiological contrast effect, the eye pushing a blue-white point in the opposite direction from the intense orange-red beside it. It is an illusion, and a remarkably consistent one."
+    },
+    {
+      "heading": "A star wrapped in its own dust",
+      "body": "Antares sits at the edge of the Rho Ophiuchi cloud complex, one of the nearest active star-forming regions. The star's own ejected material forms a nebula around it, and long-exposure photographs of this region are among the most colourful wide-field images in astronomy — Antares glowing yellow-orange at the centre, blue reflection nebulosity nearby, and dark dust lanes threading through.\n\nLike Betelgeuse, Antares is destined for core collapse and a type II supernova, likely within the next few hundred thousand to a million years. At roughly 550 light-years it poses no danger to Earth, but it would briefly become the brightest object in the night sky."
+    }
+  ],
+  "observing": {
+    "bestMonths": "May to August, best from southern latitudes where Scorpius rides high",
+    "difficulty": "Naked eye; a 150 mm telescope for the companion",
+    "howToFind": "Scorpius is one of the few constellations that genuinely resembles its name. Find the curving hook of the scorpion's body low in the southern sky on a summer evening; Antares is the bright orange star at its heart, flanked by a fainter star on either side."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "The atmosphere of Antares mapped with ALMA",
+      "publisher": "European Southern Observatory",
+      "url": "https://www.eso.org/public/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

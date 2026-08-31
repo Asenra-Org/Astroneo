@@ -1,0 +1,35 @@
+{
+  "summary": "The nearest giant star to the Sun, brightest in Gemini, and host to one of the first planets ever found orbiting an evolved star.",
+  "sections": [
+    {
+      "heading": "The brighter twin",
+      "body": "Pollux and Castor are the heads of the Gemini twins, and Pollux is clearly the brighter at magnitude 1.14 against Castor's 1.58. Bayer nonetheless lettered Castor as Alpha Geminorum and Pollux as Beta — another case where the lettering follows position or rough grouping rather than careful measurement.\n\nPollux lies 33.8 light-years away, which makes it the closest giant star to the Sun. It is a K0 orange giant of about 1.9 solar masses, swollen to nearly nine times the Sun's radius, with a surface near 4,590 K. Its total light output is around 43 times the Sun's."
+    },
+    {
+      "heading": "A star past its prime",
+      "body": "Pollux began life as a hot white A-type main-sequence star, not unlike Sirius. Having exhausted the hydrogen in its core it expanded and cooled into the orange giant we see now, and is currently fusing helium into carbon in its centre.\n\nThis is the future the Sun faces, and Pollux offers a preview at close range. The differences matter, though: at nearly twice the Sun's mass, Pollux burned through its main-sequence life in around a billion years rather than ten billion, and it will end as a white dwarf without ever exploding."
+    },
+    {
+      "heading": "Pollux b",
+      "body": "In 2006 a planet was confirmed around Pollux after years of accumulating radial-velocity data. Pollux b has a minimum mass of roughly 2.3 Jupiters and takes about 590 days to complete its orbit, sitting at a distance comparable to Mars from the Sun.\n\nIts significance is partly historical. Finding planets around giant stars is harder than around Sun-like ones, because the puffed-up, pulsating atmosphere of a giant produces velocity noise that can masquerade as a planetary signal. Pollux b was one of the earliest cases where the evidence was strong enough to be broadly accepted, and it demonstrated that planetary systems survive their host star's expansion — at least out at Mars-like distances. Worlds closer in do not fare as well."
+    }
+  ],
+  "observing": {
+    "bestMonths": "December to April from the northern hemisphere",
+    "difficulty": "Naked eye — easy from suburban skies",
+    "howToFind": "Look for two bright stars of similar brightness side by side, up and to the left of Orion. Pollux is the brighter and more southerly of the pair, and the more obviously orange; Castor beside it is white."
+  },
+  "sources": [
+    {
+      "title": "Exoplanet Exploration",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/exoplanets/"
+    },
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -15,10 +15,10 @@ export const metadata: Metadata = {
 };
 
 const stats = [
-  { value: '8,800+', label: 'Stars in our catalog' },
-  { value: '50+',      label: 'Black hole profiles' },
-  { value: 'Free',     label: 'Always and forever' },
-  { value: 'AI',       label: 'Powered exploration' },
+  { value: '8,898', label: 'Objects in the catalogue' },
+  { value: '46',    label: 'In-depth written pages' },
+  { value: 'Free',  label: 'No account, no paywall' },
+  { value: 'Cited', label: 'Every article sourced' },
 ];
 
 const values = [
@@ -57,6 +57,14 @@ export default function AboutPage() {
       email: 'contact@asenra.in',
       contactType: 'customer support',
     },
+    founder: {
+      '@type': 'Person',
+      '@id': 'https://astroneo.space/about#author',
+      name: 'Karan Patil',
+      email: 'contact@asenra.in',
+      url: 'https://astroneo.space/about#author',
+    },
+    publishingPrinciples: 'https://astroneo.space/about#editorial-policy',
   };
 
   return (
@@ -101,9 +109,9 @@ export default function AboutPage() {
             </p>
             <p className="text-lg leading-relaxed mb-6">
               Astroneo was built to change that. We created a platform where anyone with an internet connection can 
-              search our catalog of over 8,800 stars, explore detailed profiles of black holes including Sagittarius A* 
-              and M87*, interact with 3D simulations of cosmic objects, use an augmented reality sky map tied to their 
-              real-time GPS location, and read science-accurate educational articles written in plain language.
+              search a catalogue of 8,898 catalogued objects, read in-depth profiles of five well-studied black holes
+              including Sagittarius A* and M87*, interact with 3D simulations, use a sky map tied to their real-time GPS
+              location, and read cited educational articles written in plain language.
             </p>
             <p className="text-lg leading-relaxed mb-6">
               Everything on Astroneo is and will always be free. We believe that access to knowledge about our universe 
@@ -117,11 +125,11 @@ export default function AboutPage() {
             </p>
             <ul className="space-y-3 mb-8 text-muted">
               <li><strong className="text-text-primary">Star Search & Explorer:</strong> Search and browse our catalog of 8,800+ real stars, each with spectral classification, distance, luminosity, temperature, and constellation data sourced from the HYG stellar database.</li>
-              <li><strong className="text-text-primary">Black Hole Profiles:</strong> Detailed, accurate profiles of famous black holes — including Sagittarius A* (the supermassive black hole at the center of the Milky Way), M87* (the first black hole ever imaged), Cygnus X-1, V404 Cygni, and TON 618 — with visualizations and scientific data.</li>
+              <li><strong className="text-text-primary">Black Hole Profiles:</strong> Profiles of five well-studied black holes — including Sagittarius A* (the supermassive black hole at the center of the Milky Way), M87* (the first black hole ever imaged), Cygnus X-1, V404 Cygni, and TON 618 — with visualizations and scientific data.</li>
               <li><strong className="text-text-primary">Interactive Sky Map:</strong> A real-time augmented reality sky map that uses your device's GPS and orientation to show you exactly what stars and constellations are above you at any moment.</li>
               <li><strong className="text-text-primary">3D Simulations:</strong> Explore 3D interactive models of black holes, complete with accretion disks and relativistic jet visualizations.</li>
               <li><strong className="text-text-primary">AstroBot AI Assistant:</strong> An AI-powered chatbot trained to answer questions about astronomy, space science, and our universe — available on every page.</li>
-              <li><strong className="text-text-primary">Astronomy Blog:</strong> Regularly updated articles covering deep-space discoveries, stargazing guides, telescope tutorials, and educational deep-dives into cosmological concepts.</li>
+              <li><strong className="text-text-primary">Astronomy Articles:</strong> In-depth, individually sourced articles covering stellar physics, stargazing guides, telescope buying advice and cosmology — each one listing the references it draws on.</li>
               <li><strong className="text-text-primary">Upcoming Events:</strong> A calendar of upcoming astronomical events — meteor showers, eclipses, planetary conjunctions, and more.</li>
             </ul>
 
@@ -150,16 +158,99 @@ export default function AboutPage() {
               more beautiful, and more informative than anything that existed at the time.
             </p>
             <p className="text-lg leading-relaxed mb-6">
-              As the project grew, so did its scope. User feedback poured in requesting black hole profiles, an 
-              interactive sky map, a blog, AI chat, and more. Today, Astroneo serves thousands of users monthly — 
-              from school students doing astronomy projects to amateur astronomers planning their next observing session 
-              to professional researchers looking for a quick reference tool.
+              As the project grew, so did its scope. Requests came in for black hole profiles, an interactive sky map,
+              a blog and more, and the site now covers all of them. It is used by school students working on astronomy
+              projects, by amateur astronomers planning an observing session, and by anyone who wants a quick, accurate
+              reference without a paywall in front of it.
             </p>
             <p className="text-lg leading-relaxed mb-6">
-              The platform is maintained and continuously improved by a small, dedicated team committed to scientific 
-              accuracy, elegant design, and the democratization of astronomical knowledge.
+              Astroneo remains a small independent project rather than a company, built and maintained by one person
+              with help from readers who write in with corrections and suggestions.
             </p>
           </div>
+
+
+          {/* Author & editorial policy — who writes this, and how it is checked. */}
+          <section id="author" className="scroll-mt-28 mb-16">
+            <h2 className="text-3xl font-display text-text-primary mb-8">Who Writes Astroneo</h2>
+            <div className="liquid-glass rounded-3xl p-7 md:p-10 border border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <Star size={26} className="text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-display text-2xl text-text-primary mb-1">Karan Patil</h3>
+                  <p className="text-sm text-muted font-body mb-5">
+                    Founder, developer and writer &middot; Astroneo
+                  </p>
+                  <div className="space-y-4 text-muted font-body leading-relaxed">
+                    <p>
+                      I am a software developer, not a professional astronomer, and I think it matters to say
+                      so plainly on a site about science. What I bring is the discipline of building things
+                      carefully and checking them: every article here is compiled from primary sources, and
+                      each one lists the references it draws on so you can go and read them yourself rather
+                      than taking my word for it.
+                    </p>
+                    <p>
+                      Astroneo started in 2024 as a star search tool I wanted to exist and could not find.
+                      It grew into 3D visualisations, a sky map, black hole profiles and a set of written
+                      guides because those were the things people kept asking for.
+                    </p>
+                    <p>
+                      If you find an error &mdash; and on a site with this much data there will be errors
+                      &mdash; please tell me. Corrections are welcome and get made.
+                    </p>
+                  </div>
+                  <a
+                    href="mailto:contact@asenra.in"
+                    className="inline-flex items-center gap-2 mt-6 text-accent hover:underline font-body text-sm"
+                  >
+                    <Mail size={15} />
+                    contact@asenra.in
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="editorial-policy" className="scroll-mt-28 mb-16">
+            <h2 className="text-3xl font-display text-text-primary mb-8">Editorial Policy</h2>
+            <div className="prose prose-invert prose-p:text-muted max-w-none font-body space-y-5">
+              <p className="leading-relaxed">
+                <strong className="text-text-primary">Where the data comes from.</strong> Catalogue values
+                &mdash; coordinates, magnitudes, distances, spectral classes &mdash; are drawn from the HYG
+                database, itself a compilation of the Hipparcos, Yale Bright Star and Gliese catalogues.
+                Physical and mission data come from NASA, ESA and the SIMBAD database at Strasbourg.
+              </p>
+              <p className="leading-relaxed">
+                <strong className="text-text-primary">Every article is sourced.</strong> Each written page
+                ends with the references it is built from, linking to NASA, ESA, ESO, Chandra, peer-reviewed
+                papers or the relevant mission team. Where a question is genuinely unsettled &mdash;
+                Deneb&rsquo;s distance, the origin of supermassive black holes, whether dark energy is
+                constant &mdash; the article says so rather than presenting one answer as settled.
+              </p>
+              <p className="leading-relaxed">
+                <strong className="text-text-primary">Reading times are measured, not estimated.</strong>{' '}
+                They are calculated from the actual word count of each article. Publication and last-reviewed
+                dates are both shown, so you can see when a page was written and when it was last checked.
+              </p>
+              <p className="leading-relaxed">
+                <strong className="text-text-primary">Catalogue pages are marked as such.</strong> Astroneo
+                holds data on 8,898 objects, but only a few dozen have full written articles. The rest are
+                catalogue reference pages showing measured values, and they are deliberately excluded from
+                search engine indexes because a data table is not an article. They remain available to browse
+                and search on the site.
+              </p>
+              <p className="leading-relaxed">
+                <strong className="text-text-primary">Corrections.</strong> Errors are fixed on discovery and
+                the review date updated. Write to{' '}
+                <a href="mailto:contact@asenra.in" className="text-accent hover:underline">
+                  contact@asenra.in
+                </a>{' '}
+                if you spot one.
+              </p>
+            </div>
+          </section>
 
           {/* Values */}
           <h2 className="text-3xl font-display text-text-primary mb-8">Our Core Values</h2>

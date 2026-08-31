@@ -1,0 +1,35 @@
+{
+  "summary": "The eighth-nearest star system to the Sun — a subgiant caught in the act of leaving the main sequence, with a white dwarf companion.",
+  "sections": [
+    {
+      "heading": "Before the dog",
+      "body": "The name comes from the Greek prokyon, meaning \"before the dog\", because Procyon rises shortly ahead of Sirius, the Dog Star, from mid-northern latitudes. It shines at magnitude 0.34 from 11.46 light-years away, making it the eighth-closest stellar system to the Sun.\n\nProcyon A is an F5 star of about 1.5 solar masses, 2.05 solar radii and a surface near 6,530 K, radiating roughly seven times the Sun's light. With Sirius and Betelgeuse it forms the Winter Triangle, an asterism that dominates the northern winter sky and is easy to pick out even from bright suburbs."
+    },
+    {
+      "heading": "A star in transition",
+      "body": "The interesting detail is the classification: F5 IV-V, straddling subgiant and main sequence. Procyon has nearly exhausted the hydrogen in its core and is beginning to expand, but has not yet clearly become a subgiant. It is caught mid-transition.\n\nThat makes it scientifically valuable, because this phase is brief compared with a star's main-sequence life and nearby examples are scarce. Over the next tens of millions of years Procyon will swell into an orange or red giant perhaps eighty to a hundred and fifty times its current size. Its brightness in our sky will increase substantially before it fades."
+    },
+    {
+      "heading": "A second predicted companion",
+      "body": "In 1844, the same year he inferred a companion for Sirius, Friedrich Bessel noticed that Procyon's proper motion also wavered and concluded it too had an unseen partner. Confirming it took far longer — Procyon B is fainter relative to its primary than Sirius B is, and was not observed until 1896, when John Martin Schaeberle found it with the Lick Observatory's 36-inch refractor.\n\nProcyon B is a white dwarf of about 0.6 solar masses compressed into an Earth-sized body, orbiting the primary every 40.8 years. Its existence means the system has already produced one stellar death: Procyon B was originally the heavier star, evolved faster, shed its envelope and left its core behind. In a few tens of millions of years Procyon A will follow the same path, and the system will end as two white dwarfs cooling in the dark."
+    }
+  ],
+  "observing": {
+    "bestMonths": "December to April from the northern hemisphere",
+    "difficulty": "Naked eye; the companion is a serious challenge for large telescopes",
+    "howToFind": "Find Sirius, then look up and to the left for the next comparably bright star. Procyon, Sirius and Betelgeuse form a large near-equilateral triangle — the Winter Triangle — which is one of the easiest patterns to learn in the winter sky."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "White dwarf stars",
+      "publisher": "Chandra X-ray Observatory",
+      "url": "https://chandra.harvard.edu/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

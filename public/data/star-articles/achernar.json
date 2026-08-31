@@ -1,0 +1,35 @@
+{
+  "summary": "The flattest star ever measured — spinning fast enough that its equator bulges by more than half again its polar radius.",
+  "sections": [
+    {
+      "heading": "The end of the river",
+      "body": "Achernar marks the southern end of Eridanus, the celestial river that winds down from near Orion, and its name comes from the Arabic for exactly that. At magnitude 0.46 it is the ninth brightest star in the sky, lying 139 light-years away.\n\nAt a declination of about −57 degrees it is a southern object, invisible from most of Europe and North America. It is a hot B6 star of roughly 6.7 solar masses with a surface near 15,000 K, radiating around 3,150 times the Sun's light — a young, massive star only a few hundred million years old."
+    },
+    {
+      "heading": "The most oblate star we know",
+      "body": "Achernar's distinction is its shape. Interferometric measurements show an equatorial radius roughly 1.56 times its polar radius, making it the most flattened star ever directly measured. It is not a sphere in any useful sense; it is closer to a lens.\n\nThe cause is rotation at more than 250 kilometres per second, near the limit at which the star would begin shedding material outright. As with other rapid rotators, gravity darkening follows: the distended equator sits further from the core, experiences weaker surface gravity, and runs substantially cooler than the poles. The star's apparent temperature and brightness therefore depend on the angle from which it is observed, which complicates every measurement made of it."
+    },
+    {
+      "heading": "A star throwing off a disk",
+      "body": "Achernar is classified as a Be star — the 'e' denoting emission lines in its spectrum. Those lines come not from the star's surface but from a disk of gas surrounding it, flung off the equator by the extreme rotation.\n\nThis is a decretion disk, the outward-flowing counterpart of the accretion disks that feed material inward around compact objects. Achernar's disk is episodic: it builds up over years, then dissipates, and the emission lines strengthen and fade accordingly. Observations have also resolved a close companion, an A-type star on a multi-year orbit, whose gravitational influence may help drive the cycle. Understanding how these disks are launched and lost remains an active problem, and Achernar is one of the brightest and best-studied test cases."
+    }
+  ],
+  "observing": {
+    "bestMonths": "September to January, from latitudes south of about 33°N",
+    "difficulty": "Naked eye where visible",
+    "howToFind": "Look well south on a spring evening in the southern hemisphere. Achernar sits in an empty region of sky with few bright neighbours, roughly forming a wide triangle with Canopus and the Large Magellanic Cloud."
+  },
+  "sources": [
+    {
+      "title": "Achernar: the flattest star",
+      "publisher": "European Southern Observatory",
+      "url": "https://www.eso.org/public/"
+    },
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

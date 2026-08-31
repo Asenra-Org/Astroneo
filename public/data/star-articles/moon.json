@@ -1,0 +1,40 @@
+{
+  "summary": "Born from a collision that nearly destroyed the young Earth, now drifting away at the rate your fingernails grow.",
+  "sections": [
+    {
+      "heading": "Made from a collision",
+      "body": "The prevailing explanation for the Moon is the giant-impact hypothesis: roughly 4.5 billion years ago, a Mars-sized body often called Theia struck the young Earth. The impact vaporised much of both objects' outer material, and the debris that stayed in orbit coalesced into the Moon within perhaps a century.\n\nThe strongest evidence comes from the Apollo samples. The Moon's rocks are nearly identical to Earth's mantle in their oxygen isotope ratios — far closer than any meteorite from elsewhere in the solar system — which argues they share an origin. The Moon is also strikingly iron-poor, consistent with forming from mantle material after both bodies' iron cores had already merged into Earth's. The remaining difficulty is that the isotopic match is almost too good, and refining the impact models to explain that is ongoing work."
+    },
+    {
+      "heading": "Locked, and receding",
+      "body": "The Moon rotates once per orbit, so the same hemisphere always faces us. This is tidal locking, the result of Earth's gravity having gradually braked the Moon's original faster spin until it synchronised.\n\nThe same tidal interaction is still operating in the other direction. The Moon raises bulges in Earth's oceans, Earth's rotation drags those bulges slightly ahead of the Moon, and their gravitational pull accelerates it into a wider orbit — 3.8 centimetres per year, measured precisely by bouncing lasers off reflectors the Apollo missions left behind. Earth's day lengthens correspondingly, by roughly 1.7 milliseconds per century. A distant consequence is that total solar eclipses are temporary: the Moon currently appears just large enough to cover the Sun, and in a few hundred million years it will be too far away to manage it."
+    },
+    {
+      "heading": "Two very different faces",
+      "body": "The near side is covered by dark maria — vast plains of solidified basalt from ancient volcanic flooding. The far side, first seen by Luna 3 in 1959, is almost entirely rugged, cratered highland with very little mare.\n\nThe likely explanation is crustal thickness: the far side's crust is substantially thicker, so rising magma rarely reached the surface. Why it is thicker remains debated, with tidal heating asymmetry in the early Earth–Moon system among the candidates. Meanwhile, permanently shadowed craters at the poles hold water ice, confirmed by Chandrayaan-1's Moon Mineralogy Mapper and the LCROSS impact. That ice is the practical reason the lunar south pole is the target for Artemis and for essentially every crewed lunar plan currently being pursued — water there means drinking water, breathable oxygen, and rocket propellant that does not have to be lifted out of Earth's gravity well."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Year-round, on a roughly 29.5-day cycle",
+    "difficulty": "Naked eye; binoculars transform it",
+    "howToFind": "Counter-intuitively, a full Moon is the worst time to look. With the Sun directly overhead on the lunar surface nothing casts a shadow and the view is flat and glaring. Observe instead along the terminator — the line between lit and unlit — where low sunlight throws long shadows and crater walls and mountains stand out in relief. Any binoculars will show this clearly."
+  },
+  "sources": [
+    {
+      "title": "Earth's Moon",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/moon/"
+    },
+    {
+      "title": "Artemis programme",
+      "publisher": "NASA",
+      "url": "https://www.nasa.gov/humans-in-space/artemis/"
+    },
+    {
+      "title": "Lunar Reconnaissance Orbiter",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/lro/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -1,0 +1,40 @@
+{
+  "summary": "Reclassified in 2006, then revealed by a single flyby in 2015 to be a geologically active world with glaciers, mountains and a layered blue sky.",
+  "sections": [
+    {
+      "heading": "Why it was reclassified",
+      "body": "Pluto's demotion in 2006 is often described as a demotion of Pluto. It is better understood as a consequence of discovering that Pluto was not unique. Through the 1990s and 2000s astronomers found a growing population of icy bodies beyond Neptune, and in 2005 Eris, which is comparable in size to Pluto and more massive.\n\nThat left a choice: admit Eris and an indefinite number of similar objects as planets, or define the term more tightly. The IAU chose the latter, requiring that a planet orbit the Sun, be round under its own gravity, and have cleared the neighbourhood around its orbit. Pluto meets the first two and fails the third — it shares its region with a great many Kuiper Belt objects, and is locked in a 3:2 resonance with Neptune, orbiting twice for every three Neptunian orbits. The definition remains contested among planetary scientists, but the underlying observation is not: Pluto is one member of a large family, not a lone outlier."
+    },
+    {
+      "heading": "What New Horizons found",
+      "body": "Until July 2015 the best image of Pluto was a handful of blurry Hubble pixels. Expectations were modest — a small, cold, cratered body, geologically dead for billions of years.\n\nNew Horizons found nothing of the kind. Sputnik Planitia, the western lobe of the bright heart-shaped region, is a vast plain of nitrogen ice with no impact craters at all, meaning its surface is less than about ten million years old. It is divided into polygonal cells tens of kilometres across, the signature of convection — nitrogen ice slowly overturning and resurfacing the plain from below. Elsewhere, mountains of water ice rise up to 3.5 km, water ice being the only material rigid enough at these temperatures to hold that shape. Ridges suggest cryovolcanism, and the internal heat may indicate a subsurface liquid ocean beneath the ice shell."
+    },
+    {
+      "heading": "A blue haze and a double world",
+      "body": "Backlit images taken as New Horizons looked back at Pluto revealed an atmosphere with more than twenty distinct haze layers extending hundreds of kilometres up, glowing blue. The colour arises the same way Earth's does — small particles scattering short wavelengths preferentially — though here the particles are tholins, complex organic molecules formed when ultraviolet light breaks apart methane and nitrogen.\n\nPluto's largest moon, Charon, is over half its diameter. The pair is proportionally so evenly matched that their common centre of mass lies outside Pluto's surface, so they genuinely orbit each other rather than Charon orbiting Pluto — a configuration sometimes described as a double dwarf planet. Four smaller moons, Styx, Nix, Kerberos and Hydra, tumble chaotically in the shifting gravitational field of the central pair."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Around opposition, once a year",
+    "difficulty": "Serious challenge — magnitude 14, needs 200 mm or more from a dark site",
+    "howToFind": "Pluto is a faint point of light indistinguishable from background stars in any telescope. The standard approach is to photograph or sketch the field on two nights several days apart and identify the object that moved. It is a matter of confirmation rather than viewing — there is no visible disk to see."
+  },
+  "sources": [
+    {
+      "title": "Pluto",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/dwarf-planets/pluto/"
+    },
+    {
+      "title": "New Horizons mission",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/new-horizons/"
+    },
+    {
+      "title": "Definition of a planet",
+      "publisher": "International Astronomical Union",
+      "url": "https://www.iau.org/public/themes/pluto/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

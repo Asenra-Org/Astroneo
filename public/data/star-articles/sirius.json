@@ -1,0 +1,35 @@
+{
+  "summary": "The brightest star in the night sky — a nearby white A-type star orbited by a dead stellar core compressed to the size of Earth.",
+  "sections": [
+    {
+      "heading": "Bright because it is close",
+      "body": "At magnitude −1.46, Sirius outshines every other star we can see, but it does so mostly through proximity rather than power. It sits 8.6 light-years away — the seventh-nearest star system — and radiates about 25 times the Sun's light. That is respectable but unremarkable; Rigel is thousands of times more luminous and looks fainter to us purely because it is a hundred times further off.\n\nSirius A is a main-sequence A1V star of about 2.06 solar masses and 1.71 solar radii, with a surface near 9,900 K. That temperature gives it a faintly blue-white cast, and explains why it scintillates so violently when low on the horizon: a bright point source seen through thick, turbulent air flashes through the whole spectrum. Sirius near the horizon generates more misidentified-aircraft and UFO reports than any other star."
+    },
+    {
+      "heading": "The companion that was predicted before it was seen",
+      "body": "In 1844 Friedrich Bessel noticed that Sirius was not moving in a straight line across the sky. It wobbled, with a period of about fifty years. Bessel concluded there had to be an unseen massive companion and worked out its orbit without ever observing it — an early and elegant demonstration that you can find a dark object by watching what it does to a bright one.\n\nThe companion was finally glimpsed in 1862 by Alvan Graham Clark while testing a new refractor. Sirius B turned out to be genuinely strange: roughly the mass of the Sun packed into a body about the size of Earth. It was the first white dwarf ever identified, and it forced physicists to accept matter at densities where a teaspoon would weigh several tonnes. The explanation — electron degeneracy pressure holding the star up against its own gravity — had to wait for quantum mechanics in the 1920s."
+    },
+    {
+      "heading": "The Nile, the dog days, and the colour problem",
+      "body": "Sirius carries more recorded cultural history than any other star. Its heliacal rising — the first morning it becomes visible before dawn after a spell lost in the Sun's glare — coincided with the annual flooding of the Nile, and Egyptian calendars were anchored to it for millennia. Greeks and Romans associated its return with the hottest weeks of summer, which is where \"the dog days\" comes from, Sirius being the brightest star of Canis Major, the great dog.\n\nOne puzzle has never been fully settled. Several classical sources, Ptolemy among them, describe Sirius as red. It is emphatically not red now, and stellar evolution offers no mechanism to change an A-type star's colour in two thousand years. The likeliest explanations are translation and category errors in the original texts, or descriptions of the star reddened by horizon haze — but the question remains genuinely open."
+    }
+  ],
+  "observing": {
+    "bestMonths": "December to March from the northern hemisphere; higher and steadier from the southern",
+    "difficulty": "Naked eye — unmistakable",
+    "howToFind": "Follow Orion's belt down and to the left. Sirius is the first and by far the brightest thing you reach. Splitting Sirius B out of the glare needs roughly a 200 mm telescope, steady air, and patience — the magnitude difference is about ten, which is the real difficulty rather than the separation."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "White dwarfs and Sirius B",
+      "publisher": "Chandra X-ray Observatory",
+      "url": "https://chandra.harvard.edu/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

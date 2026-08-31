@@ -1,0 +1,35 @@
+{
+  "summary": "The orange eye of Taurus — a giant star that appears to sit among the Hyades cluster but is actually less than half as far away.",
+  "sections": [
+    {
+      "heading": "A line-of-sight illusion",
+      "body": "Aldebaran glows orange at the front of the Hyades, the V-shaped cluster forming the bull's face, and for centuries it was assumed to belong to it. It does not. Aldebaran lies 65 light-years from Earth while the Hyades sit at roughly 153 — the star is a foreground object that happens to fall in the same direction.\n\nThe Hyades stars share a common origin, drift together through the galaxy, and are all about 625 million years old. Aldebaran is an unrelated interloper billions of years older, and the resemblance to cluster membership is pure perspective. It is one of the cleaner reminders that the constellations are two-dimensional patterns imposed on a three-dimensional arrangement."
+    },
+    {
+      "heading": "An orange giant",
+      "body": "Aldebaran is a K5 giant of about 1.16 solar masses that has swollen to roughly 44 times the Sun's radius. Its surface has cooled to near 3,900 K, giving it the distinctly warm colour that makes it easy to identify, and it radiates about 440 times the Sun's light — most of it in the infrared.\n\nIt varies slightly and irregularly in brightness, by a few hundredths of a magnitude, as its distended outer layers pulse. Having exhausted its core hydrogen, it is now working through later stages of fusion and will eventually shed its outer envelope as a planetary nebula and leave behind a white dwarf. A candidate planet of several Jupiter masses has been proposed from decades of velocity data, but the signal is difficult to separate from the star's own atmospheric noise and the detection remains contested."
+    },
+    {
+      "heading": "Occultations and a distant appointment",
+      "body": "Aldebaran sits close enough to the ecliptic that the Moon passes in front of it in series lasting several years, separated by longer gaps. These lunar occultations are worth catching: the star vanishes instantly rather than fading, because it is effectively a point source and the Moon has no atmosphere to dim it gradually. The abruptness is startling the first time you see it.\n\nThe star also has a long-term visitor. Pioneer 10, launched in 1972 and now silent, is drifting roughly in Aldebaran's direction. It will take about two million years to arrive, by which time the star will have moved considerably — but the trajectory has given Aldebaran a permanent minor role in the story of humanity's first departures from the solar system."
+    }
+  ],
+  "observing": {
+    "bestMonths": "October to March from the northern hemisphere",
+    "difficulty": "Naked eye — bright and distinctly coloured",
+    "howToFind": "Follow Orion's belt up and to the right. The first bright star you meet is Aldebaran, marking the eye of Taurus at one tip of the V-shaped Hyades cluster. Continue along the same line and you reach the Pleiades."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Pioneer 10 mission",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/pioneer-10/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

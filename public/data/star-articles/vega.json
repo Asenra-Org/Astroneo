@@ -1,0 +1,44 @@
+{
+  "summary": "The star astronomers once used to define brightness itself — a fast-spinning, egg-shaped sun that we happen to view almost exactly pole-on.",
+  "sections": [
+    {
+      "heading": "The zero point of the magnitude scale",
+      "body": "For much of the twentieth century, Vega was the reference against which every other star's brightness and colour were measured. It was assigned magnitude 0.0 by definition, and the photometric system used across professional astronomy still carries its name. Modern calibrations have drifted slightly — Vega now sits at about 0.03 — but the convention stuck because the star is bright, well placed for northern observatories, and appeared reassuringly stable.\n\nIt also has an unusual record of firsts. In 1850 it became the first star other than the Sun to be photographed, in a daguerreotype taken at Harvard College Observatory. In 1872 Henry Draper captured the first photograph of a stellar spectrum, again using Vega."
+    },
+    {
+      "heading": "Spinning close to the breaking point",
+      "body": "Vega turns out to be far less placid than its role as a calibration standard suggests. It rotates at roughly 236 kilometres per second at its equator, completing a turn in well under a day and coming within about a fifth of the speed at which it would tear itself apart.\n\nThat spin flattens the star noticeably: its equatorial radius is around 20% larger than its polar radius. It also produces gravity darkening, where the bulged equator sits further from the core, experiences weaker surface gravity, and runs cooler — near 8,000 K — while the poles reach roughly 10,000 K. We see Vega almost exactly pole-on, staring down its rotation axis, which is precisely why it looked like such a uniform, dependable standard for so long. Had we viewed it edge-on, nobody would have chosen it."
+    },
+    {
+      "heading": "The first debris disk",
+      "body": "In 1983 the Infrared Astronomical Satellite found that Vega was emitting far more infrared radiation than a bare star should. The excess came from a surrounding disk of cold dust — debris ground down from collisions between asteroid-sized bodies.\n\nThis was the first detection of its kind, and circumstellar debris disks are still sometimes described as showing \"the Vega phenomenon\". It provided early observational evidence that the raw material of planet formation is common around other stars, at a time when no exoplanet had yet been confirmed. Vega's disk has since been mapped in detail, though whether full-sized planets have formed within it remains unsettled."
+    },
+    {
+      "heading": "A former and future pole star",
+      "body": "Earth's rotation axis wobbles like a slowing top, tracing a circle on the sky every 25,800 years. Polaris holds the northern pole position now, but it is a temporary arrangement. Vega marked the celestial north pole around 12,000 BCE and will do so again near the year 13,700.\n\nIn the meantime it anchors the Summer Triangle alongside Deneb and Altair, an asterism that dominates northern summer evenings and is bright enough to punch through most urban light pollution."
+    }
+  ],
+  "observing": {
+    "bestMonths": "June to October from the northern hemisphere, near overhead in midsummer",
+    "difficulty": "Naked eye — visible from city centres",
+    "howToFind": "On a summer evening look near the zenith for the brightest star overhead. Vega forms the top-right corner of the large Summer Triangle, with Deneb to its left and Altair well below. The small parallelogram of Lyra hangs just beneath it."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Debris disks and the Vega phenomenon",
+      "publisher": "NASA Spitzer Science Center",
+      "url": "https://www.spitzer.caltech.edu/"
+    },
+    {
+      "title": "Circumstellar material around Vega",
+      "publisher": "European Southern Observatory",
+      "url": "https://www.eso.org/public/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}
