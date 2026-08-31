@@ -1,0 +1,44 @@
+{
+  "summary": "The closest star system to the Sun — a pair of Sun-like stars orbiting each other, with the red dwarf Proxima trailing far behind.",
+  "sections": [
+    {
+      "heading": "Two suns, close to home",
+      "body": "What looks like a single brilliant star at magnitude −0.27, third brightest in the night sky, is a binary. Alpha Centauri A is a G2V star almost indistinguishable from the Sun in temperature and spectral type, slightly heavier at 1.1 solar masses and about 1.5 times as luminous. Alpha Centauri B is a cooler orange K1 dwarf of 0.91 solar masses emitting roughly half the Sun's light.\n\nThe similarity of the primary to our own star is genuinely striking and is a large part of why the system attracts so much attention. If you stood on a world orbiting Alpha Centauri A at the right distance, the sunlight would look essentially normal."
+    },
+    {
+      "heading": "The orbit, and the third member",
+      "body": "The two stars circle a common centre of mass every 79.9 years on a markedly elliptical path, closing to about 11 astronomical units — roughly Saturn's distance from the Sun — and opening out to around 36. Through a small telescope the pair is easy to split, and their relative positions shift visibly across a few years, which makes this one of the most rewarding binaries in the sky for a patient observer.\n\nProxima Centauri is the third member, a faint red dwarf orbiting the inner pair at some 13,000 astronomical units with a period near 550,000 years. Because Proxima is currently on the near side of that enormous orbit, it — not the bright pair — holds the title of closest star to the Sun."
+    },
+    {
+      "heading": "How we learned it was close",
+      "body": "The system's proximity was established in the 1830s by Thomas Henderson, observing from the Cape of Good Hope. Henderson measured its parallax — the tiny annual shift in position caused by Earth's motion around the Sun — and found a distance of a few light-years.\n\nHe sat on the result, doubting his own precision, and published in 1839 after Friedrich Bessel had already announced a parallax for 61 Cygni. Henderson therefore narrowly missed being credited with the first stellar distance ever measured, despite having done the work earlier. The measurements mattered enormously: for the first time they gave the stars a physical scale, and confirmed that the universe was vastly larger than the solar system."
+    },
+    {
+      "heading": "Planets and the case for going there",
+      "body": "The confirmed planets in the system so far belong to Proxima. Searches around A and B are ongoing and difficult, because the two stars' light contaminates each other's measurements, but candidate detections have been reported and instruments capable of imaging a temperate planet here are actively being built.\n\nAt 4.37 light-years, Alpha Centauri is the least unreasonable interstellar destination available. Even so, the Voyager probes would need tens of thousands of years to cover the distance. Concepts such as Breakthrough Starshot propose accelerating gram-scale probes to a fraction of light speed with ground-based lasers, cutting the journey to a few decades. Every element of that plan is unproven — but the target is fixed, and it is this system."
+    }
+  ],
+  "observing": {
+    "bestMonths": "April to July, from latitudes south of about 25°N",
+    "difficulty": "Naked eye; any small telescope splits the pair",
+    "howToFind": "In the southern sky, find the Southern Cross and follow the two bright Pointer stars away from it. Alpha Centauri is the further and brighter of the two Pointers. A 60 mm telescope at moderate magnification cleanly separates A from B."
+  },
+  "sources": [
+    {
+      "title": "Alpha Centauri",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Exoplanet Exploration",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/exoplanets/"
+    },
+    {
+      "title": "Observations of the Alpha Centauri system",
+      "publisher": "European Southern Observatory",
+      "url": "https://www.eso.org/public/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

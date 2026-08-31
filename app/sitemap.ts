@@ -1,37 +1,75 @@
 import type { MetadataRoute } from 'next';
-import fs from 'fs';
-import path from 'path';
+import { isIndexableStar } from '@/lib/indexable';
+import { getAllArticles } from '@/lib/blog';
+import { getAllStars } from '@/lib/starCatalog';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://astroneo.space';
+/**
+ * The single sitemap for the site.
+ *
+ * This route is what actually serves /sitemap.xml — it shadows anything sitting in
+ * public/. The project previously also ran next-sitemap in postbuild, writing a second
+ * set of files that were never served; that has been removed so there is one source of
+ * truth.
+ *
+ * Only pages with real editorial content are listed. The ~8,800 catalog-stub star pages
+ * stay live and internally linked but are withheld here and marked noindex, because
+ * advertising thousands of templated near-duplicate pages is what Google's thin-content
+ * and scaled-content guidelines target. See lib/indexable.js.
+ */
 
-  // Static pages
+const BASE = 'https://astroneo.space';
+
+async function readBlackHoleSlugs(): Promise<string[]> {
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.join(process.cwd(), 'public', 'data', 'blackholes.json');
+    const items: { slug: string }[] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    return items.map((item) => item.slug);
+  } catch {
+    return [];
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+
   const staticPages: MetadataRoute.Sitemap = [
-    { url: base,                       lastModified: new Date(), changeFrequency: 'weekly',  priority: 1.0 },
-    { url: `${base}/explore`,          lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${base}/blog`,             lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${base}/blackholes`,       lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/sky-map`,          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/upcoming-events`,  lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
-    { url: `${base}/about`,            lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/contact`,          lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.6 },
-    { url: `${base}/privacy-policy`,   lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.4 },
-    { url: `${base}/terms`,            lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.4 },
+    { url: BASE, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${BASE}/explore`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE}/blackholes`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/sky-map`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/upcoming-events`, lastModified: now, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.6 },
+    { url: `${BASE}/privacy-policy`, lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
+    { url: `${BASE}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
   ];
 
-  // Blog articles
-  let blogPages: MetadataRoute.Sitemap = [];
-  try {
-    const filePath = path.join(process.cwd(), 'public', 'data', 'blogs.json');
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const articles: { slug: string; date: string }[] = JSON.parse(raw);
-    blogPages = articles.map(a => ({
-      url: `${base}/blog/${a.slug}`,
-      lastModified: new Date(a.date),
-      changeFrequency: 'yearly' as const,
-      priority: 0.7,
-    }));
-  } catch (_) {}
+  const articles = await getAllArticles();
+  const blogPages: MetadataRoute.Sitemap = articles.map((article) => ({
+    url: `${BASE}/blog/${article.slug}`,
+    lastModified: new Date(article.updated),
+    changeFrequency: 'monthly' as const,
+    priority: 0.9,
+  }));
 
-  return [...staticPages, ...blogPages];
+  const stars = getAllStars();
+  const starPages: MetadataRoute.Sitemap = stars.filter(isIndexableStar).map((star) => ({
+    url: `${BASE}/star/${star.slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+
+  const blackHoleSlugs = await readBlackHoleSlugs();
+  const blackHolePages: MetadataRoute.Sitemap = blackHoleSlugs.map((slug) => ({
+    url: `${BASE}/blackhole/${slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...blogPages, ...starPages, ...blackHolePages];
 }

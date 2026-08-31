@@ -1,0 +1,39 @@
+{
+  "summary": "The brightest star in the northern sky — an ancient orange giant that is not originally from our part of the galaxy.",
+  "sections": [
+    {
+      "heading": "A giant close by",
+      "body": "Arcturus shines at magnitude −0.05 from 36.7 light-years away, making it the brightest star visible from northern latitudes and the fourth brightest in the sky overall. It is a K0 giant with about 25 times the Sun's radius and 170 times its light output, but only around 1.08 solar masses.\n\nThat mass figure is the interesting one. Arcturus is barely heavier than the Sun, yet it is already a giant — it has simply had more time. Having exhausted its core hydrogen it expanded and cooled to about 4,290 K, and it is now fusing helium in its core. This is a fairly precise preview of what the Sun will look like in roughly five billion years."
+    },
+    {
+      "heading": "The star that revealed stellar motion",
+      "body": "In 1718 Edmond Halley compared contemporary star positions with catalogues compiled by Ptolemy over fifteen hundred years earlier and found that Arcturus, along with Sirius and Aldebaran, had shifted measurably. This was the discovery of proper motion, and it dismantled the assumption that the stars were fixed points on a rotating shell.\n\nArcturus is well suited to the job. It crosses the sky at about 2.3 arcseconds per year — one of the largest proper motions among bright stars — which accumulates to roughly the width of the full Moon every 800 years. It is currently passing through our neighbourhood at high speed and will be noticeably fainter in a few tens of thousands of years."
+    },
+    {
+      "heading": "An immigrant from another galaxy",
+      "body": "That speed is a clue to something stranger. Most bright stars near the Sun move roughly along with us as the galactic disk rotates. Arcturus does not: it is travelling at over 100 kilometres per second relative to the local standard of rest, on an orbit steeply inclined to the disk.\n\nIt is also metal-poor, containing fewer heavy elements than the Sun, which marks it as old. Arcturus belongs to a group of stars sharing similar motion known as the Arcturus stream, and the favoured explanation is that these stars formed in a smaller galaxy that the Milky Way absorbed billions of years ago. If that holds, Arcturus is a piece of a devoured galaxy passing through, and it will continue out of the disk and back again on an orbit that has little to do with ours."
+    },
+    {
+      "heading": "Opening a World's Fair",
+      "body": "In 1933 the organisers of the Chicago World's Fair wanted a theatrical opening. They chose to focus light from Arcturus onto photocells at several observatories, using the resulting current to switch on the fair's floodlights.\n\nThe conceit was that the light had left Arcturus around the time of Chicago's previous World's Fair in 1893, forty years earlier — a neat piece of showmanship built on the distance estimate then available. Modern measurements put the travel time closer to 37 years, so the timing was slightly off, but the demonstration remains one of the more elegant pieces of public astronomy ever staged."
+    }
+  ],
+  "observing": {
+    "bestMonths": "April to August from the northern hemisphere",
+    "difficulty": "Naked eye — brilliant, with an obvious warm tint",
+    "howToFind": "Follow the curve of the Big Dipper's handle away from the bowl and continue the arc — the old mnemonic is \"arc to Arcturus\". It is the first brilliant orange star along that curve. Extending further brings you to Spica."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "The Arcturus stream and galactic accretion",
+      "publisher": "ESA Gaia mission",
+      "url": "https://www.esa.int/Science_Exploration/Space_Science/Gaia"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -1,23 +1,10 @@
-import fs from 'fs';
-import path from 'path';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-
-interface BlogArticle {
-  slug: string;
-  title: string;
-  date: string;
-  readTime: string;
-  category: string;
-  featured: boolean;
-  excerpt: string;
-  content: string;
-  image: string;
-}
+import { getAllArticles } from '@/lib/blog';
 
 export const metadata: Metadata = {
   title: 'Space Science & Stargazing Blog | Astroneo',
@@ -32,15 +19,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BlogListPage() {
-  let articles: BlogArticle[] = [];
-  try {
-    const filePath = path.join(process.cwd(), 'public', 'data', 'blogs.json');
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    articles = JSON.parse(raw);
-  } catch (err) {
-    console.error('Error loading blog articles:', err);
-  }
+export default async function BlogListPage() {
+  const articles = await getAllArticles();
 
   const featuredArticle = articles.find(a => a.featured) || articles[0];
   const regularArticles = articles.filter(a => a.slug !== featuredArticle?.slug);

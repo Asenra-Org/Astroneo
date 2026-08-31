@@ -1,0 +1,40 @@
+{
+  "summary": "The first object widely accepted as a black hole, and the subject of a famous bet that Stephen Hawking lost on purpose.",
+  "sections": [
+    {
+      "heading": "An X-ray source with no visible cause",
+      "body": "Cygnus X-1 was found in 1964 by instruments carried above the atmosphere on sounding rockets — X-rays do not reach the ground, so the entire field of X-ray astronomy had to wait for rocketry. It was among the strongest X-ray sources in the sky, and it was in the constellation Cygnus, which gave it its name.\n\nThe puzzle was what produced it. The X-rays came from the direction of HDE 226868, a blue supergiant star of around 40 solar masses. But blue supergiants do not emit X-rays like this, and the emission flickered on timescales of milliseconds.\n\nThat flickering was the decisive clue. An object cannot vary in brightness faster than light can cross it, so a source varying in milliseconds must be no more than a few hundred kilometres across. Something extremely small was producing X-rays next to a very large star."
+    },
+    {
+      "heading": "Too heavy to be anything else",
+      "body": "Watching the supergiant's spectrum showed it wobbling on a 5.6-day cycle, orbiting an unseen companion. From that orbit the companion's mass could be calculated, and revised measurements published in 2021 — using very long baseline radio interferometry to pin down the distance at about 7,100 light-years — put it at roughly 21 solar masses.\n\nThat number settles the argument. A white dwarf cannot exceed about 1.4 solar masses. A neutron star cannot exceed roughly 2.2 to 3. An object of 21 solar masses, compact enough to vary in milliseconds, has no other available description. Cygnus X-1 became the first object most astronomers accepted as a black hole.\n\nThe X-rays come from an accretion disk. The black hole is close enough to its companion to capture material from the supergiant's powerful stellar wind, and that gas spirals inward, heating to millions of degrees through friction before it crosses the horizon. The system also appears to be spinning near the maximum rate general relativity permits."
+    },
+    {
+      "heading": "The bet",
+      "body": "In 1974, Stephen Hawking and Kip Thorne made a wager. Thorne bet that Cygnus X-1 contained a black hole. Hawking bet that it did not.\n\nHawking's reasoning was openly a hedge. He had spent his career working on black hole theory, and as he put it, if black holes turned out not to exist he would have wasted a great deal of effort — but at least he would win the bet. It was, in his words, an insurance policy.\n\nBy 1990 the evidence had become strong enough that Hawking conceded. The stake was a subscription to *Penthouse* for Thorne, over the reported objections of Thorne's wife. The story is remembered partly because it is funny and partly because it captures something real about how the field moved: even the people building the theory treated the existence of these objects as an open empirical question until the observations were in."
+    }
+  ],
+  "observing": {
+    "bestMonths": "July to November from the northern hemisphere",
+    "difficulty": "The companion star needs binoculars; the black hole emits no visible light",
+    "howToFind": "HDE 226868 sits in Cygnus at about magnitude 8.9, near the star Eta Cygni along the swan's neck. Binoculars or a small telescope with a chart will show it. There is nothing visually remarkable about it — the interest is entirely in knowing that the star is being slowly consumed by something you cannot see beside it."
+  },
+  "sources": [
+    {
+      "title": "Cygnus X-1",
+      "publisher": "Chandra X-ray Observatory",
+      "url": "https://chandra.harvard.edu/"
+    },
+    {
+      "title": "Black Holes",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/black-holes/"
+    },
+    {
+      "title": "Revised mass and distance of Cygnus X-1",
+      "publisher": "International Centre for Radio Astronomy Research",
+      "url": "https://www.icrar.org/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -1,0 +1,35 @@
+{
+  "summary": "Two enormous blue stars orbiting so closely that tides have pulled them into eggs — and the star that revealed the precession of the equinoxes.",
+  "sections": [
+    {
+      "heading": "A binary too close to separate",
+      "body": "Spica looks like a single blue-white star of magnitude 0.97, and no telescope will split it. It is in fact two stars orbiting each other every 4.0145 days at a separation of only about 0.12 astronomical units — far closer than Mercury is to the Sun. The pair is known to be double only from the periodic Doppler shifting of its spectral lines.\n\nThe primary is a B1 star of roughly 11.4 solar masses, 7.4 solar radii and a surface near 22,400 K, radiating around 20,000 times the Sun's light. The secondary is smaller at about 7 solar masses but still far outweighs anything in our neighbourhood. Almost all of the system's output is ultraviolet."
+    },
+    {
+      "heading": "Stars pulled out of shape",
+      "body": "At that separation the mutual gravitational pull is strong enough to visibly distort both stars into ellipsoids, their long axes pointing at each other. As they orbit, we see varying amounts of their elongated surfaces, and the combined brightness rises and falls by a few hundredths of a magnitude twice per orbit.\n\nThis makes Spica a rotating ellipsoidal variable — brightness changes caused purely by geometry, with no eclipse involved. The primary is separately a Beta Cephei variable, pulsating on a period of a few hours as waves driven by iron opacity move through its envelope. The result is a light curve with two unrelated signals overlaid, which took considerable work to disentangle."
+    },
+    {
+      "heading": "The star that measured the drift of the sky",
+      "body": "Around 130 BCE, Hipparchus compared his own measurement of Spica's position relative to the autumn equinox with records from Timocharis roughly 150 years earlier. The values disagreed by about two degrees — too much to be observational error.\n\nHipparchus concluded that the equinoxes themselves were shifting, and so discovered the precession of the equinoxes: the 25,800-year wobble of Earth's rotation axis. It is one of the great results of ancient astronomy, achieved with naked-eye instruments and careful record-keeping, and Spica's position near the ecliptic is what made it the right star to notice it with."
+    }
+  ],
+  "observing": {
+    "bestMonths": "March to July from both hemispheres",
+    "difficulty": "Naked eye — bright, with a clear blue-white cast",
+    "howToFind": "Follow the arc of the Big Dipper's handle to Arcturus, then continue the same curve onward — \"arc to Arcturus, speed on to Spica\". It is the brightest star in Virgo and the only prominent one in an otherwise faint region."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Variable star classifications",
+      "publisher": "American Association of Variable Star Observers",
+      "url": "https://www.aavso.org/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

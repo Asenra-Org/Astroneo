@@ -1,0 +1,39 @@
+{
+  "summary": "One of the most luminous stars visible to the naked eye — so distant that astronomers still argue about exactly how far away it is.",
+  "sections": [
+    {
+      "heading": "Brightness at an extraordinary range",
+      "body": "Deneb appears as a fairly ordinary magnitude 1.25 star, comparable to several others. The distance is what makes it remarkable. Where Vega sits 25 light-years away and Sirius under 9, Deneb is somewhere in the region of 1,500 to 2,600 light-years — and still looks bright.\n\nWorking backwards, its intrinsic output is somewhere near 200,000 times the Sun's, placing it among the most luminous stars a person can see without a telescope. It is a blue-white A2 supergiant of roughly 19 solar masses, swollen to about 200 solar radii, with a surface near 8,500 K. If Deneb were placed at Sirius's distance it would be bright enough to read by."
+    },
+    {
+      "heading": "Why the distance is uncertain",
+      "body": "Parallax works by measuring the tiny apparent shift of a star as Earth moves around the Sun, and the shift shrinks with distance. For something as remote as Deneb the angle is minuscule, and small systematic errors dominate.\n\nThe Hipparcos satellite's results implied around 1,500 light-years; reanalysis pushed the figure considerably higher. Gaia, which has transformed distance measurement for most of the galaxy, struggles specifically with very bright stars — they saturate its detectors, and Deneb is among the objects where its results need careful handling. The consequence is that Deneb's luminosity, mass and radius all carry uncertainty that scales with the distance error, which is unusual for such a prominent star."
+    },
+    {
+      "heading": "A pulsating supergiant",
+      "body": "Deneb is the prototype of the Alpha Cygni variables, a class of supergiants that shift irregularly in brightness by around a tenth of a magnitude. The variation comes from non-radial pulsations: rather than the whole star swelling and contracting together, different regions of the surface move in opposite directions at once, with several overlapping modes producing a pattern that never quite repeats.\n\nThe star is also shedding mass rapidly through a strong stellar wind, losing material at a rate hundreds of thousands of times the Sun's. Having burned through its core hydrogen in only around ten million years, it faces either a supernova or a transition through further evolutionary stages first."
+    },
+    {
+      "heading": "The tail of the swan",
+      "body": "The name derives from the Arabic dhanab, meaning tail, and Deneb marks the tail of Cygnus the swan — or equivalently the top of the Northern Cross, the asterism the constellation forms.\n\nIt is the third vertex of the Summer Triangle with Vega and Altair, and the faintest of the three, which is itself a useful lesson: the two brighter members are relatively modest stars very close by, while the dimmest is a titan at a hundred times the distance. Cygnus also lies along the Milky Way, so the region around Deneb is dense with nebulosity including the North America Nebula, whose shape gives it its name."
+    }
+  ],
+  "observing": {
+    "bestMonths": "July to November from the northern hemisphere",
+    "difficulty": "Naked eye — visible from towns and cities",
+    "howToFind": "Find the Summer Triangle overhead on a summer evening. Deneb is the faintest of its three corners, at the top of a distinct cross of stars running down the Milky Way. Under dark skies the surrounding star clouds are the best part of the view."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Gaia mission and stellar distances",
+      "publisher": "European Space Agency",
+      "url": "https://www.esa.int/Science_Exploration/Space_Science/Gaia"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

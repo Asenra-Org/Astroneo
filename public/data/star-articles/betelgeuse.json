@@ -1,0 +1,44 @@
+{
+  "summary": "A red supergiant in Orion's shoulder, large enough to swallow Jupiter's orbit, and the nearest star to us that will die as a supernova.",
+  "sections": [
+    {
+      "heading": "A star the size of a solar system",
+      "body": "Betelgeuse is a red supergiant roughly 700 light-years away, and it is one of the very few stars whose surface humans have ever resolved as an actual disk rather than a point of light. The Hubble Space Telescope managed it in 1995, and interferometers have since mapped bright and dark patches drifting across its face.\n\nIts radius is somewhere near 640 to 900 times the Sun's, with the uncertainty coming from the fact that a supergiant has no crisp edge — the atmosphere simply thins out until it becomes the surrounding wind. Placed where the Sun is, its surface would reach past the orbit of Mars and close to Jupiter's. Despite that bulk it holds only about 16 to 19 solar masses, so the average density of its outer layers is lower than the air you are breathing."
+    },
+    {
+      "heading": "The Great Dimming",
+      "body": "Between October 2019 and February 2020, Betelgeuse faded to about 40% of its usual brightness — the faintest it had been in the century of careful records. The dimming was dramatic enough to make general news, usually attached to speculation that the star was about to explode.\n\nIt was not. Imaging from the Very Large Telescope showed that the southern half of the disk had gone dark, and the explanation published in Nature in 2021 combined two effects: a cooler patch on the surface, and a cloud of dust that condensed after the star ejected a large bubble of gas in our direction. As the material cooled it formed obscuring grains, and the star effectively hid behind its own exhalation. Betelgeuse returned to normal brightness within months."
+    },
+    {
+      "heading": "A variable star with no fixed period",
+      "body": "Betelgeuse is a semiregular variable. Its brightness wanders between roughly magnitude 0.0 and 1.6, which is enough that an attentive observer can notice it changing relative to Rigel and Aldebaran over a single season. There is a dominant cycle of around 400 days plus a longer one near 5.9 years, but neither is strict — the pulsation of a convective supergiant is not a clean oscillation.\n\nThe convection itself is part of why. On the Sun, a granule is roughly the size of a country. On Betelgeuse, a single convective cell can span a large fraction of the visible disk, so a handful of enormous rising and sinking columns dominate the surface at any moment, and the star's apparent shape and brightness shift as they turn over."
+    },
+    {
+      "heading": "When it explodes",
+      "body": "Betelgeuse is fusing progressively heavier elements in its core and will eventually collapse into a type II supernova. The honest timescale is \"within the next hundred thousand years or so\", which is imminent by stellar standards and meaningless on a human one. It may already have exploded; the light simply would not have arrived yet.\n\nWhen it does, it should reach roughly the brightness of a half Moon, stay visible in daylight for weeks, and cast shadows at night. At 700 light-years it is far too distant to endanger Earth — the usual estimate for a supernova posing any biological risk is under about 50 light-years. What it will do is give astronomers their first nearby core-collapse event in the era of neutrino detectors and gravitational-wave observatories, and permanently remove Orion's shoulder from the sky."
+    }
+  ],
+  "observing": {
+    "bestMonths": "November to March from the northern hemisphere",
+    "difficulty": "Naked eye — one of the brightest stars in the sky",
+    "howToFind": "Find Orion's three-star belt, then look up and to the left (from the northern hemisphere) to the distinctly orange star marking the hunter's shoulder. Its colour contrast with blue-white Rigel, diagonally opposite, is obvious even from a city centre."
+  },
+  "sources": [
+    {
+      "title": "A dusty veil shading Betelgeuse during its Great Dimming",
+      "publisher": "Nature — Montargès et al., 2021",
+      "url": "https://www.nature.com/articles/s41586-021-03546-8"
+    },
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Hubble observations of Betelgeuse",
+      "publisher": "ESA/Hubble",
+      "url": "https://esahubble.org/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

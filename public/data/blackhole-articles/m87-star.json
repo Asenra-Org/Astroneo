@@ -1,0 +1,40 @@
+{
+  "summary": "The first black hole ever imaged — six and a half billion solar masses, with an event horizon larger than our entire solar system.",
+  "sections": [
+    {
+      "heading": "The first picture",
+      "body": "On 10 April 2019 the Event Horizon Telescope collaboration released the first direct image of a black hole. It showed a fuzzy orange ring with a dark centre, and it was immediately one of the most reproduced scientific images ever made.\n\nThe target was M87*, the supermassive black hole at the heart of Messier 87, a giant elliptical galaxy 55 million light-years away in the Virgo Cluster. Two things made it a better first target than our own galaxy's black hole: it is enormous, and material orbits it slowly enough that it holds still during an observation.\n\nThe image is not a photograph in any conventional sense. Eight radio observatories from Hawaii to the South Pole observed simultaneously, and their data were combined so the array functioned as a single telescope with an effective aperture the size of Earth. The volume was so large that no network could transmit it — petabytes of data were recorded to hard drives and physically flown to processing centres. The South Pole data could not be collected until the Antarctic winter ended. Reconstruction then took two years."
+    },
+    {
+      "heading": "What the image shows",
+      "body": "The dark centre is not the black hole itself. It is the **shadow** — the region where light paths bend so severely inward that nothing reaches us. It appears roughly two and a half times larger than the event horizon, because gravity bends the paths of photons that would otherwise have missed.\n\nThe bright ring is superheated gas swirling in the accretion flow. Its brightness is noticeably uneven, and that asymmetry is a prediction confirmed: material moving toward us is beamed brighter by relativistic Doppler effects, while material receding is dimmed.\n\nThe size and shape of the ring match what general relativity predicts for a black hole of this mass, to within measurement error. A theory published in 1915 predicted the appearance of an object that could not be observed for another 104 years, and got it right.\n\nA follow-up release in 2021 showed the same ring in polarised light, mapping the magnetic field lines threading the accretion flow — the structure thought to be responsible for launching the jet."
+    },
+    {
+      "heading": "Scale, and a jet seen a century early",
+      "body": "M87* holds about 6.5 billion solar masses, roughly 1,500 times more than Sagittarius A*. Its event horizon spans around 40 billion kilometres — larger than our entire solar system. Light takes well over a day to cross it.\n\nIt also drives one of the most famous relativistic jets in astronomy: a beam of material launched from the poles at close to light speed, extending some 5,000 light-years out of the galaxy. This jet was seen long before anyone knew what it was. In 1918, Heber Curtis at Lick Observatory noted \"a curious straight ray\" connected to the nucleus of M87. It took most of a century to establish that the ray is matter being flung from the vicinity of a supermassive black hole.\n\nHow these jets are launched is still not fully settled. The leading mechanism extracts rotational energy from the spinning black hole itself via magnetic fields anchored in the accretion disk, and the 2021 polarisation results support that picture."
+    }
+  ],
+  "observing": {
+    "bestMonths": "March to June, in Virgo",
+    "difficulty": "The host galaxy needs a 150 mm telescope; the black hole is not visible",
+    "howToFind": "Messier 87 sits in the Virgo Cluster, reachable from the region between Denebola in Leo and Vindemiatrix in Virgo. In an amateur telescope it appears as a featureless round glow — but that glow is a galaxy of several trillion stars, and at its centre is the object in the photograph."
+  },
+  "sources": [
+    {
+      "title": "First M87 Event Horizon Telescope Results",
+      "publisher": "Event Horizon Telescope Collaboration",
+      "url": "https://eventhorizontelescope.org/"
+    },
+    {
+      "title": "Black Holes",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/black-holes/"
+    },
+    {
+      "title": "The M87 jet",
+      "publisher": "Chandra X-ray Observatory",
+      "url": "https://chandra.harvard.edu/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

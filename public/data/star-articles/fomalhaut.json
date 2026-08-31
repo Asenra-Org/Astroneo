@@ -1,0 +1,40 @@
+{
+  "summary": "A young star ringed by nested belts of debris, and the site of an exoplanet discovery that was later withdrawn.",
+  "sections": [
+    {
+      "heading": "The lonely star of autumn",
+      "body": "Fomalhaut sits at magnitude 1.16, 25 light-years away, in a stretch of the autumn sky almost devoid of other bright stars. From northern latitudes it hangs low in the south with nothing else nearby, which earned it the nickname the Loneliest Star. The name itself comes from the Arabic fam al-hut, the mouth of the fish, marking that point in Piscis Austrinus.\n\nIt is an A3 main-sequence star of about 1.92 solar masses, radiating roughly 16 times the Sun's light at a surface temperature near 8,590 K. It is also young — somewhere around 440 million years old, less than a tenth the Sun's age — and that youth is the reason it is one of the most studied stars in astronomy."
+    },
+    {
+      "heading": "A ring with a sharp edge",
+      "body": "Fomalhaut is encircled by a broad belt of dust and debris, detected first through its infrared excess and later imaged directly. What made it compelling was the shape: Hubble images in 2008 showed a ring with a strikingly sharp inner edge, offset from the star rather than centred on it.\n\nDebris does not organise itself that way on its own. Sharp edges and offsets are the signature of gravitational shepherding by unseen planets, in the same way that Saturn's narrow rings are confined by small moons. The ring was, in effect, circumstantial evidence for a planetary system before anything had been seen."
+    },
+    {
+      "heading": "The planet that turned into a dust cloud",
+      "body": "In 2008 a moving point of light within the ring was announced as Fomalhaut b, presented as one of the first exoplanets ever directly imaged. It was a landmark result, widely reported and widely taught.\n\nIt did not survive scrutiny. The object was bright in visible light but never detected in the infrared, which is backwards for a planet — a planet should glow with its own heat and reflect comparatively little. Continued monitoring showed it expanding and fading, and by 2020 the consensus explanation was an expanding cloud of debris from a collision between two large planetesimals, which is now dispersing beyond detection. Rather than a failure, this is a clean example of self-correction: a striking claim made honestly, tested for a decade, and revised when the evidence went the other way.\n\nJames Webb observations published in 2023 then revealed the system is more complex than anyone had imaged, with at least three nested belts including previously unseen inner structures — geometry that still argues for shepherding planets, just not the one that was announced."
+    }
+  ],
+  "observing": {
+    "bestMonths": "August to November; low in the south from northern latitudes, high from the southern",
+    "difficulty": "Naked eye — easy if your southern horizon is clear",
+    "howToFind": "On an autumn evening look low in the south for a lone bright star with no comparable neighbours. Dropping a line down from the western side of the Great Square of Pegasus points roughly toward it."
+  },
+  "sources": [
+    {
+      "title": "Webb Looks at Fomalhaut's Debris Disks",
+      "publisher": "NASA Webb Space Telescope",
+      "url": "https://science.nasa.gov/mission/webb/"
+    },
+    {
+      "title": "Exoplanet Exploration",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/exoplanets/"
+    },
+    {
+      "title": "Hubble imaging of the Fomalhaut ring",
+      "publisher": "ESA/Hubble",
+      "url": "https://esahubble.org/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

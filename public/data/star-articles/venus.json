@@ -1,0 +1,40 @@
+{
+  "summary": "Earth's twin in size and nothing else — a 464 °C world under 92 atmospheres of carbon dioxide, turning backwards beneath clouds of sulfuric acid.",
+  "sections": [
+    {
+      "heading": "The runaway greenhouse",
+      "body": "Venus is almost exactly Earth's size at 12,104 km across, with similar mass and composition. The similarity ends there. Its surface sits at about 464 °C — hotter than Mercury's dayside despite being nearly twice as far from the Sun — and under a pressure of 92 Earth atmospheres, equivalent to being 900 metres deep in Earth's ocean.\n\nThe cause is an atmosphere of 96.5% carbon dioxide. Venus likely began with water, possibly oceans. As the young Sun brightened, that water evaporated, and water vapour is itself a potent greenhouse gas, which drove more evaporation. Once the water reached the upper atmosphere, ultraviolet light split it and the hydrogen escaped to space. With no water to draw carbon dioxide into carbonate rock the way Earth's oceans do, the CO₂ accumulated with nowhere to go. Venus is the reference case for how a habitable world can be lost permanently."
+    },
+    {
+      "heading": "Backwards, and slower than its year",
+      "body": "Venus rotates once every 243 Earth days while orbiting the Sun in 225 — its day is longer than its year. It also rotates retrograde, spinning east to west, so from the surface the Sun would rise in the west and set in the east, taking 117 Earth days between sunrises.\n\nNo confident explanation exists. A giant impact could have flipped or halted the original spin; alternatively, atmospheric tides in that immensely thick atmosphere combined with solar tidal forces may have slowed and reversed it over billions of years. The atmosphere itself does not share the planet's sluggishness: the upper cloud deck super-rotates, circling the planet in about four days, sixty times faster than the ground beneath it."
+    },
+    {
+      "heading": "Landing and not lasting",
+      "body": "The Soviet Venera programme achieved something no other programme has: landing working spacecraft on the Venusian surface and returning photographs. Venera 7 transmitted from the surface in 1970, and Venera 13 in 1982 sent back colour images and survived 127 minutes against a design target of 32.\n\nThat is the scale of the engineering problem. A lander must survive a corrosive sulfuric-acid descent, then heat and pressure that crush and cook electronics within hours at best. Venus has therefore been explored far less thoroughly than Mars, despite being closer and easier to reach. A new generation of missions — NASA's DAVINCI and VERITAS and ESA's EnVision — is intended to change that, along with continued debate over the contested 2020 detection of phosphine in the clouds, a possible but far from established biosignature."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Varies; visible for months at a time as morning or evening star",
+    "difficulty": "Naked eye — the brightest object in the sky after the Sun and Moon",
+    "howToFind": "Venus is unmistakable when present, blazing in the west after sunset or the east before sunrise. Any small telescope shows it going through phases like the Moon — the observation with which Galileo demonstrated that it orbits the Sun rather than Earth."
+  },
+  "sources": [
+    {
+      "title": "Venus",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/venus/"
+    },
+    {
+      "title": "DAVINCI and VERITAS missions",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/planetary-science/programs/discovery/"
+    },
+    {
+      "title": "EnVision mission",
+      "publisher": "European Space Agency",
+      "url": "https://www.esa.int/Science_Exploration/Space_Science/EnVision"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -1,0 +1,35 @@
+{
+  "summary": "The second brightest star in the night sky, invisible from most of Europe and North America, and the navigation beacon of choice for interplanetary spacecraft.",
+  "sections": [
+    {
+      "heading": "Second only to Sirius",
+      "body": "Canopus reaches magnitude −0.74, bettered only by Sirius. Unlike Sirius, though, it is not bright because it is close. At roughly 310 light-years it is thirty-six times more distant, and it compensates with sheer output — around 10,700 times the Sun's luminosity.\n\nIt is an evolved star of about 8 solar masses, classified as a bright giant or supergiant, with a radius near 71 times the Sun's and a surface around 7,400 K. That temperature gives it a white colour with the faintest yellow cast, distinct from Sirius's blue-white when the two are compared on the same night."
+    },
+    {
+      "heading": "The southern sky's property",
+      "body": "Canopus sits at a declination of about −52.7 degrees, which puts a hard limit on who can see it. From roughly 37 degrees north it never rises at all. That excludes essentially all of Europe, most of the continental United States, and northern Asia — which is why a star second in brightness only to Sirius is completely unfamiliar to a large share of the world's population.\n\nFrom the southern hemisphere the situation reverses entirely. Canopus is a dominant feature of the southern sky, circumpolar from much of Australia, South Africa and southern South America, and it has been a primary navigation reference in those regions for as long as records exist."
+    },
+    {
+      "heading": "How spacecraft find their bearings",
+      "body": "A spacecraft in deep space needs to know its orientation, and the usual method is to lock onto known stars. Canopus became the standard second reference alongside the Sun, to the point that the instruments were simply called Canopus star trackers and flew on Mariner, Voyager and many later missions.\n\nThe reasons are practical. It is extremely bright, so it is easy to acquire and hard to confuse with anything else. It sits far from the ecliptic plane, meaning a sensor pointed at it is unlikely to be blinded by the Sun or confused by a planet drifting through the field. And it is distant enough that its position does not change measurably over a mission's lifetime. Mariner 4 famously had its tracker distracted by a fleck of paint drifting alongside the spacecraft — an early lesson in how literal-minded automated star identification can be."
+    }
+  ],
+  "observing": {
+    "bestMonths": "December to March, from latitudes south of about 37°N",
+    "difficulty": "Naked eye where visible — brilliant and unmistakable",
+    "howToFind": "From the southern hemisphere on a summer evening, find Sirius and look south and west roughly 36 degrees. Canopus is the only star in that region bright enough to be mistaken for it. From the far southern hemisphere the two make an obvious pair dominating the sky."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Mariner 4 mission",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/mariner-4/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

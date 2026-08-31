@@ -1,0 +1,40 @@
+{
+  "summary": "One of the most massive black holes known — tens of billions of solar masses, powering a quasar visible across ten billion light-years.",
+  "sections": [
+    {
+      "heading": "A blue smudge on a photographic plate",
+      "body": "TON 618 was catalogued in 1957 during a survey of faint blue stars at the Tonantzintla Observatory in Mexico. It looked like a dim blue star, and was recorded as one.\n\nIt is not a star. Quasars were not understood until the 1960s, when their spectra were finally interpreted and their enormous redshifts recognised. TON 618 sits at a redshift of about 2.2, meaning its light has been travelling for something on the order of ten billion years. For an object that distant to appear at all on a 1950s photographic plate, it has to be extraordinarily luminous.\n\nIt is. TON 618 is a hyperluminous quasar, radiating on the order of a hundred trillion times the Sun's output — brighter than many entire galaxies, from a region roughly the size of a solar system."
+    },
+    {
+      "heading": "Weighing something ten billion light-years away",
+      "body": "You cannot watch stars orbit a black hole at this distance. The mass is instead inferred from the accretion flow itself, using a technique called reverberation mapping and its calibrated shortcuts.\n\nGas in the broad-line region near the black hole moves at speeds determined by the gravity it feels, and that motion broadens the emission lines in the spectrum — faster gas, wider lines. Measuring the width of a line such as hydrogen beta, combined with an estimate of how far the emitting gas sits from the centre, yields a mass.\n\nFor TON 618 the lines are exceptionally broad, and the resulting estimates run from around 40 to 66 billion solar masses. That places it among the most massive black holes known. The method is well established but carries real uncertainty — it depends on assumptions about the geometry and dynamics of gas we cannot resolve — so these figures should be read as order-of-magnitude rather than precise."
+    },
+    {
+      "heading": "The scale problem",
+      "body": "An event horizon of this mass spans roughly 1,300 astronomical units — around 40 times the radius of Neptune's orbit. Light would take about a week to cross it. Our entire solar system, including the Kuiper Belt, would sit well inside with room to spare.\n\nA counter-intuitive consequence: for a black hole this large, the tidal forces at the horizon are gentle. Spaghettification depends on how sharply gravity changes with distance, and around such an enormous horizon the gradient is mild. A person falling into TON 618 would cross the event horizon without being stretched at all, and would have days of ordinary-seeming existence before the geometry closed in.\n\nHow objects like this assembled so early remains one of the harder open questions in astrophysics. Ten billion years ago the universe was only a few billion years old, and growing tens of billions of solar masses by ordinary accretion from a stellar-mass seed in that time appears to require sustained rates above the usual theoretical limits. Direct collapse of enormous primordial gas clouds into massive seed black holes is the leading alternative, and JWST's discovery of surprisingly massive early black holes has made the question more pressing rather than less."
+    }
+  ],
+  "observing": {
+    "bestMonths": "March to June, in Canes Venatici",
+    "difficulty": "Magnitude 15.9 — a large amateur telescope and a precise chart",
+    "howToFind": "TON 618 is a faint point in Canes Venatici, indistinguishable from a dim star in any eyepiece. Experienced observers with 300 mm or more of aperture do track it down. There is nothing to see beyond a speck of light — the appeal is entirely that the speck left its source before the Earth existed."
+  },
+  "sources": [
+    {
+      "title": "Quasars and active galactic nuclei",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/black-holes/"
+    },
+    {
+      "title": "Supermassive black hole mass measurement",
+      "publisher": "Chandra X-ray Observatory",
+      "url": "https://chandra.harvard.edu/"
+    },
+    {
+      "title": "Early supermassive black holes",
+      "publisher": "NASA Webb Space Telescope",
+      "url": "https://science.nasa.gov/mission/webb/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

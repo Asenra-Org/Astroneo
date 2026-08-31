@@ -1,0 +1,35 @@
+{
+  "summary": "The densest planet in the solar system, the only one with plate tectonics, and the only place life is known to exist.",
+  "sections": [
+    {
+      "heading": "An atmosphere that life built",
+      "body": "Earth's air is 78% nitrogen and 21% oxygen, and that oxygen is not a natural starting condition. Free oxygen is chemically aggressive and reacts away quickly unless something keeps replenishing it. For Earth's first two billion years there was almost none.\n\nIt accumulated because cyanobacteria evolved photosynthesis and released oxygen as waste. Around 2.4 billion years ago the Great Oxidation Event flooded the atmosphere with it, rusting the oceans, driving much of the existing anaerobic biosphere into retreat, and probably triggering a global glaciation. Earth's atmosphere is a biological product, which is why atmospheric composition is the primary signal astronomers look for when assessing whether a distant planet might host life."
+    },
+    {
+      "heading": "The thermostat under the surface",
+      "body": "Earth is the only body in the solar system known to have plate tectonics — a crust broken into plates that slide, collide and subduct on a convecting mantle. Venus and Mars have rigid single-plate shells; Earth's has been recycling itself for billions of years.\n\nThis turns out to be a climate regulator. Carbon dioxide dissolves in rain, weathers silicate rock, and washes to the ocean floor as carbonate, which subduction eventually returns to the interior and volcanism releases again. Crucially, weathering speeds up when the planet is warm and slows when it is cold, so the cycle pulls the climate back toward moderate temperatures over millions of years. It is slow — far too slow to counteract anything happening on human timescales — but it is a large part of why Earth stayed habitable while Venus did not."
+    },
+    {
+      "heading": "The field and the Moon",
+      "body": "Earth's liquid iron outer core generates a magnetic field through dynamo action, and that field deflects the solar wind. Without it, charged particles would strip the upper atmosphere over geological time — the process MAVEN has confirmed happened to Mars once its own dynamo shut down.\n\nThe Moon contributes something different. At over a quarter of Earth's diameter it is enormous relative to its planet, and its gravitational influence stabilises Earth's axial tilt at a steady 23.4 degrees. Mars, with only two tiny moons, has wandered chaotically across tens of degrees of obliquity, with correspondingly violent climate swings. Earth's comparatively stable seasons are partly a consequence of the impact that formed its Moon."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Year-round, from anywhere",
+    "difficulty": "You are standing on it",
+    "howToFind": "The most useful observation is of Earth's shadow. Shortly after sunset, look east: a dark blue-grey band rising from the horizon topped by a pinkish glow — the Belt of Venus — is the planet's own shadow cast on the atmosphere. Its curvature is visible proof of Earth's shape, available on any clear evening."
+  },
+  "sources": [
+    {
+      "title": "Earth",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/earth/"
+    },
+    {
+      "title": "MAVEN and Martian atmospheric loss",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/maven/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

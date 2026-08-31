@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     default: 'Astroneo — Search the Stars, Explore the Universe',
     template: '%s | Astroneo',
   },
-  description: 'Explore any star in the night sky with Astroneo. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data. Free forever.',
+  description: 'Astronomy reference with 8,898 catalogued objects, interactive 3D models, a GPS visibility checker, and cited articles on stellar physics and practical observing. Free, no account needed.',
   keywords: ['star explorer', 'astronomy app', '3D star map', 'space exploration', 'star facts', 'night sky', 'constellation', 'Betelgeuse', 'Sirius'],
   openGraph: {
     type: 'website',
@@ -34,13 +34,13 @@ export const metadata: Metadata = {
     url: 'https://astroneo.space',
     siteName: 'Astroneo',
     title: 'Astroneo — Search the Stars, Explore the Universe',
-    description: 'Explore any star in the night sky with Astroneo. Search 200,000+ stars, interact with 3D models, and discover complete astronomical data.',
+    description: 'Astronomy reference with 8,898 catalogued objects, interactive 3D models and cited articles on stellar physics and practical observing.',
     images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'Astroneo — Search the Stars' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Astroneo — Search the Stars',
-    description: 'Explore any star in the night sky with Astroneo. Free astronomical data and 3D star viewer.',
+    description: 'Astronomy reference with 8,898 catalogued objects, 3D models and cited articles. Free.',
     images: ['/og-default.png'],
   },
   robots: {

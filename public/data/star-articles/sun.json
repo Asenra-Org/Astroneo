@@ -1,0 +1,44 @@
+{
+  "summary": "An ordinary G-type main-sequence star holding 99.86% of the solar system's mass — and the only one close enough to study in genuine detail.",
+  "sections": [
+    {
+      "heading": "An average star, and that is the point",
+      "body": "The Sun is frequently described as unremarkable, and by stellar standards it is: a G2 main-sequence star of 5,772 K surface temperature, 696,000 km radius, and about 4.6 billion years of age with a comparable span remaining. It is more massive than roughly 95% of stars in the galaxy, most of which are red dwarfs, but it is nowhere near the extremes.\n\nWhat is remarkable is its dominance locally. The Sun holds 99.86% of all the mass in the solar system. Every planet, moon, asteroid and comet combined amounts to a rounding error, and Jupiter accounts for most of that remainder. When people speak of the solar system, they are describing the Sun plus its debris."
+    },
+    {
+      "heading": "How the energy is made, and how slowly it escapes",
+      "body": "In the core, at around 15.7 million K and densities over a hundred times that of water, hydrogen nuclei fuse into helium through the proton-proton chain. The Sun converts roughly 600 million tonnes of hydrogen every second, and about 4 million tonnes of that becomes energy.\n\nThat energy does not travel straight out. In the radiative zone above the core, a photon is absorbed and re-emitted in a random direction almost immediately, over and over. The resulting random walk means energy generated in the core takes somewhere between ten thousand and a hundred thousand years to reach the surface. The sunlight falling on you left the surface eight minutes and twenty seconds ago, but the energy in it was released before the last ice age ended. Above the radiative zone, convection takes over, and the granulation visible on the photosphere is the tops of those convection cells."
+    },
+    {
+      "heading": "The magnetic cycle and the corona problem",
+      "body": "The Sun rotates differentially — about 25 days at the equator, 35 near the poles — which winds and tangles its magnetic field. That tangling drives an eleven-year cycle of sunspots, flares and coronal mass ejections, with the field reversing polarity each cycle, making the true magnetic period twenty-two years.\n\nAbove the 5,772 K surface, the corona reaches one to three million K. Heat flowing from a cooler region to a much hotter one demands an explanation, and the coronal heating problem has been open for the better part of a century. Magnetic reconnection and wave heating are the leading candidates. NASA's Parker Solar Probe, which first flew through the corona in 2021 and has since passed within a few million kilometres of the surface, was built specifically to sample this region directly rather than infer it from a distance."
+    },
+    {
+      "heading": "The end of the Sun",
+      "body": "In roughly five billion years the core hydrogen will run out. The core will contract and heat while the outer layers expand enormously, and the Sun will become a red giant perhaps two hundred times its present radius. Mercury and Venus will be engulfed. Earth's fate is genuinely uncertain, as the Sun will have shed enough mass to loosen its grip and let the planet's orbit widen — but a scorched Earth just outside the surface is not a meaningful improvement.\n\nThe Sun is not massive enough to explode. After a period of helium burning it will shed its outer envelope as a planetary nebula, briefly illuminating it, and leave behind the exposed carbon-oxygen core: a white dwarf about the size of Earth, cooling for trillions of years."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Year-round",
+    "difficulty": "Requires certified solar filtration — never observe without it",
+    "howToFind": "Never look at the Sun through any telescope, binoculars or camera without a purpose-made solar filter fitted over the front aperture. Unfiltered viewing causes permanent blindness within seconds. Safe options are a certified full-aperture solar filter, a dedicated hydrogen-alpha telescope, or projecting the image onto white card. Eclipse glasses are for naked-eye use only and must never be used at the eyepiece."
+  },
+  "sources": [
+    {
+      "title": "The Sun",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/sun/"
+    },
+    {
+      "title": "Parker Solar Probe",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/parker-solar-probe/"
+    },
+    {
+      "title": "Safe solar viewing",
+      "publisher": "American Astronomical Society",
+      "url": "https://eclipse.aas.org/eye-safety"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -1,0 +1,40 @@
+{
+  "summary": "The supermassive black hole at the centre of our own galaxy, weighed by watching stars orbit it for thirty years, and photographed in 2022.",
+  "sections": [
+    {
+      "heading": "Weighed by the stars that orbit it",
+      "body": "Sagittarius A* holds about 4.3 million solar masses at the centre of the Milky Way, roughly 26,000 light-years away. We know that figure with unusual precision, and the way it was obtained is one of the finest pieces of observational astronomy of the last half-century.\n\nTwo teams — one led by Reinhard Genzel in Germany, one by Andrea Ghez in the United States — spent nearly thirty years tracking individual stars orbiting the galactic centre. Working in infrared to see through the intervening dust, they measured the positions of stars in the innermost region night after night, year after year, until the orbits closed.\n\nOne star, S2, orbits every 16 years. At its closest approach it passes within about 120 astronomical units of the centre and reaches roughly 3% of the speed of light. An orbit that tight around an object that invisible leaves essentially one explanation. Genzel and Ghez shared the 2020 Nobel Prize in Physics for the work."
+    },
+    {
+      "heading": "The 2022 image",
+      "body": "In May 2022 the Event Horizon Telescope collaboration released an image of Sagittarius A*, three years after publishing M87*. The delay was not for lack of data — both were observed in the same 2017 campaign.\n\nThe problem was that Sagittarius A* is small and fast. Gas orbits it in minutes rather than the days or weeks it takes around M87*, so the source changes appearance during the observation itself. Imaging it is like photographing a running child with a long exposure. Reconstructing a usable image required years of new algorithmic work and thousands of simulations.\n\nThe result matched the prediction: a dark central shadow surrounded by a bright asymmetric ring of emission, with a size consistent with a 4.3-million-solar-mass black hole. Two black holes differing in mass by a factor of a thousand both behaved exactly as general relativity said they would."
+    },
+    {
+      "heading": "A remarkably quiet monster",
+      "body": "Despite its mass, Sagittarius A* is faint. It accretes very little material — far below the rate that would make it a quasar — and its output is a tiny fraction of what a black hole this size could produce if it were feeding well.\n\nThis is fortunate and also somewhat puzzling. There is gas available in the galactic centre, and the question of why so little of it reaches the black hole is an active area of research. Occasional flares are observed in infrared and X-rays, lasting hours, when clumps of material do fall in.\n\nThe scale is worth holding onto: 4.3 million solar masses sounds overwhelming, but the event horizon is only about 12 million kilometres across. That would fit comfortably inside the orbit of Mercury. Its gravitational influence dominates only the innermost few light-years of a galaxy 100,000 light-years wide — the Sun orbits the galactic centre because of the combined mass of everything inside our orbit, not because of the black hole."
+    }
+  ],
+  "observing": {
+    "bestMonths": "June to September, looking toward Sagittarius",
+    "difficulty": "Not directly observable — obscured by dust and far too small",
+    "howToFind": "You cannot see it, but you can look at where it is. On a summer evening find the teapot shape of Sagittarius low in the south; the galactic centre lies just above the spout. Under dark skies this is the brightest, densest part of the Milky Way, and the black hole sits behind roughly 25,000 light-years of stars and dust."
+  },
+  "sources": [
+    {
+      "title": "First Sagittarius A* Event Horizon Telescope Results",
+      "publisher": "Event Horizon Telescope Collaboration",
+      "url": "https://eventhorizontelescope.org/"
+    },
+    {
+      "title": "The Nobel Prize in Physics 2020",
+      "publisher": "The Nobel Foundation",
+      "url": "https://www.nobelprize.org/prizes/physics/2020/summary/"
+    },
+    {
+      "title": "Black Holes",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/black-holes/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

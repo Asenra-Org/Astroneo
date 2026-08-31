@@ -1,0 +1,44 @@
+{
+  "summary": "A shrinking iron world with ice at its poles, a day twice as long as its year, and an orbit that helped confirm general relativity.",
+  "sections": [
+    {
+      "heading": "Mostly core",
+      "body": "Mercury is the smallest planet at 4,879 km across — smaller than Ganymede and Titan — but it is unusually dense. Its iron core occupies about 85% of its radius, a far greater fraction than any other planet, leaving only a thin rocky mantle and crust above it.\n\nThe leading explanation is a giant impact early in the solar system's history that stripped away much of the original mantle, leaving the core disproportionately exposed. Alternatives involve intense heating from the young Sun vaporising the outer layers. Neither is settled, and the question is one of the main reasons the planet keeps attracting missions."
+    },
+    {
+      "heading": "A day longer than a year",
+      "body": "Mercury orbits the Sun in 88 Earth days and rotates once every 59, which are locked in a 3:2 resonance — it turns exactly three times for every two orbits. The consequence is strange: one solar day, from noon to noon, lasts about 176 Earth days, or two full Mercurian years.\n\nWith almost no atmosphere to move heat around, surface temperatures swing from about 430 °C in daylight to −180 °C at night, the largest range of any planet. And in permanently shadowed craters at the poles, where sunlight has never reached, MESSENGER confirmed deposits of water ice. The planet closest to the Sun holds ice, because some of its floor has never once seen daylight."
+    },
+    {
+      "heading": "A planet that is shrinking",
+      "body": "Mercury's surface is crossed by lobate scarps — long cliffs, some hundreds of kilometres in length and up to a kilometre or two high, where the crust has buckled and thrust over itself.\n\nThese formed as the planet's interior cooled and contracted, reducing its radius by an estimated several kilometres and forcing the rigid crust to accommodate a smaller volume. Some scarps appear young enough that the contraction may be ongoing, making Mercury tectonically active in a way completely unlike Earth's plate tectonics — a single shrinking shell rather than sliding plates."
+    },
+    {
+      "heading": "The orbit that broke Newton",
+      "body": "Mercury's elliptical orbit precesses, its closest point to the Sun slowly rotating around it. Nineteenth-century astronomers accounted for the pull of the other planets and found a residual discrepancy of about 43 arcseconds per century that Newtonian gravity could not explain.\n\nThe search for a cause included a hypothetical inner planet, Vulcan, which was never found. In 1915 Einstein's general relativity produced the missing 43 arcseconds exactly, from the curvature of spacetime near the Sun, with no adjustable parameters. Einstein later said the result gave him heart palpitations. It remains one of the theory's foundational confirmations, and it came from watching one small planet fail to behave."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Near greatest elongation, a few times a year, at dawn or dusk",
+    "difficulty": "Naked eye, but genuinely difficult — it never strays far from the Sun",
+    "howToFind": "Look low in the west just after sunset or low in the east just before sunrise, during the roughly two-week windows around greatest elongation. Mercury appears as a steady point in the twilight glow. Never sweep for it with binoculars while the Sun is above the horizon."
+  },
+  "sources": [
+    {
+      "title": "Mercury",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/mercury/"
+    },
+    {
+      "title": "MESSENGER mission results",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/messenger/"
+    },
+    {
+      "title": "BepiColombo",
+      "publisher": "European Space Agency",
+      "url": "https://www.esa.int/Science_Exploration/Space_Science/BepiColombo"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

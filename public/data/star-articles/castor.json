@@ -1,0 +1,35 @@
+{
+  "summary": "A single point of light to the eye, six stars in reality — and the binary that proved stars actually orbit one another.",
+  "sections": [
+    {
+      "heading": "Six stars in three pairs",
+      "body": "Castor appears as one star of magnitude 1.58, 51 light-years away. A small telescope splits it into two, a larger one adds a third much fainter component, and spectroscopy reveals that every one of those three is itself a binary. The system totals six stars.\n\nCastor A and Castor B are hot white A-type stars, each with a small red dwarf companion in a close orbit. The two bright pairs circle each other over roughly 450 years. Castor C, about 1,000 astronomical units out, is the eclipsing binary YY Geminorum — two nearly identical red dwarfs orbiting every 19 hours, passing in front of each other from our viewpoint. YY Geminorum has been valuable well beyond this system, because eclipsing binaries let astronomers measure stellar masses and radii directly rather than inferring them from models, and low-mass stars measured this precisely are rare."
+    },
+    {
+      "heading": "The first proven orbit",
+      "body": "Castor was recorded as a visual double by James Bradley in 1718 and independently later, but the significance emerged in 1803 when William Herschel compared decades of position measurements.\n\nHerschel had set out expecting to measure parallax, using the assumption that the fainter star of a close pair was a distant background object. Instead he found that the two stars had rotated about a common point. They were not a chance alignment — they were physically bound and orbiting each other. This was the first demonstration that Newtonian gravity operates outside the solar system, and it turned binary stars from a curiosity into the primary tool for weighing stars, which they remain."
+    },
+    {
+      "heading": "The fainter alpha",
+      "body": "Castor carries the designation Alpha Geminorum despite being noticeably fainter than Pollux, its Beta. The usual explanations apply — Bayer's lettering was not strictly ordered by brightness, and position within the constellation influenced it.\n\nA real brightness change cannot be entirely ruled out, though it is not favoured; none of the six components is the kind of star expected to vary substantially over four centuries. In mythology the asymmetry is fitting anyway: Castor was the mortal twin and Pollux the immortal one, and it is Pollux that shines brighter."
+    }
+  ],
+  "observing": {
+    "bestMonths": "December to April from the northern hemisphere",
+    "difficulty": "Naked eye; a 100 mm telescope splits A from B",
+    "howToFind": "Find the two bright stars of similar brightness above and left of Orion. Castor is the fainter, whiter and more northerly of the pair. At around 100× magnification the two main components separate cleanly — one of the more satisfying doubles in the winter sky."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "Eclipsing binaries and stellar masses",
+      "publisher": "American Association of Variable Star Observers",
+      "url": "https://www.aavso.org/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

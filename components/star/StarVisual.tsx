@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 interface StarVisualProps {
@@ -13,18 +11,6 @@ export default function StarVisual({ spectralClass, starType, size = 100, name =
   const isPlanet = starType === 'Planet' || starType === 'Dwarf Planet' || starType === 'Moon';
   const cls = spectralClass ? spectralClass[0].toUpperCase() : 'G';
   const planetName = name.toLowerCase();
-
-  // CSS Animation for the glow
-  const pulseAnim = `
-    @keyframes gentle-pulse {
-      0% { transform: scale(1.0) translate(-50%, -50%); opacity: 0.8; }
-      100% { transform: scale(1.08) translate(-46%, -46%); opacity: 1; }
-    }
-    @keyframes ring-spin {
-      from { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(0deg); }
-      to { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg); }
-    }
-  `;
 
   // Defaults (G-type)
   let coreColor = '#FFD700';
@@ -146,8 +132,6 @@ export default function StarVisual({ spectralClass, starType, size = 100, name =
 
   return (
     <div style={{ width: size, height: size, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <style>{pulseAnim}</style>
-      
       {/* Outer subtle atmosphere glow */}
       {!isPlanet && (
         <div style={{

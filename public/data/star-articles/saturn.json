@@ -1,0 +1,44 @@
+{
+  "summary": "A planet less dense than water, wearing rings that are vanishingly thin, probably young, and slowly falling away.",
+  "sections": [
+    {
+      "heading": "Rings of ice, thinner than they look",
+      "body": "Saturn's rings span roughly 282,000 km from inner to outer edge — most of the distance from Earth to the Moon — and are made of over 99% water ice, in pieces ranging from dust grains to boulders.\n\nTheir thickness is the surprise. In most places the ring system is between about ten metres and a kilometre deep. Scaled to a sheet of paper's thickness, the rings would be several kilometres wide. This extreme flatness is why they vanish from view roughly every fifteen years, when Earth passes through the ring plane and we see them edge-on — an event that initially convinced Galileo his earlier observations had been mistaken."
+    },
+    {
+      "heading": "Young rings, and ring rain",
+      "body": "The rings were long assumed to be as old as the planet. Cassini's measurements during its final orbits point the other way. By weighing the ring system precisely, and accounting for how quickly infalling micrometeorite dust darkens clean ice, several analyses concluded the rings may be only on the order of a hundred million years old — young enough that dinosaurs on Earth would have seen a ringless Saturn.\n\nThey are also being lost. Cassini measured ice raining out of the rings into Saturn's upper atmosphere along magnetic field lines, at a rate suggesting the whole system could disappear within tens of millions to a few hundred million years. If that holds, the rings are a temporary feature and our timing in observing them is fortunate."
+    },
+    {
+      "heading": "Titan and Enceladus",
+      "body": "Saturn's moons are as interesting as its rings. Titan is the only moon in the solar system with a substantial atmosphere — thicker than Earth's at the surface, mostly nitrogen — and the only world besides Earth known to have stable liquid on its surface. Those are lakes and seas of liquid methane and ethane at −179 °C, fed by methane rain, cutting river channels into water-ice bedrock. ESA's Huygens probe landed there in 2005 and returned images from the surface.\n\nEnceladus is only 500 km across, but Cassini discovered geysers erupting from fractures at its south pole, venting water vapour and ice grains into space. Flying through those plumes, the spacecraft detected salts, silica particles indicating hydrothermal activity on the sea floor, and complex organic molecules. A small moon with a subsurface ocean, rock-water chemistry and organics is about as promising a target for life as the solar system offers, and it obligingly sprays its ocean into space where a passing spacecraft can sample it."
+    },
+    {
+      "heading": "Less dense than water",
+      "body": "Saturn's average density is 0.687 grams per cubic centimetre, below that of water. The familiar line is that it would float in a sufficiently large bathtub, which is true in the sense the arithmetic allows and false in every practical sense — a planet's self-gravity does not permit it to be treated as a bath toy.\n\nThe number does convey something real. Saturn is 95 Earth masses spread across a volume that could hold 764 Earths, made almost entirely of hydrogen and helium with a comparatively modest core. At its north pole sits a persistent hexagonal jet stream some 30,000 km across, a six-sided standing wave with no equivalent anywhere else, which Cassini watched change colour across a full Saturnian season."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Around opposition, roughly every 12.5 months",
+    "difficulty": "Naked eye as a steady yellowish star; a 60 mm telescope shows the rings",
+    "howToFind": "Saturn looks like a moderately bright, non-twinkling yellowish star. Even a small telescope at 30× or more resolves the rings, and for most people it is the single most memorable first view through a telescope. Titan is visible as a nearby point of light in the same field."
+  },
+  "sources": [
+    {
+      "title": "Saturn",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/saturn/"
+    },
+    {
+      "title": "Cassini–Huygens mission",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/cassini/"
+    },
+    {
+      "title": "Enceladus",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/saturn/moons/enceladus/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

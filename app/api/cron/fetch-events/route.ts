@@ -187,7 +187,10 @@ ${JSON.stringify(items, null, 2)}`
       endDateObj.setDate(endDateObj.getDate() + 2);
       const endDate = endDateObj.toISOString().split('T')[0];
 
-      const nasaUrl = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${today}&end_date=${endDate}&api_key=DEMO_KEY`;
+      // DEMO_KEY is capped at ~30 requests/hour per IP and will intermittently 429.
+      // Set NASA_API_KEY (free, from api.nasa.gov) to lift that to 1,000/hour.
+      const nasaApiKey = process.env.NASA_API_KEY || 'DEMO_KEY';
+      const nasaUrl = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${today}&end_date=${endDate}&api_key=${nasaApiKey}`;
       
       const res = await fetch(nasaUrl);
       if (res.ok) {

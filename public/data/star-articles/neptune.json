@@ -1,0 +1,40 @@
+{
+  "summary": "The planet found with mathematics before anyone looked for it — home to the fastest winds in the solar system and a captured moon orbiting backwards.",
+  "sections": [
+    {
+      "heading": "Discovered on paper",
+      "body": "Uranus, tracked for decades after its discovery in 1781, would not follow its predicted path. Something was tugging at it. In the 1840s Urbain Le Verrier in France and John Couch Adams in England independently calculated where an unseen eighth planet would have to be to produce the discrepancy.\n\nLe Verrier sent his prediction to Johann Galle at the Berlin Observatory, who found the planet on the night of 23 September 1846, within one degree of the predicted position. It remains one of the most striking confirmations of Newtonian gravity ever achieved — a planet located by calculation, then simply pointed at. The credit dispute between the British and French claims took considerably longer to settle than the observation."
+    },
+    {
+      "heading": "The fastest winds anywhere",
+      "body": "Neptune's atmosphere carries winds measured at around 2,100 kilometres per hour, faster than anywhere else in the solar system and comfortably supersonic in its local conditions.\n\nThis is genuinely counter-intuitive. Neptune receives about a thousandth of the sunlight Earth does, so there is very little solar energy available to drive weather. The explanation lies inside: Neptune radiates roughly 2.6 times more energy than it absorbs from the Sun, meaning an internal heat source powers its atmosphere from below. What that source is — residual heat of formation, or something ongoing — has not been resolved. Voyager 2 photographed a storm the size of Earth, the Great Dark Spot, in 1989; by the time Hubble looked in 1994 it had vanished entirely, and other dark spots have since appeared and dissipated on timescales of a few years."
+    },
+    {
+      "heading": "Triton, orbiting the wrong way",
+      "body": "Neptune's largest moon orbits retrograde — backwards relative to the planet's rotation. No large moon that formed alongside its planet does this, which means Triton did not form there. It is a captured object from the Kuiper Belt, gravitationally seized at some point in the distant past, and its arrival probably disrupted or destroyed Neptune's original moon system.\n\nTriton is also active. Voyager 2 photographed geysers erupting nitrogen gas and dark dust several kilometres above its surface, on a world at −235 °C, among the coldest measured anywhere. Its surface is young and sparsely cratered, indicating resurfacing, and it may hold a subsurface ocean. Because it is a Kuiper Belt object we can study up close, Triton is effectively a preview of Pluto and its relatives — and its retrograde orbit is decaying, so in some billions of years tidal forces will tear it apart into a ring system."
+    }
+  ],
+  "observing": {
+    "bestMonths": "Around opposition, once a year",
+    "difficulty": "Telescope required — magnitude 7.8",
+    "howToFind": "Neptune is never visible to the naked eye and needs a chart. Through a telescope at high magnification it shows a very small blue-grey disk, distinguishable from a star mainly by its colour and by the fact that it does not resolve to a point. Triton is a challenging target requiring around 250 mm of aperture."
+  },
+  "sources": [
+    {
+      "title": "Neptune",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/neptune/"
+    },
+    {
+      "title": "Triton",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/neptune/moons/triton/"
+    },
+    {
+      "title": "Voyager mission",
+      "publisher": "NASA",
+      "url": "https://science.nasa.gov/mission/voyager/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}

@@ -1,0 +1,39 @@
+{
+  "summary": "A blue supergiant radiating over a hundred thousand times the Sun's light — the true brightest star of Orion, despite carrying the constellation's second letter.",
+  "sections": [
+    {
+      "heading": "Brightness at a distance",
+      "body": "Rigel shines at magnitude 0.13 from around 860 light-years away. Compare that with Sirius, which looks brighter only because it sits a hundred times closer. If Rigel were moved to Sirius's distance it would be roughly as bright as a crescent Moon and would cast obvious shadows.\n\nThe numbers behind that output are severe. Rigel holds about 21 solar masses in a radius near 78 times the Sun's, with a surface temperature around 12,100 K, and emits somewhere near 120,000 times the Sun's total energy. Most of that output is ultraviolet, invisible to us, so the figure you compute from visible light alone substantially understates it."
+    },
+    {
+      "heading": "Alpha, beta, and a naming puzzle",
+      "body": "Rigel is Beta Orionis while Betelgeuse is Alpha Orionis, yet Rigel is consistently the brighter of the two. Johann Bayer's 1603 lettering is often assumed to run strictly from brightest to faintest within a constellation, and it frequently does, but Bayer also grouped stars by position and magnitude class rather than measuring them precisely.\n\nThere is a second possibility that cannot be dismissed. Betelgeuse is a semiregular variable that ranges over more than a magnitude and a half. At its brightest it can rival Rigel outright, so an observer in 1603 may simply have caught it during a strong maximum and lettered accordingly."
+    },
+    {
+      "heading": "Not one star but several",
+      "body": "What looks like a single point is at least a quadruple system. Rigel B sits about nine arcseconds away — a comfortable split in a modest telescope, though the glare of the primary makes it harder than the separation suggests — and Rigel B is itself a close binary, with a further spectroscopic component identified since.\n\nThe primary is a slowly pulsating variable, drifting by around a tenth of a magnitude on irregular timescales as waves move through its enormous, unstable atmosphere. Its ultraviolet output also lights up IC 2118, the Witch Head Nebula, a faint reflection cloud a couple of degrees away that is a well-known and genuinely difficult astrophotography target."
+    },
+    {
+      "heading": "What happens next",
+      "body": "Rigel has already left the main sequence and is burning through its remaining fuel at a pace that gives it a total lifespan of only around ten million years — a rounding error against the Sun's ten billion.\n\nIts future path is not fully settled. It may expand and cool into a red supergiant resembling Betelgeuse, possibly cycling between blue and red states more than once, before its core collapses in a type II supernova. Either way the outcome is the same, and on a timescale of a few million years the two brightest stars of Orion will both be gone."
+    }
+  ],
+  "observing": {
+    "bestMonths": "November to March from the northern hemisphere",
+    "difficulty": "Naked eye — brilliant and obvious",
+    "howToFind": "Locate Orion's belt and look down and to the right (from the northern hemisphere). Rigel is the brilliant blue-white star at the hunter's foot, diagonally opposite orange Betelgeuse. Comparing the two is the easiest way to see stellar colour with the naked eye."
+  },
+  "sources": [
+    {
+      "title": "Stars",
+      "publisher": "NASA Science",
+      "url": "https://science.nasa.gov/universe/stars/"
+    },
+    {
+      "title": "The Witch Head Nebula (IC 2118)",
+      "publisher": "NASA Astronomy Picture of the Day",
+      "url": "https://apod.nasa.gov/apod/"
+    }
+  ],
+  "reviewed": "2026-08-31"
+}
