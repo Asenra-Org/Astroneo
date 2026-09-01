@@ -1,2 +1,10 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_GA_ID,NEXT_PUBLIC_FIREBASE_API_KEY,NEXT_PUBLIC_FIREBASE_APP_ID,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,NEXT_PUBLIC_FIREBASE_PROJECT_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"
+  # Netlify fails a build if the value of an environment variable appears in the build
+  # output. Every key below is a public identifier that is *required* to be in the
+  # shipped HTML or client bundle, so finding it there is expected, not a leak.
+  #
+  # ADSENSE_ID is here because AdSense needs the publisher ID in the
+  # google-adsense-account meta tag and the adsbygoogle script URL. It is the same value
+  # already published at /ads.txt. Without this entry the build fails once the variable
+  # is set in the Netlify dashboard.
+  SECRETS_SCAN_OMIT_KEYS = "ADSENSE_ID,NEXT_PUBLIC_GA_ID,NEXT_PUBLIC_FIREBASE_API_KEY,NEXT_PUBLIC_FIREBASE_APP_ID,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,NEXT_PUBLIC_FIREBASE_PROJECT_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"

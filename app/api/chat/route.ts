@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { google } from '@ai-sdk/google';
 import { streamText, convertToModelMessages } from 'ai';
 
@@ -28,3 +29,4 @@ Keep your answers concise, engaging, and easy to understand. Do not use overly c
     );
   }
 }
+

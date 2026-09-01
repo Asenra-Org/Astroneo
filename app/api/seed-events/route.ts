@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, setDoc, doc, getDocs } from 'firebase/firestore';
@@ -69,3 +70,4 @@ export async function GET() {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
   }
 }
+
