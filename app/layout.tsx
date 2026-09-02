@@ -61,7 +61,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`} data-scroll-behavior="smooth">
       <head>
         {adsenseId && (
-          <meta name="google-adsense-account" content={adsenseId} />
+          <>
+            <meta name="google-adsense-account" content={adsenseId} />
+            <Script
+              async
+              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
+              strategy="afterInteractive"
+              crossOrigin="anonymous"
+            />
+          </>
         )}
       </head>
       <body className="font-body bg-bg text-text-primary">
@@ -82,16 +90,6 @@ gtag('js', new Date());
 gtag('config', '${gaId}');`}
             </Script>
           </>
-        )}
-
-        {/* AdSense */}
-        {adsenseId && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
-            strategy="lazyOnload"
-            crossOrigin="anonymous"
-          />
         )}
       </body>
     </html>
