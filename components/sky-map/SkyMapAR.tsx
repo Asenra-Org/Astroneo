@@ -511,8 +511,8 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           );
           
       // Proper delta-time based exponential smoothing.
-      // A speed of 6.0 gives butter-smooth stability while hiding device sensor noise.
-      const blendFactor = arModeRef.current ? (1 - Math.exp(-6.0 * dt)) : (1 - Math.exp(-15.0 * dt));
+      // A speed of 1.5 gives a heavy 'gimbal' stabilization effect, hiding violent sensor noise.
+      const blendFactor = arModeRef.current ? (1 - Math.exp(-1.5 * dt)) : (1 - Math.exp(-15.0 * dt));
       renderBasis.current = blendBasis(renderBasis.current, target, blendFactor);
       const basis = renderBasis.current;
 
