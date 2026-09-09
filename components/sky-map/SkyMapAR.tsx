@@ -141,7 +141,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   const [lightPollution, setLightPollution] = useState(0.25);
   const [showBelowHorizon, setShowBelowHorizon] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
-  const [hudInfo, setHudInfo] = useState({ dir: 'S', heading: 180, pitch: 15, fov: 55 });
+  const [hudInfo, setHudInfo] = useState({ dir: 'S', heading: 180, pitch: 15, fov: 70 });
 
   // ── Mutable render state. Kept in refs so the animation loop never restarts. ──
   const manualAngles = useRef({ heading: 180, pitch: 20, roll: 0 });
@@ -149,7 +149,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
   const sensorBasis = useRef<CameraBasis | null>(null);
   /** Smoothed basis actually used for rendering. */
   const renderBasis = useRef<CameraBasis>(basisFromAngles(180, 20, 0));
-  const fovRef = useRef(55);
+  const fovRef = useRef(70);
   const headingOffsetRef = useRef(0);
   const lightPollutionRef = useRef(0.25);
   const showBelowRef = useRef(true);
@@ -485,9 +485,12 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
     let raf = 0;
     let hudTick = 0;
+    let lastTimeMs = performance.now();
 
     const render = (nowMs: number) => {
       raf = requestAnimationFrame(render);
+      const dt = Math.min((nowMs - lastTimeMs) / 1000, 0.1);
+      lastTimeMs = nowMs;
 
       const { w, h, dpr } = sizeRef.current;
       if (w === 0 || h === 0) return;
@@ -498,7 +501,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       const date = new Date();
 
-      // ── Orientation ──────────────────────────────────────────────────
+      // ── Orientation ────────────────────────────────────────────────────────
       const target = arModeRef.current && sensorBasis.current
         ? sensorBasis.current
         : basisFromAngles(
@@ -506,8 +509,11 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
             manualAngles.current.pitch,
             manualAngles.current.roll,
           );
-      // Frame-rate independent smoothing, so the feel is identical at 30 and 120fps.
-      renderBasis.current = blendBasis(renderBasis.current, target, 0.18);
+          
+      // Proper delta-time based exponential smoothing.
+      // A speed of 6.0 gives butter-smooth stability while hiding device sensor noise.
+      const blendFactor = arModeRef.current ? (1 - Math.exp(-6.0 * dt)) : (1 - Math.exp(-15.0 * dt));
+      renderBasis.current = blendBasis(renderBasis.current, target, blendFactor);
       const basis = renderBasis.current;
 
       const fov = fovRef.current;
