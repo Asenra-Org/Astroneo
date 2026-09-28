@@ -90,7 +90,7 @@ export default function PushNotificationToggle() {
     }
   };
 
-  if (!isSupported) return null;
+  if (!isSupported) return (<button disabled className="text-muted bg-white/5 p-2 rounded-full cursor-not-allowed opacity-50" title="Push notifications not supported"><BellOff size={16} className="w-4 h-4" /></button>);
 
   return (
     <>

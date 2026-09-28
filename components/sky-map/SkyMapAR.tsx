@@ -512,7 +512,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
           
       // Proper delta-time based exponential smoothing.
       // A speed of 1.5 gives a heavy 'gimbal' stabilization effect, hiding violent sensor noise.
-      const blendFactor = arModeRef.current ? (1 - Math.exp(-1.5 * dt)) : (1 - Math.exp(-15.0 * dt));
+      const blendFactor = arModeRef.current ? (1 - Math.exp(-25.0 * dt)) : (1 - Math.exp(-15.0 * dt));
       renderBasis.current = blendBasis(renderBasis.current, target, blendFactor);
       const basis = renderBasis.current;
 
@@ -599,7 +599,7 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
               for (let i = 0; i < stars.length; i++) {
           const s = stars[i];
           // Cap the limiting magnitude so the background doesn't get swamped with "dummy" looking noisy dots
-          const effectiveLimit = Math.min(limitMag, 5.0);
+          const effectiveLimit = Math.min(limitMag, 3.5);
           if (s.mag > effectiveLimit) continue;
           const v = matApply(M, s.vec);
           if (v[2] <= 1e-4) continue;
