@@ -117,7 +117,8 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12 items-start">
+
             {/* Saved Stars */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -210,9 +211,19 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-              )}
+            )}
+            </motion.div>
+
+            {/* Live Sky & Push Notifications */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <DailyCelestialFacts />
             </motion.div>
           </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-1 gap-8 md:gap-12 mt-12 items-start">
             {/* Observation Log */}
@@ -262,12 +273,26 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-              )}
+            )}
+            </motion.div>
+
+            {/* Live Sky & Push Notifications */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <DailyCelestialFacts />
             </motion.div>
           </div>
+
         </div>
       </main>
       <Footer />
     </>
   );
 }
+
+
+
+

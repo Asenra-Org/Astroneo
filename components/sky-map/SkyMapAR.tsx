@@ -34,7 +34,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, Sliders, X, RefreshCw, RotateCcw, Camera, AlertTriangle, Eye } from 'lucide-react';
+import { Compass, Sliders, X, RefreshCw, RotateCcw, Camera, AlertTriangle, Eye, Share2 } from 'lucide-react';
 import { lst as localSiderealTime } from '@/lib/astronomy';
 import { getSunCoords, getMoonCoords, getPlanetCoords } from '@/lib/solar-system';
 import {
@@ -840,7 +840,11 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     return () => cancelAnimationFrame(raf);
   }, [stars, latitude, longitude]);
 
-  const recenter = () => {
+  
+
+  const handleSnap = async () => { if (!canvasRef.current) return; const canvas = canvasRef.current; const tempCanvas = document.createElement('canvas'); tempCanvas.width = canvas.width; tempCanvas.height = canvas.height; const ctx = tempCanvas.getContext('2d'); if (!ctx) return; if (cameraMode && videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) { const v = videoRef.current; const vRatio = v.videoWidth / v.videoHeight; const cRatio = canvas.width / canvas.height; let sx = 0, sy = 0, sw = v.videoWidth, sh = v.videoHeight; if (vRatio > cRatio) { sw = v.videoHeight * cRatio; sx = (v.videoWidth - sw) / 2; } else { sh = v.videoWidth / cRatio; sy = (v.videoHeight - sh) / 2; } ctx.drawImage(v, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height); } else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height); } ctx.drawImage(canvas, 0, 0); ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = 'bold 32px var(--font-display), sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('AstroNeo', canvas.width - 32, canvas.height - 32); try { const dataUrl = tempCanvas.toDataURL('image/png'); const blob = await (await fetch(dataUrl)).blob(); const file = new File([blob], 'astroneo-sky.png', { type: 'image/png' }); if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ title: 'AstroNeo Sky Map', text: 'Check out the stars I found with AstroNeo!', files: [file] }); } else { const link = document.createElement('a'); link.download = 'astroneo-sky.png'; link.href = dataUrl; link.click(); } } catch (err) { console.error('Share failed', err); } };
+
+const recenter = () => {
     manualAngles.current = { heading: 180, pitch: 20, roll: 0 };
     fovRef.current = 55;
   };
@@ -1010,8 +1014,9 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
 
       {/* Bottom bar */}
       <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-center pointer-events-none text-white/70 font-mono text-xs">
-        <button
-          onClick={recenter}
+        <button onClick={handleSnap} className="p-3 rounded-full bg-black/60 border border-white/10 hover:bg-black/80 pointer-events-auto backdrop-blur-md active:scale-95 transition shadow-lg mr-4" title="Snap and Share"><Share2 className="w-4 h-4 text-white/70" /></button>
+          <button
+            onClick={recenter}
           className="p-3 rounded-full bg-black/60 border border-white/10 hover:bg-black/80 pointer-events-auto backdrop-blur-md active:scale-95 transition shadow-lg"
           title="Recenter"
         >
