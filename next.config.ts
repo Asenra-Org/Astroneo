@@ -52,7 +52,6 @@ const retiredArticles: Record<string, string> = {
 };
 
 const nextConfig: NextConfig = {
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   images: {
     remotePatterns: [
