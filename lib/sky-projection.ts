@@ -464,3 +464,36 @@ export function angleDelta(from: number, to: number): number {
 
 
 
+export function blendBasis(curr: CameraBasis, target: CameraBasis, t: number): CameraBasis {
+  if (t <= 0) return curr;
+  if (t >= 1) return target;
+
+  function slerp(v1: Vec3, v2: Vec3, amount: number): Vec3 {
+    let dotProd = dot(v1, v2);
+    dotProd = Math.max(-1, Math.min(1, dotProd));
+    const theta = Math.acos(dotProd);
+    if (Math.abs(theta) < 1e-4) {
+      return normalize([
+        v1[0] + (v2[0] - v1[0]) * amount,
+        v1[1] + (v2[1] - v1[1]) * amount,
+        v1[2] + (v2[2] - v1[2]) * amount
+      ]);
+    }
+    const sinTheta = Math.sin(theta);
+    const weight1 = Math.sin((1 - amount) * theta) / sinTheta;
+    const weight2 = Math.sin(amount * theta) / sinTheta;
+    return [
+      v1[0] * weight1 + v2[0] * weight2,
+      v1[1] * weight1 + v2[1] * weight2,
+      v1[2] * weight1 + v2[2] * weight2
+    ];
+  }
+
+  const fwd = slerp(curr.forward, target.forward, t);
+  let up = slerp(curr.up, target.up, t);
+
+  const rt = normalize(cross(fwd, up));
+  up = cross(rt, fwd);
+
+  return { forward: fwd, up, right: rt };
+}

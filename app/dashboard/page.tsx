@@ -10,6 +10,7 @@ import { getUserDoc } from '@/lib/firestore';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Bookmark, Telescope, Star, Calendar, Trash2, Microscope } from 'lucide-react';
+import DailyCelestialFacts from '@/components/ui/DailyCelestialFacts';
 import type { SavedStar } from '@/types/user';
 import type { Observation } from '@/types/observation';
 import { SpaceEvent } from '@/types/event';
@@ -208,68 +209,6 @@ export default function DashboardPage() {
                         <Calendar size={14} />
                         {new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
-                    </div>
-                  ))}
-                </div>
-            )}
-            </motion.div>
-
-            {/* Live Sky & Push Notifications */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <DailyCelestialFacts />
-            </motion.div>
-          </div>
-
-
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-8 md:gap-12 mt-12 items-start">
-            {/* Observation Log */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-display text-2xl text-text-primary">
-                  Observation Log
-                </h2>
-              </div>
-
-              {observations.length === 0 ? (
-                <div className="liquid-glass rounded-2xl p-10 text-center">
-                  <div className="text-4xl mb-4 opacity-50">🔭</div>
-                  <p className="text-muted font-body text-sm">
-                    No observations yet. Visit a star page to log one!
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {observations.map((obs) => (
-                    <div key={obs.id} className="liquid-glass rounded-xl p-4 md:p-5 relative">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="font-display text-lg text-text-primary">
-                          {obs.starName}
-                        </p>
-                        <button
-                          onClick={() => obs.id && handleDeleteObservation(obs.id)}
-                          className="text-muted hover:text-[#FF6B6B] transition-colors p-1"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      {obs.notes && (
-                        <p className="text-sm text-text-primary/70 font-body leading-relaxed mb-3">
-                          {obs.notes}
-                        </p>
-                      )}
-                      {obs.conditions && (
-                        <p className="text-xs text-muted font-body tracking-wide">
-                          Conditions: <span className="text-text-primary/70">{obs.conditions}</span>
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
