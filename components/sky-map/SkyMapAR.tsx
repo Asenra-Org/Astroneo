@@ -596,21 +596,23 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
       const bright: { s: SkyStar; x: number; y: number; r: number; a: number }[] = [];
 
       const margin = 40;
-      for (let i = 0; i < stars.length; i++) {
-        const s = stars[i];
-        if (s.mag > limitMag) continue;
-        const v = matApply(M, s.vec);
-        if (v[2] <= 1e-4) continue;
-        const inv = focal / v[2];
-        const x = cx + v[0] * inv;
-        const y = cy - v[1] * inv;
-        if (x < -margin || x > w + margin || y < -margin || y > h + margin) continue;
+              for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          // Cap the limiting magnitude so the background doesn't get swamped with "dummy" looking noisy dots
+          const effectiveLimit = Math.min(limitMag, 5.0);
+          if (s.mag > effectiveLimit) continue;
+          const v = matApply(M, s.vec);
+          if (v[2] <= 1e-4) continue;
+          const inv = focal / v[2];
+          const x = cx + v[0] * inv;
+          const y = cy - v[1] * inv;
+          if (x < -margin || x > w + margin || y < -margin || y > h + margin) continue;
+  
+          // Make faint stars much smaller and dimmer so they don't look like noise.
+          const rel = Math.max(0, effectiveLimit - s.mag);
+          const r = 0.35 + Math.pow(rel, 1.35) * 0.45;
+          const alpha = Math.min(1, 0.20 + rel * 0.35);
 
-        // Perceptual size: flux is 10^(-0.4·m), compressed so the brightest
-        // stars stay a sensible size while the faintest remain visible.
-        const rel = Math.max(0, limitMag - s.mag);
-        const r = 0.45 + Math.pow(rel, 1.45) * 0.30;
-        const alpha = Math.min(1, 0.30 + rel * 0.42);
 
         if (r < 1.5) {
           const b = batches[s.bucket];
@@ -1075,3 +1077,4 @@ function drawMoon(
 
   ctx.restore();
 }
+

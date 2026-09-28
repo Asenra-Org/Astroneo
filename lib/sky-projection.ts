@@ -461,19 +461,6 @@ export function angleDelta(from: number, to: number): number {
  * valid without the cost or the sign-flip pitfalls of quaternion slerp, and at
  * the small per-frame steps used here the difference is not observable.
  */
-export function blendBasis(from: CameraBasis, to: CameraBasis, t: number): CameraBasis {
-  const mix = (a: Vec3, b: Vec3): Vec3 => [
-    a[0] + (b[0] - a[0]) * t,
-    a[1] + (b[1] - a[1]) * t,
-    a[2] + (b[2] - a[2]) * t,
-  ];
-  const forward = normalize(mix(from.forward, to.forward));
-  let up = mix(from.up, to.up);
-  // Re-orthogonalise up against forward (Gram–Schmidt), then rebuild right.
-  const d = dot(up, forward);
-  up = normalize([up[0] - forward[0] * d, up[1] - forward[1] * d, up[2] - forward[2] * d]);
-  // right = forward x up keeps the same handedness as `basisFromAngles`;
-  // the opposite order silently mirrors the sky left-to-right.
-  const right = cross(forward, up);
-  return { right, up, forward };
-}
+
+
+
