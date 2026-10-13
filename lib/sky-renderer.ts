@@ -19,6 +19,9 @@ import {
   type CameraBasis,
   equatorialVector,
   equatorialToHorizontal,
+  precessionMatrix,
+  applyRefraction,
+  matMul,
   basisToHeadingPitch,
   worldToCamera,
   matApply,
@@ -99,6 +102,8 @@ export interface SkyRenderOptions {
   layers: SkyLayers;
   /** One pre-rendered glow sprite per colour bucket. */
   starSprites: unknown[];
+  /** CSS colour per bucket, so batched fills set fillStyle once per group. */
+  bucketColors?: string[];
   /**
    * Pre-rendered Milky Way puffs, indexed by warmth bucket. Building a radial
    * gradient per blob per frame costs ~100ms for the all-sky view; blitting a
@@ -151,8 +156,27 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
 
   const scale = fisheyeScale(w, o.fovDegrees);
   const cx = w / 2, cy = h / 2;
-  const eqToHor = equatorialToHorizontal(localSiderealTime(o.date, o.longitude), o.latitude);
+  // Catalogue positions are J2000; precess them to the current epoch before
+  // rotating into the horizontal frame. Folding it in here costs nothing per
+  // object and removes the constant offset that put the whole sky slightly off.
+  const eqToHor = matMul(
+    equatorialToHorizontal(localSiderealTime(o.date, o.longitude), o.latitude),
+    precessionMatrix(o.date),
+  );
   const M = worldToCamera(basis, eqToHor);
+
+  /**
+   * Equatorial vector to screen, through the local horizontal frame so that
+   * atmospheric refraction can be applied. Refraction lifts objects toward the
+   * zenith by up to half a degree at the horizon; `applyRefraction` returns the
+   * input unchanged above 20°, where the correction is under a tenth of a
+   * degree and not worth the work.
+   */
+  const projectEq = (vec: Vec3) => {
+    const enu = applyRefraction(matApply(eqToHor, vec));
+    return projectFisheye(
+      [dot(enu, basis.right), dot(enu, basis.up), dot(enu, basis.forward)], scale, cx, cy);
+  };
 
   const sunEq = getSunCoords(o.date), moonEq = getMoonCoords(o.date);
   const sunENU = matApply(eqToHor, equatorialVector(sunEq.ra, sunEq.dec));
@@ -187,19 +211,25 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
   const zen = projENU([0, 0, 1]);
   const zenithInside = pointInPolygon(zen.x, zen.y, rim);
 
+  /** Applies the horizon curve as a clip, keeping either the sky or the ground side. */
+  const clipTo = (side: 'sky' | 'ground') => {
+    ctx.beginPath();
+    ctx.moveTo(rim[0].x, rim[0].y);
+    for (let i = 1; i < rim.length; i++) ctx.lineTo(rim[i].x, rim[i].y);
+    ctx.closePath();
+    const keepInside = side === 'sky' ? zenithInside : !zenithInside;
+    if (!keepInside) {
+      const big = Math.hypot(w, h) * 3;
+      ctx.moveTo(cx - big, cy - big); ctx.lineTo(cx + big, cy - big);
+      ctx.lineTo(cx + big, cy + big); ctx.lineTo(cx - big, cy + big); ctx.closePath();
+      ctx.clip('evenodd');
+    } else {
+      ctx.clip();
+    }
+  };
+
   ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(rim[0].x, rim[0].y);
-  for (let i = 1; i < rim.length; i++) ctx.lineTo(rim[i].x, rim[i].y);
-  ctx.closePath();
-  if (!zenithInside) {
-    const big = Math.hypot(w, h) * 3;
-    ctx.moveTo(cx - big, cy - big); ctx.lineTo(cx + big, cy - big);
-    ctx.lineTo(cx + big, cy + big); ctx.lineTo(cx - big, cy + big); ctx.closePath();
-    ctx.clip('evenodd');
-  } else {
-    ctx.clip();
-  }
+  clipTo('sky');
 
   // ── Sky gradient ──────────────────────────────────────────────────────────
   if (!o.cameraMode) {
@@ -218,6 +248,8 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
     ctx.fillStyle = g;
     ctx.fillRect(zen.x - far, zen.y - far, far * 2, far * 2);
   }
+  ctx.restore(); // the painted sky stops at the horizon
+
 
   // ── Milky Way ─────────────────────────────────────────────────────────────
   if (L.milkyWay && !o.cameraMode && sunAlt < 2) {
@@ -261,7 +293,7 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
   const focused: { con: PreparedConstellation; x: number; y: number; d: number }[] = [];
   for (const con of o.constellations) {
     if (!con.labelVec) continue;
-    const p = projectFisheye(matApply(M, con.labelVec), scale, cx, cy);
+    const p = projectEq(con.labelVec);
     const d = Math.hypot(p.x - cx, p.y - cy);
     if (d < focusRadius) focused.push({ con, x: p.x, y: p.y, d });
   }
@@ -279,7 +311,7 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
         let started = false;
         let prev: { x: number; y: number } | null = null;
         for (const vec of seg) {
-          const p = projectFisheye(matApply(M, vec), scale, cx, cy);
+          const p = projectEq(vec);
           // A jump of this size is the projection wrapping around the antipode,
           // not a real line between two stars.
           if (prev && Math.hypot(p.x - prev.x, p.y - prev.y) > scale * 1.2) started = false;
@@ -293,26 +325,71 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
   }
 
   // ── Stars ─────────────────────────────────────────────────────────────────
+  // `o.stars` arrives sorted brightest-first, so a binary search finds where
+  // the catalogue crosses the limiting magnitude and everything fainter is
+  // skipped entirely. Iterating all 8,886 every frame — the previous behaviour —
+  // did most of its work on stars that were never going to be drawn.
+  let lo = 0, hi = o.stars.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (o.stars[mid].mag <= limitMag) lo = mid + 1; else hi = mid;
+  }
+  const cutoff = lo;
+
   const named: { s: SkyStar; x: number; y: number; r: number }[] = [];
-  ctx.save();
-  for (let i = 0; i < o.stars.length; i++) {
-    const s = o.stars[i];
-    if (s.mag > limitMag) continue;
-    const p = projectFisheye(matApply(M, s.vec), scale, cx, cy);
-    if (p.x < -8 || p.x > w + 8 || p.y < -8 || p.y > h + 8) continue;
-    const rel = Math.max(0, limitMag - s.mag);
+  // Faint stars are batched by colour and alpha band: one path and one fill per
+  // group. The per-star fillStyle changes and separate fill() calls were the
+  // bulk of the draw cost, not the arcs themselves.
+  const ALPHA_BANDS = 4;
+  const batch: number[][] = Array.from({ length: 12 * ALPHA_BANDS }, () => []);
+  const bright: { x: number; y: number; r: number; a: number; bucket: number; color: string }[] = [];
+
+  for (let i = cutoff - 1; i >= 0; i--) {
+    const st = o.stars[i];
+    const p = projectEq(st.vec);
+    if (p.x < -6 || p.x > w + 6 || p.y < -6 || p.y > h + 6) continue;
+    const rel = limitMag - st.mag;
     const r = 0.55 + Math.pow(rel, 1.42) * 0.17;
     const alpha = Math.min(1, 0.34 + rel * 0.4);
-    const sprite = o.starSprites[s.bucket];
-    if (r > 1.5 && sprite) {
-      const gr = r * 4.6;
-      ctx.globalAlpha = Math.min(1, alpha * 0.8);
-      ctx.drawImage(sprite, p.x - gr, p.y - gr, gr * 2, gr * 2);
+    if (r < 1.35) {
+      const band = Math.min(ALPHA_BANDS - 1, Math.floor(alpha * ALPHA_BANDS));
+      batch[st.bucket * ALPHA_BANDS + band].push(p.x, p.y, r);
+    } else {
+      bright.push({ x: p.x, y: p.y, r, a: alpha, bucket: st.bucket, color: st.color });
+      if (r > 2.1 && isProperName(st.name)) named.push({ s: st, x: p.x, y: p.y, r });
     }
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = s.color;
-    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.fill();
-    if (r > 2.1 && isProperName(s.name)) named.push({ s, x: p.x, y: p.y, r });
+  }
+
+  ctx.save();
+  for (let g = 0; g < batch.length; g++) {
+    const arr = batch[g];
+    if (!arr.length) continue;
+    const bucket = Math.floor(g / ALPHA_BANDS);
+    const band = g % ALPHA_BANDS;
+    ctx.globalAlpha = (band + 0.5) / ALPHA_BANDS;
+    ctx.fillStyle = o.bucketColors?.[bucket] ?? '#ffffff';
+    ctx.beginPath();
+    for (let k = 0; k < arr.length; k += 3) {
+      const r = arr[k + 2];
+      // Round, not square. The saving comes from one fill per group rather than
+      // one per star, so the arc itself costs little; rects made faint stars
+      // visibly blocky at device pixel ratio 2.
+      ctx.moveTo(arr[k] + r, arr[k + 1]);
+      ctx.arc(arr[k], arr[k + 1], r, 0, TAU);
+    }
+    ctx.fill();
+  }
+  // Bright stars keep their halo and a round core.
+  for (const b of bright) {
+    const sprite = o.starSprites[b.bucket];
+    if (sprite) {
+      const gr = b.r * 4.6;
+      ctx.globalAlpha = Math.min(1, b.a * 0.8);
+      ctx.drawImage(sprite, b.x - gr, b.y - gr, gr * 2, gr * 2);
+    }
+    ctx.globalAlpha = b.a;
+    ctx.fillStyle = b.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
   }
   ctx.globalAlpha = 1;
   ctx.restore();
@@ -353,7 +430,7 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
     const eq = body.slug === 'sun' ? sunEq
       : body.slug === 'moon' ? moonEq
       : getPlanetCoords(body.slug, o.date);
-    const p = projectFisheye(matApply(M, equatorialVector(eq.ra, eq.dec)), scale, cx, cy);
+    const p = projectEq(equatorialVector(eq.ra, eq.dec));
     if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40) continue;
 
     const zoomK = Math.min(2.4, Math.max(0.65, 70 / o.fovDegrees));
@@ -416,7 +493,7 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
     ctx.font = `500 11px ${FONT}`;
     for (const d of DEEP_SKY) {
       if (d.mag > limitMag + 1.5) continue;
-      const p = projectFisheye(matApply(M, equatorialVector(d.ra, d.dec)), scale, cx, cy);
+      const p = projectEq(equatorialVector(d.ra, d.dec));
       if (p.x < 24 || p.x > w - 24 || p.y < 24 || p.y > h - 24) continue;
       const rr = Math.max(4.5, Math.min(17, (d.size * Math.PI / 180) * scale * 0.34));
       ctx.beginPath(); ctx.ellipse(p.x, p.y, rr, rr * 0.78, 0, 0, TAU); ctx.stroke();
@@ -453,7 +530,20 @@ export function renderSky(ctx: Ctx, o: SkyRenderOptions): SkyRenderResult {
     ctx.restore();
   }
 
-  ctx.restore(); // end sky clip
+  // ── Ground ────────────────────────────────────────────────────────────────
+  // Opaque while looking level or up, so the landscape reads as solid. Looking
+  // steeply down it becomes translucent and the stars below the horizon — the
+  // ones that have set, or have not yet risen — show through the earth.
+  {
+    const pitchNow = Math.asin(Math.max(-1, Math.min(1, basis.forward[2]))) * 180 / Math.PI;
+    const t = Math.min(1, Math.max(0, (-pitchNow - 8) / 27));
+    const groundAlpha = 1 - t * 0.78;
+    ctx.save();
+    clipTo('ground');
+    ctx.fillStyle = `rgba(0,0,0,${groundAlpha.toFixed(3)})`;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
 
   // ── Cardinal markers, drawn over the landscape ────────────────────────────
   ctx.save();

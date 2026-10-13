@@ -175,9 +175,12 @@ export function limitingMagnitude(cond: SkyConditions, fovDegrees: number): numb
 
   limit -= cond.lightPollution * 2.6;
 
-  // Narrowing the field concentrates light and resolves fainter stars. The
-  // catalogue is complete to roughly magnitude 6.5, so the gain is capped.
-  limit += clamp(Math.log2(60 / clamp(fovDegrees, 4, 120)), 0, 3) * 0.9;
+  // Narrowing the field concentrates light and resolves fainter stars; widening
+  // it past the naked-eye field does the reverse, since the same sky is being
+  // squeezed into fewer pixels. The catalogue is complete to roughly magnitude
+  // 6.5, so the gain is capped. Allowing the term to go negative also keeps the
+  // all-sky view from trying to draw several thousand stars at once.
+  limit += clamp(Math.log2(60 / clamp(fovDegrees, 4, 240)), -1.3, 3) * 0.9;
 
   return clamp(limit, -2, 7.2);
 }

@@ -115,6 +115,66 @@ export function equatorialToHorizontal(lstHours: number, latDeg: number): Mat3 {
   ]);
 }
 
+/**
+ * Precession from J2000 to the given date (IAU 1976).
+ *
+ * Catalogue positions are stored for epoch J2000, but the Earth's axis has
+ * moved since: by 2026 that is roughly a fifth of a degree, and it grows by
+ * about 1.4 arcminutes every year. Left uncorrected it shifts the entire sky by
+ * a constant offset, which is exactly the "everything sits slightly high or
+ * low" error it produces on screen.
+ *
+ * Folding it into the equatorial-to-horizontal matrix costs nothing per star.
+ */
+export function precessionMatrix(date: Date): Mat3 {
+  const jd = date.getTime() / 86400000 + 2440587.5;
+  const T = (jd - 2451545.0) / 36525;
+  const AS = DEG / 3600;
+  const zeta = (2306.2181 * T + 0.30188 * T * T + 0.017998 * T * T * T) * AS;
+  const z = (2306.2181 * T + 1.09468 * T * T + 0.018203 * T * T * T) * AS;
+  const th = (2004.3109 * T - 0.42665 * T * T - 0.041833 * T * T * T) * AS;
+
+  const cz = Math.cos(zeta), sz = Math.sin(zeta);
+  const cZ = Math.cos(z), sZ = Math.sin(z);
+  const ct = Math.cos(th), st = Math.sin(th);
+
+  return new Float64Array([
+    cz * ct * cZ - sz * sZ, -sz * ct * cZ - cz * sZ, -st * cZ,
+    cz * ct * sZ + sz * cZ, -sz * ct * sZ + cz * cZ, -st * sZ,
+    cz * st, -sz * st, ct,
+  ]);
+}
+
+/**
+ * Atmospheric refraction in degrees for a true altitude (Bennett 1982).
+ *
+ * The atmosphere bends light downward, so every object appears HIGHER than it
+ * really is — by half a degree at the horizon, which is more than the Moon's
+ * own width, and still 5 arcminutes at 10° up. Planetarium software applies
+ * this; without it everything low in the sky sits visibly too low.
+ */
+export function refractionDegrees(trueAltDeg: number): number {
+  if (trueAltDeg < -2) return 0;
+  const h = Math.max(trueAltDeg, -1);
+  return 1.02 / Math.tan((h + 10.3 / (h + 5.11)) * DEG) / 60;
+}
+
+/**
+ * Applies refraction to an ENU unit vector, lifting it toward the zenith.
+ * Returns the same vector when the correction is negligible.
+ */
+export function applyRefraction(v: Vec3): Vec3 {
+  const sinAlt = Math.max(-1, Math.min(1, v[2]));
+  const alt = Math.asin(sinAlt) / DEG;
+  if (alt > 20 || alt < -2) return v;           // below a tenth of a degree
+  const r = refractionDegrees(alt);
+  if (r < 1e-4) return v;
+  const newAlt = (alt + r) * DEG;
+  const cosOld = Math.sqrt(Math.max(1e-9, 1 - sinAlt * sinAlt));
+  const k = Math.cos(newAlt) / cosOld;
+  return [v[0] * k, v[1] * k, Math.sin(newAlt)];
+}
+
 /** Altitude and azimuth (degrees) for a vector already in the ENU frame. */
 export function altAzFromENU(v: Vec3): { altitude: number; azimuth: number } {
   const alt = Math.asin(Math.max(-1, Math.min(1, v[2]))) / DEG;

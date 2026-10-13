@@ -102,6 +102,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const milkyWay = useRef<MilkyWayBlob[]>([]);
   const starSprites = useRef<HTMLCanvasElement[]>([]);
   const mwSprites = useRef<HTMLCanvasElement[]>([]);
+  const bucketColors = useRef<string[]>([]);
   const flyTo = useRef<{ h: number; p: number; t: number } | null>(null);
 
   useEffect(() => { layersRef.current = layers; }, [layers]);
@@ -116,6 +117,10 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   // ── Scene assets ───────────────────────────────────────────────────────────
   useEffect(() => {
     milkyWay.current = [...buildMilkyWay(), ...buildMagellanicClouds()];
+    bucketColors.current = BUCKET_TEMPS.map((t) => {
+      const [r, g, b] = apparentStarRGB(t, 0.26);
+      return `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`;
+    });
     starSprites.current = BUCKET_TEMPS.map((temp) => {
       const c = document.createElement('canvas');
       const S = 48; c.width = c.height = S;
@@ -166,7 +171,9 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
           bucket: bucketForTemp(temp),
         });
       }
-      prepared.sort((a, b) => b.mag - a.mag);
+      // Brightest first: the renderer binary-searches this for the magnitude
+      // cutoff and never touches the fainter tail.
+      prepared.sort((a, b) => a.mag - b.mag);
       setStars(prepared);
       setConstellations(cons.map((c) => ({
         name: c.name, rank: c.rank,
@@ -335,6 +342,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
         layers: layersRef.current,
         starSprites: starSprites.current,
         milkyWaySprites: mwSprites.current,
+        bucketColors: bucketColors.current,
         cameraMode: camRef.current,
       });
       picks.current = out.picks;

@@ -92,7 +92,7 @@ export interface MilkyWayBlob {
  * toward the anticentre, and carries a dark rift along the midplane where dust
  * blocks the light behind it.
  */
-export function buildMilkyWay(count = 5200): MilkyWayBlob[] {
+export function buildMilkyWay(count = 3400): MilkyWayBlob[] {
   const rand = mulberry32(20260413);
   const blobs: MilkyWayBlob[] = [];
 
@@ -121,7 +121,7 @@ export function buildMilkyWay(count = 5200): MilkyWayBlob[] {
 
     blobs.push({
       vec: galacticToEquatorial(l, b),
-      size: 1.1 + rand() * 3.2 + centreWeight * 1.8,
+      size: 1.3 + rand() * 3.4 + centreWeight * 1.9,
       intensity: Math.min(1, intensity),
       // Dust toward the centre scatters red; the outer disc reads cooler.
       warmth: Math.min(1, centreWeight * 0.85 + rand() * 0.3),
@@ -141,8 +141,8 @@ export function buildMagellanicClouds(): MilkyWayBlob[] {
   const rand = mulberry32(5551212);
   const clouds: MilkyWayBlob[] = [];
   const defs = [
-    { ra: 5.3923, dec: -69.756, r: 5.4, n: 90, i: 0.5 },  // Large Magellanic Cloud
-    { ra: 0.8744, dec: -72.829, r: 3.0, n: 45, i: 0.38 }, // Small Magellanic Cloud
+    { ra: 5.3923, dec: -69.756, r: 5.4, n: 34, i: 0.5 },  // Large Magellanic Cloud
+    { ra: 0.8744, dec: -72.829, r: 3.0, n: 18, i: 0.38 }, // Small Magellanic Cloud
   ];
   for (const d of defs) {
     for (let i = 0; i < d.n; i++) {
