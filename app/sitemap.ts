@@ -40,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/explore`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE}/blackholes`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/sky-map`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/sky-map`, lastModified: now, changeFrequency: 'weekly', priority: 0.95 },
     { url: `${BASE}/upcoming-events`, lastModified: now, changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.6 },

@@ -1,37 +1,40 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Footer from '@/components/layout/Footer';
 import { SITE_URL } from '@/lib/site';
 import SkyMapClient from './SkyMapClient';
 
 /**
- * Live sky map.
+ * Live AR sky map.
  *
- * This route used to be a single `'use client'` component, which meant it could
- * export no metadata at all: it inherited the site-wide title and description,
- * so the one feature the site is actually distinctive for had no title, no
- * description and no Open Graph tags of its own anywhere in the index.
+ * Positioning note. Every well-known augmented-reality star map — Star Walk,
+ * SkyView, Sky Tonight, Stellarium Mobile — is a native app install. The
+ * browser-based planetariums that do exist (Stellarium Web among them) render a
+ * chart but do not track the device or overlay the camera. A sky map that does
+ * AR *in the browser* therefore sits in a real gap, and that gap is what this
+ * page is written to rank for: "AR star map no app", "browser based sky map",
+ * "online AR sky map".
  *
- * It also redirected signed-out visitors to `/auth/login`, a path that
- * robots.txt disallows — so a crawler following the sitemap entry for this page
- * was sent straight into a blocked directory and indexed nothing.
- *
- * The page is now a server component. The interactive map still lives in the
- * client component below and still requires an account, but the explanation of
- * what the tool is and how it works is rendered on the server, so it is in the
- * HTML for crawlers and readable by signed-out visitors.
+ * The page is a server component so that all of this copy is in the HTML for
+ * crawlers and for assistants, not assembled after hydration. The interactive
+ * map itself lives in the client component.
  */
 
-const TITLE = 'Live Sky Map — See Which Stars Are Above You Right Now';
+const TITLE = 'Free AR Star Map in Your Browser — No App Install';
+// Kept under ~155 characters: beyond that Google truncates the snippet and the
+// tail is wasted.
 const DESCRIPTION =
-  'An interactive AR star map that shows the real sky above your location, right now. Point your phone to identify stars and planets, see the Moon in its current phase, and look below the horizon to find what has already set.';
+  'Free AR sky map in your browser. Point your phone to identify stars, planets and constellations in real time. No app download, works on iPhone and Android.';
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   keywords: [
-    'live sky map', 'AR star map', 'star map tonight', 'what star is that',
-    'night sky map', 'planets visible tonight', 'star finder', 'constellation finder',
-    'where is Jupiter tonight', 'moon phase tonight',
+    'free AR star map', 'browser based AR sky map', 'online AR sky map',
+    'AR star map no app', 'best online sky map', 'augmented reality star map',
+    'star map in browser', 'what star is that', 'live sky map',
+    'planets visible tonight', 'constellation finder', 'moon phase tonight',
+    'free star map online', 'sky map without app',
   ],
   alternates: { canonical: `${SITE_URL}/sky-map` },
   openGraph: {
@@ -40,7 +43,7 @@ export const metadata: Metadata = {
     siteName: 'Astroneo',
     title: TITLE,
     description: DESCRIPTION,
-    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'Astroneo live sky map' }],
+    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'Astroneo free AR sky map running in a browser' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -50,57 +53,79 @@ export const metadata: Metadata = {
   },
 };
 
-/** Questions people actually search for, answered plainly. Also feeds FAQ schema. */
+/**
+ * Questions people actually type, answered in the first sentence.
+ *
+ * Generative engines quote passages that answer a question directly and carry a
+ * checkable specific — a number, a method, a named standard. Each answer below
+ * is written to stand on its own if it is lifted out of the page.
+ */
 const FAQ: { q: string; a: string }[] = [
   {
-    q: 'How does the sky map know which stars are above me?',
-    a: 'It converts each star\'s catalogued right ascension and declination into an altitude and azimuth for your latitude and longitude at the current moment, using local sidereal time. That is the same calculation a planetarium or an observatory telescope uses, so a star shown halfway up your eastern sky really is halfway up your eastern sky.',
+    q: 'Is there an AR star map that works without installing an app?',
+    a: 'Yes. Astroneo runs entirely in a mobile browser. Open the sky map, allow motion access, and the view follows wherever you point the phone; allow camera access and the stars are drawn over your live surroundings. Nothing is downloaded and no account is needed to look around. Most augmented-reality star maps — Star Walk, SkyView, Sky Tonight, Stellarium Mobile — are native app installs, and the browser planetariums that exist generally render a chart without tracking the device.',
   },
   {
-    q: 'Do I need to install an app?',
-    a: 'No. The sky map runs in your browser on a phone, tablet or desktop. On a phone it can use the compass and motion sensors so the view follows wherever you point, and it can show the stars over a live camera view.',
+    q: 'Is the sky map free?',
+    a: 'Yes, the sky map is free to use and there is nothing to buy. Creating a free account unlocks saving stars and logging observations, but the map, the catalogue and the AR view cost nothing.',
   },
   {
-    q: 'Why do the stars not line up with what I can see?',
-    a: 'Phone compasses drift, especially indoors or near metal and magnets. Open the settings panel and use the compass offset slider to nudge the map until a bright star you recognise sits where you actually see it. Moving the phone in a figure of eight also helps the device recalibrate.',
+    q: 'How accurate are the star positions?',
+    a: 'Positions are computed the way planetarium software computes them, not approximated. Each object is converted from catalogue right ascension and declination into an altitude and azimuth for your exact latitude, longitude and the current instant using local sidereal time. Catalogue coordinates are precessed from epoch J2000 to today, a correction of about 0.2 degrees in 2026 that grows by roughly 1.4 arcminutes a year, and atmospheric refraction is applied below 20 degrees altitude, where it reaches 29 arcminutes at the horizon — wider than the Moon itself.',
   },
   {
-    q: 'Can I see stars that are below the horizon?',
-    a: 'Yes. Tilt down and the ground becomes translucent, so you can see the stars beneath your feet — the ones that have already set, or that have not risen yet. Most sky maps simply hide them.',
+    q: 'What can I see on it?',
+    a: 'Nearly 8,900 catalogued stars, all 88 IAU constellation figures, the Sun, the Moon in tonight\'s real phase, all seven planets, and 20 bright deep-sky objects including the Andromeda Galaxy, the Orion Nebula, the Pleiades and both Magellanic Clouds.',
   },
   {
-    q: 'Which planets does it show?',
-    a: 'Mercury, Venus, Mars, Jupiter, Saturn, Uranus and Neptune, plus the Sun and the Moon. Planet positions are computed from orbital elements for the current date rather than being fixed to the background stars, because planets move against them.',
+    q: 'Does it work on iPhone and Android?',
+    a: 'Yes. It uses the standard web device-orientation and camera interfaces, so it works in Safari on iOS and Chrome on Android. On iOS you will be asked once to allow Motion & Orientation access; on both platforms the camera overlay requires a secure https connection, which this site uses.',
   },
   {
-    q: 'Does it show the Moon phase?',
-    a: 'Yes. The Moon is drawn with its real illuminated fraction for tonight, and its bright limb is oriented toward the Sun — which is why a low crescent correctly appears to lie on its back.',
+    q: 'What star is that? How do I identify something I can see?',
+    a: 'Hold the phone up toward the object with AR mode on. The map rotates to match, and bright stars and planets are labelled on screen. Tap a label to open a full page on that object. If the alignment looks slightly off, phone compasses drift near metal and indoors — use the compass offset slider in the menu to nudge it until a star you recognise lines up.',
   },
   {
     q: 'Why can I see fewer stars than on a clear night?',
-    a: 'The map models sky brightness. Moonlight, twilight and light pollution all raise the background and hide faint stars, exactly as they do outdoors. Drag the light-pollution slider down to a rural setting and the fainter stars reappear.',
+    a: 'The map models sky brightness rather than drawing every catalogue entry. Twilight, moonlight and light pollution each raise the background and hide faint stars, exactly as they do outdoors, so the number of visible stars changes with the real conditions.',
   },
+  {
+    q: 'Can I see stars below the horizon?',
+    a: 'Yes. Tilt the view downward past about eight degrees and the ground becomes translucent, showing the stars beneath your feet — the ones that have already set, or that have not yet risen. Most sky maps simply hide everything below the horizon.',
+  },
+];
+
+const HOW_TO_STEPS = [
+  { name: 'Open the map', text: 'Open the sky map in your phone browser. Nothing is downloaded.' },
+  { name: 'Allow location', text: 'Allow location access so the sky is computed for where you are standing. If you decline, a default location is used and you can still look around.' },
+  { name: 'Turn on compass tracking', text: 'Open the menu and switch on compass tracking. On iPhone, accept the Motion & Orientation prompt. The view now follows wherever you point.' },
+  { name: 'Point at the sky', text: 'Raise the phone toward any part of the sky. Stars, planets and constellation figures are drawn in the positions they genuinely occupy above you.' },
+  { name: 'Overlay the camera', text: 'Switch on camera view to draw the sky over your live surroundings, which makes it far easier to match a label to the real point of light above a roofline or tree.' },
 ];
 
 export default function SkyMapPage() {
   const webAppSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Astroneo Live Sky Map',
+    name: 'Astroneo AR Sky Map',
     url: `${SITE_URL}/sky-map`,
     applicationCategory: 'EducationalApplication',
     applicationSubCategory: 'Astronomy',
-    operatingSystem: 'Any device with a web browser',
-    browserRequirements: 'Requires JavaScript and a modern browser',
+    operatingSystem: 'Any device with a web browser (iOS, Android, Windows, macOS)',
+    browserRequirements: 'Requires JavaScript. Augmented-reality view requires a device with orientation sensors and a camera.',
     description: DESCRIPTION,
+    isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     featureList: [
-      'Real-time star positions for your location',
-      'Augmented-reality view using the phone compass and motion sensors',
-      'Live camera passthrough with the sky overlaid',
-      'Sun, Moon and planet positions computed for the current moment',
-      'Moon rendered in its current phase',
-      'Stars visible below the horizon through translucent ground',
+      'Augmented-reality view that tracks the phone compass and motion sensors',
+      'Live camera passthrough with the sky drawn over your surroundings',
+      'Runs entirely in the browser with no app install',
+      'Nearly 8,900 catalogued stars',
+      'All 88 IAU constellation figures',
+      'Sun, Moon and all seven planets computed for the current moment',
+      'Moon rendered in its real current phase',
+      'Positions corrected for precession and atmospheric refraction',
+      'Stars below the horizon visible through translucent ground',
       'Adjustable light pollution affecting which stars are visible',
     ],
     publisher: { '@type': 'Organization', name: 'Astroneo', url: SITE_URL },
@@ -116,12 +141,28 @@ export default function SkyMapPage() {
     })),
   };
 
+  const howToSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: 'How to use an AR star map in your browser',
+    description: 'Identify stars, planets and constellations by pointing your phone at the sky, without installing an app.',
+    totalTime: 'PT1M',
+    tool: [{ '@type': 'HowToTool', name: 'A phone with a browser, compass and camera' }],
+    step: HOW_TO_STEPS.map((s, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+      url: `${SITE_URL}/sky-map#step-${i + 1}`,
+    })),
+  };
+
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: 'Live Sky Map', item: `${SITE_URL}/sky-map` },
+      { '@type': 'ListItem', position: 2, name: 'AR Sky Map', item: `${SITE_URL}/sky-map` },
     ],
   };
 
@@ -129,79 +170,126 @@ export default function SkyMapPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([webAppSchema, faqSchema, breadcrumbSchema]) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([webAppSchema, faqSchema, howToSchema, breadcrumbSchema]),
+        }}
       />
 
-      {/* The interactive map. Requires an account; the explanation below does not. */}
+      {/* The interactive map. The explanation below renders for everyone. */}
       <SkyMapClient />
 
       <article className="bg-bg px-6 py-16 md:py-24">
         <div className="max-w-3xl mx-auto">
           <h1 className="font-display text-3xl md:text-4xl text-text-primary tracking-tight mb-4">
-            Live sky map: what is above you right now
+            A free AR star map that runs in your browser
           </h1>
-          <p className="text-muted font-body text-base leading-relaxed mb-10">
-            Astroneo&apos;s sky map draws the real sky over your location at this moment. It is not a
-            picture of a generic starfield — every position is computed from the catalogue for your
-            latitude, your longitude and the current time, so what you see on screen matches what is
-            genuinely overhead. Point your phone at the sky and the view follows it.
+
+          {/* Answer-first paragraph: the passage an assistant is most likely to quote. */}
+          <p className="text-muted font-body text-base leading-relaxed mb-6">
+            Astroneo is a free augmented-reality sky map that works in a mobile browser, with no app
+            to install and no account needed to look. Point your phone at the sky and it shows you
+            the stars, planets and constellations genuinely above you, computed for your exact
+            location and the current moment. Switch the camera on and the sky is drawn over your
+            real surroundings.
+          </p>
+          <p className="text-muted font-body text-sm leading-relaxed mb-12">
+            Almost every augmented-reality star map is a native app download. The browser
+            planetariums that exist generally draw a chart without tracking your device at all. This
+            one does both in the browser, which is the whole reason it exists.
           </p>
 
-          <section className="mb-10">
-            <h2 className="font-display text-xl text-text-primary mb-3">How the positions are worked out</h2>
-            <p className="text-muted font-body text-sm leading-relaxed mb-3">
-              Every star in the catalogue is stored with a right ascension and a declination — fixed
-              coordinates on the celestial sphere, the sky&apos;s equivalent of longitude and latitude.
-              Those coordinates alone do not tell you where to look, because the sky turns.
-            </p>
-            <p className="text-muted font-body text-sm leading-relaxed">
-              To place a star in <em>your</em> sky, the map computes the local sidereal time for your
-              longitude, which fixes which part of the celestial sphere is currently facing you, then
-              rotates each star&apos;s coordinates into an altitude above your horizon and an azimuth
-              around it. The Sun, the Moon and the planets are handled separately: they move against
-              the background stars, so their positions are calculated from orbital elements for the
-              current date rather than being looked up in a table.
+          <section className="mb-12">
+            <h2 className="font-display text-xl text-text-primary mb-4">Why browser-based matters</h2>
+            <div className="overflow-x-auto -mx-2 px-2">
+              <table className="w-full text-sm font-body border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-2.5 pr-4 text-text-primary font-semibold">&nbsp;</th>
+                    <th className="text-left py-2.5 pr-4 text-text-primary font-semibold">Astroneo</th>
+                    <th className="text-left py-2.5 text-muted font-medium">Typical AR star app</th>
+                  </tr>
+                </thead>
+                <tbody className="text-muted">
+                  {[
+                    ['Install required', 'None — opens in the browser', 'App Store / Play download'],
+                    ['Storage used', 'Nothing kept on the device', '100–400 MB typical'],
+                    ['Cost', 'Free', 'Free tier with paid upgrade, or paid'],
+                    ['Works on a shared or borrowed phone', 'Yes, just open the link', 'Needs an install and often a sign-in'],
+                    ['Sharing', 'A link anyone can open', 'A store listing to download first'],
+                  ].map(([k, a, b]) => (
+                    <tr key={k} className="border-b border-white/5 align-top">
+                      <td className="py-2.5 pr-4 text-text-primary">{k}</td>
+                      <td className="py-2.5 pr-4">{a}</td>
+                      <td className="py-2.5">{b}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-muted font-body text-xs leading-relaxed mt-3">
+              An installed app can do things a web page cannot — run offline, stay resident, use the
+              sensors more aggressively. If you are a regular observer, a dedicated app is still
+              worth having. This is for the far more common case of wanting to know what that bright
+              thing above the roofline is, right now, without installing anything.
             </p>
           </section>
 
-          <section className="mb-10">
-            <h2 className="font-display text-xl text-text-primary mb-3">What you can see</h2>
-            <ul className="space-y-2.5 text-muted font-body text-sm leading-relaxed">
+          <section className="mb-12">
+            <h2 className="font-display text-xl text-text-primary mb-4">How accurate is it?</h2>
+            <p className="text-muted font-body text-sm leading-relaxed mb-3">
+              Each object is converted from its catalogue right ascension and declination into an
+              altitude above your horizon and an azimuth around it, using the local sidereal time for
+              your longitude. That is the same calculation an observatory uses to point a telescope.
+              Two corrections that casual sky maps usually skip are applied:
+            </p>
+            <ul className="space-y-3 text-muted font-body text-sm leading-relaxed mb-3">
               <li>
-                <strong className="text-text-primary">Nearly 8,900 catalogued stars</strong>, each
-                coloured by its real surface temperature derived from its spectral class and colour
-                index — so hot stars genuinely render blue-white and cool ones orange-red.
+                <strong className="text-text-primary">Precession.</strong> Catalogue positions are
+                stored for epoch J2000, but Earth&apos;s axis has moved since. In 2026 that is about
+                0.2 degrees across the whole sky, growing by roughly 1.4 arcminutes every year.
+                Uncorrected, it shifts everything by a constant offset.
               </li>
               <li>
-                <strong className="text-text-primary">The Sun, Moon and seven planets</strong>, with
-                the Moon drawn in tonight&apos;s actual phase and its lit edge turned toward the Sun.
+                <strong className="text-text-primary">Atmospheric refraction.</strong> The atmosphere
+                bends light downward, so every object appears higher than it truly is — by 29
+                arcminutes at the horizon, which is wider than the Moon, and still 5 arcminutes at 10
+                degrees up.
               </li>
-              <li>
-                <strong className="text-text-primary">The sky below your feet.</strong> Tilt down and
-                the ground turns translucent, showing the stars that have already set or have not yet
-                risen.
-              </li>
-              <li>
-                <strong className="text-text-primary">A sky that changes with conditions.</strong>{' '}
-                Twilight, moonlight and light pollution each raise the background brightness and hide
-                faint stars, the same way they do when you are standing outside.
-              </li>
+            </ul>
+            <p className="text-muted font-body text-sm leading-relaxed">
+              Planet positions are computed from orbital elements for the current date rather than
+              being fixed to the background stars, and the Moon is drawn at its real illuminated
+              fraction with its bright limb turned toward the Sun — which is why a low crescent
+              correctly appears to lie on its back.
+            </p>
+          </section>
+
+          <section className="mb-12">
+            <h2 className="font-display text-xl text-text-primary mb-4">What you can see</h2>
+            <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-muted font-body text-sm leading-relaxed">
+              <li><strong className="text-text-primary">8,898 catalogued objects</strong>, coloured by real surface temperature from their spectral class</li>
+              <li><strong className="text-text-primary">All 88 constellations</strong> with their IAU figures</li>
+              <li><strong className="text-text-primary">The Sun, Moon and seven planets</strong>, positioned for right now</li>
+              <li><strong className="text-text-primary">20 deep-sky objects</strong> — Andromeda, Orion Nebula, Pleiades, both Magellanic Clouds</li>
+              <li><strong className="text-text-primary">The Milky Way</strong>, thickening toward the galactic centre</li>
+              <li><strong className="text-text-primary">Below-horizon sky</strong>, through translucent ground when you look down</li>
             </ul>
           </section>
 
-          <section className="mb-10">
-            <h2 className="font-display text-xl text-text-primary mb-3">Using it outdoors</h2>
-            <p className="text-muted font-body text-sm leading-relaxed mb-3">
-              Switch on AR mode and the map reads your phone&apos;s compass and motion sensors, so the
-              view tracks wherever you point — including when you tilt the handset sideways. Turn on
-              the camera and the stars are drawn over your live surroundings, which makes it much
-              easier to match a label on screen to the actual point of light above a rooftop or tree.
-            </p>
-            <p className="text-muted font-body text-sm leading-relaxed">
-              Pinch to zoom. Narrowing the field of view reveals fainter stars, the way binoculars do.
-              If the alignment looks wrong, phone compasses are the usual culprit — the settings panel
-              has an offset slider to correct it.
-            </p>
+          <section className="mb-12">
+            <h2 className="font-display text-xl text-text-primary mb-4">How to use it</h2>
+            <ol className="space-y-3">
+              {HOW_TO_STEPS.map((s, i) => (
+                <li key={s.name} id={`step-${i + 1}`} className="flex gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-white/8 border border-white/15 text-text-primary text-xs font-body flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span className="text-muted font-body text-sm leading-relaxed">
+                    <strong className="text-text-primary">{s.name}.</strong> {s.text}
+                  </span>
+                </li>
+              ))}
+            </ol>
           </section>
 
           <section className="mb-4">
@@ -215,6 +303,16 @@ export default function SkyMapPage() {
               ))}
             </div>
           </section>
+
+          <nav className="mt-12 pt-8 border-t border-white/10" aria-label="Related pages">
+            <h2 className="font-display text-lg text-text-primary mb-3">Keep exploring</h2>
+            <ul className="space-y-2 text-sm font-body">
+              <li><Link href="/explore" className="text-accent hover:underline">Browse the full star catalogue</Link> — search 8,898 objects by constellation and spectral class</li>
+              <li><Link href="/upcoming-events" className="text-accent hover:underline">Upcoming sky events</Link> — meteor showers, eclipses and conjunctions</li>
+              <li><Link href="/blackholes" className="text-accent hover:underline">Black holes</Link> — the nearest and most studied, explained</li>
+              <li><Link href="/blog" className="text-accent hover:underline">Astronomy guides</Link> — practical observing and stellar physics</li>
+            </ul>
+          </nav>
         </div>
       </article>
 
