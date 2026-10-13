@@ -22,7 +22,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://astroneo.space'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Astroneo — Search the Stars, Explore the Universe',
     template: '%s | Astroneo',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://astroneo.space',
+    url: SITE_URL,
     siteName: 'Astroneo',
     title: 'Astroneo — Search the Stars, Explore the Universe',
     description: 'Astronomy reference with 8,898 catalogued objects, interactive 3D models and cited articles on stellar physics and practical observing.',
@@ -53,6 +53,7 @@ export const metadata: Metadata = {
 
 import AIChatBot from '@/components/ai/AIChatBot';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
+import { SITE_URL } from '@/lib/site';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const { gaId, adsenseId } = config;

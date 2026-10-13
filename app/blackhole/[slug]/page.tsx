@@ -11,6 +11,7 @@ import LogObservationModal from '@/components/star/LogObservationModal';
 import Footer from '@/components/layout/Footer';
 import { getBlackHoleArticle } from '@/lib/starArticles';
 import StarArticleBody from '@/components/star/StarArticleBody';
+import { SITE_URL } from '@/lib/site';
 
 interface BlackHole {
   id: string;
@@ -60,7 +61,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: `${blackhole.name}: ${blackhole.type} black hole. Mass: ${blackhole.mass}. Distance: ${blackhole.distance}.`,
     },
     alternates: {
-      canonical: `https://astroneo.space/blackhole/${slug}`,
+      canonical: `${SITE_URL}/blackhole/${slug}`,
     },
   };
 }
@@ -89,7 +90,7 @@ export default async function BlackHoleDetailPage({ params }: { params: Promise<
     '@type': article ? 'Article' : 'AstronomicalObject',
     name: blackhole.name,
     description: article ? article.summary : blackhole.description,
-    url: `https://astroneo.space/blackhole/${slug}`,
+    url: `${SITE_URL}/blackhole/${slug}`,
     additionalType: 'https://en.wikipedia.org/wiki/Black_hole',
     ...(article
       ? {
@@ -99,19 +100,19 @@ export default async function BlackHoleDetailPage({ params }: { params: Promise<
           author: {
             '@type': 'Person',
             name: 'Karan Patil',
-            url: 'https://astroneo.space/about#author',
+            url: `${SITE_URL}/about#author`,
           },
           publisher: {
             '@type': 'Organization',
             name: 'Astroneo',
-            logo: { '@type': 'ImageObject', url: 'https://astroneo.space/icon-192.png' },
+            logo: { '@type': 'ImageObject', url: `${SITE_URL}/icon-192.png` },
           },
           citation: article.sources.map((source) => source.url),
         }
       : {}),
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://astroneo.space/blackhole/${slug}`,
+      '@id': `${SITE_URL}/blackhole/${slug}`,
     },
   };
 

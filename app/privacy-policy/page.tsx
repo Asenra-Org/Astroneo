@@ -1,11 +1,12 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Astroneo',
   description: 'Read the Astroneo Privacy Policy to understand how we collect, use, and protect your personal data in compliance with GDPR and applicable privacy laws.',
-  alternates: { canonical: 'https://astroneo.space/privacy-policy' },
+  alternates: { canonical: `${SITE_URL}/privacy-policy` },
 };
 
 export default function PrivacyPolicyPage() {
@@ -172,7 +173,7 @@ export default function PrivacyPolicyPage() {
             <address className="not-italic bg-white/5 border border-white/10 rounded-2xl p-6 text-muted text-sm leading-relaxed">
               <strong className="text-text-primary block mb-2">Astroneo</strong>
               Email: <a href="mailto:contact@asenra.in" className="text-accent hover:underline">contact@asenra.in</a><br />
-              Website: <a href="https://astroneo.space" className="text-accent hover:underline">astroneo.space</a>
+              Website: <a href={SITE_URL} className="text-accent hover:underline">astroneo.space</a>
             </address>
           </div>
         </div>

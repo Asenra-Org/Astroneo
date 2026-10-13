@@ -3,11 +3,12 @@ import Footer from '@/components/layout/Footer';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Mail, MessageSquare, MapPin, Clock } from 'lucide-react';
+import { SITE_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Contact Us | Astroneo',
   description: 'Get in touch with the Astroneo team. We welcome feedback, bug reports, collaboration proposals, and astronomy questions.',
-  alternates: { canonical: 'https://astroneo.space/contact' },
+  alternates: { canonical: `${SITE_URL}/contact` },
 };
 
 export default function ContactPage() {
@@ -15,7 +16,7 @@ export default function ContactPage() {
     '@context': 'https://schema.org',
     '@type': 'ContactPage',
     name: 'Contact Astroneo',
-    url: 'https://astroneo.space/contact',
+    url: `${SITE_URL}/contact`,
     description: 'Contact the Astroneo team for support, feedback, or collaboration inquiries.',
   };
 

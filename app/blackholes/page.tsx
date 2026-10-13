@@ -2,19 +2,20 @@ import fs from 'fs';
 import path from 'path';
 import type { Metadata } from 'next';
 import BlackHolesClient from './BlackHolesClient';
+import { SITE_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Black Holes: Five Objects and What We Know About Them | Astroneo',
   description:
     'Profiles of Sagittarius A*, M87*, Cygnus X-1, V404 Cygni and TON 618 — how each was found, how its mass was measured, and what remains unresolved. Each page cites its sources.',
   alternates: {
-    canonical: 'https://astroneo.space/blackholes',
+    canonical: `${SITE_URL}/blackholes`,
   },
   openGraph: {
     title: 'Black Holes: Five Objects and What We Know About Them',
     description:
       'Profiles of Sagittarius A*, M87*, Cygnus X-1, V404 Cygni and TON 618 — how each was found and how its mass was measured.',
-    url: 'https://astroneo.space/blackholes',
+    url: `${SITE_URL}/blackholes`,
   },
 };
 
@@ -52,13 +53,13 @@ export default function Page() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Black Holes',
-    url: 'https://astroneo.space/blackholes',
+    url: `${SITE_URL}/blackholes`,
     description:
       'Profiles of five well-studied black holes, covering how each was discovered and how its mass was determined.',
     hasPart: blackholes.map((bh) => ({
       '@type': 'Article',
       headline: bh.name,
-      url: `https://astroneo.space/blackhole/${bh.slug}`,
+      url: `${SITE_URL}/blackhole/${bh.slug}`,
     })),
   };
 

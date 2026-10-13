@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import SaveStarButton from '@/components/star/SaveStarButton';
 import LogObservationModal from '@/components/star/LogObservationModal';
+import { SITE_URL } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: `${star.commonName}: ${star.spectralClass ? star.spectralClass + ' star' : typeName}${star.constellation ? ' in ' + star.constellation : ''}. ${distanceStr}${tempStr}`.trim(),
     },
     alternates: {
-      canonical: `https://astroneo.space/star/${slug}`,
+      canonical: `${SITE_URL}/star/${slug}`,
     },
   };
 }
@@ -81,12 +82,12 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
           author: {
             '@type': 'Person',
             name: 'Karan Patil',
-            url: 'https://astroneo.space/about#author',
+            url: `${SITE_URL}/about#author`,
           },
           publisher: {
             '@type': 'Organization',
             name: 'Astroneo',
-            logo: { '@type': 'ImageObject', url: 'https://astroneo.space/icon-192.png' },
+            logo: { '@type': 'ImageObject', url: `${SITE_URL}/icon-192.png` },
           },
           about: {
             '@type': 'Thing',
@@ -102,9 +103,9 @@ export default async function StarDetailPage({ params }: { params: Promise<{ slu
         }),
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://astroneo.space/star/${slug}`,
+      '@id': `${SITE_URL}/star/${slug}`,
     },
-    url: `https://astroneo.space/star/${slug}`,
+    url: `${SITE_URL}/star/${slug}`,
   };
 
   if (slug === 'solar-system') {

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Mail, Globe } from 'lucide-react';
+import { SITE_URL } from '@/lib/site';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -83,7 +84,7 @@ export default function Footer() {
           </div>
           <div className="flex items-center gap-6">
             <a
-              href="https://astroneo.space"
+              href={SITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted hover:text-text-primary transition-colors"

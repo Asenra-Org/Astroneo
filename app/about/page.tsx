@@ -2,15 +2,16 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import type { Metadata } from 'next';
 import { Telescope, Globe2, BookOpen, Users, Mail, Star } from 'lucide-react';
+import { SITE_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'About Astroneo | Our Mission to Make Space Accessible',
   description: 'Astroneo is a free astronomy platform for exploring 8,800+ stars, black holes, and celestial objects. Learn about our mission, technology, and team.',
-  alternates: { canonical: 'https://astroneo.space/about' },
+  alternates: { canonical: `${SITE_URL}/about` },
   openGraph: {
     title: 'About Astroneo | Our Mission to Make Space Accessible',
     description: 'Learn how Astroneo brings the universe to everyone with real astronomical data, interactive 3D models, and AI-powered exploration tools.',
-    url: 'https://astroneo.space/about',
+    url: `${SITE_URL}/about`,
   },
 };
 
@@ -49,8 +50,8 @@ export default function AboutPage() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Astroneo',
-    url: 'https://astroneo.space',
-    logo: 'https://astroneo.space/icon-192.png',
+    url: SITE_URL,
+    logo: `${SITE_URL}/icon-192.png`,
     description: 'A free astronomy platform for exploring the universe through interactive star maps, 3D models, and real astronomical data.',
     contactPoint: {
       '@type': 'ContactPoint',
@@ -59,12 +60,12 @@ export default function AboutPage() {
     },
     founder: {
       '@type': 'Person',
-      '@id': 'https://astroneo.space/about#author',
+      '@id': `${SITE_URL}/about#author`,
       name: 'Karan Patil',
       email: 'contact@asenra.in',
-      url: 'https://astroneo.space/about#author',
+      url: `${SITE_URL}/about#author`,
     },
-    publishingPrinciples: 'https://astroneo.space/about#editorial-policy',
+    publishingPrinciples: `${SITE_URL}/about#editorial-policy`,
   };
 
   return (

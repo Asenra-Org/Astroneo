@@ -14,6 +14,7 @@ import {
   SPECTRAL_CLASSES,
   PAGE_SIZE,
 } from '@/lib/starCatalog';
+import { SITE_URL } from '@/lib/site';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -23,13 +24,13 @@ const baseMetadata: Metadata = {
   description:
     'Search and filter our database of over 8,800 stars. Find coordinates, distance, temperature, spectral classification, and 3D visual models.',
   alternates: {
-    canonical: 'https://astroneo.space/explore',
+    canonical: `${SITE_URL}/explore`,
   },
   openGraph: {
     title: 'Explore 8,800+ Stars | Astroneo',
     description:
       'Search and filter our database of over 8,800 stars. Find coordinates, distance, temperature, spectral classification, and 3D visual models.',
-    url: 'https://astroneo.space/explore',
+    url: `${SITE_URL}/explore`,
   },
 };
 
@@ -62,7 +63,7 @@ export async function generateMetadata({
   return {
     ...baseMetadata,
     robots: { index: false, follow: true },
-    alternates: { canonical: 'https://astroneo.space/explore' },
+    alternates: { canonical: `${SITE_URL}/explore` },
   };
 }
 

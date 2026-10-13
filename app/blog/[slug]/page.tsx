@@ -8,6 +8,7 @@ import { Calendar, Clock, ArrowLeft, User, RefreshCw, ArrowRight } from 'lucide-
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { getAllArticles, getArticleBySlug, getRelatedArticles } from '@/lib/blog';
+import { SITE_URL } from '@/lib/site';
 
 export async function generateStaticParams() {
   const articles = await getAllArticles();
@@ -34,19 +35,19 @@ export async function generateMetadata({
   return {
     title: `${article.title} | Astroneo`,
     description: article.excerpt,
-    authors: [{ name: 'Karan Patil', url: 'https://astroneo.space/about#author' }],
+    authors: [{ name: 'Karan Patil', url: `${SITE_URL}/about#author` }],
     openGraph: {
       type: 'article',
       title: article.title,
       description: article.excerpt,
-      url: `https://astroneo.space/blog/${slug}`,
+      url: `${SITE_URL}/blog/${slug}`,
       publishedTime: article.date,
       modifiedTime: article.updated,
       authors: ['Karan Patil'],
-      images: [{ url: `https://astroneo.space${article.image}` }],
+      images: [{ url: `${SITE_URL}${article.image}` }],
     },
     alternates: {
-      canonical: `https://astroneo.space/blog/${slug}`,
+      canonical: `${SITE_URL}/blog/${slug}`,
     },
   };
 }
@@ -64,27 +65,27 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     '@type': 'BlogPosting',
     headline: article.title,
     description: article.excerpt,
-    image: `https://astroneo.space${article.image}`,
+    image: `${SITE_URL}${article.image}`,
     datePublished: article.date,
     dateModified: article.updated,
     wordCount: article.wordCount,
     author: {
       '@type': 'Person',
       name: 'Karan Patil',
-      url: 'https://astroneo.space/about#author',
+      url: `${SITE_URL}/about#author`,
     },
     publisher: {
       '@type': 'Organization',
       name: 'Astroneo',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://astroneo.space/icon-192.png',
+        url: `${SITE_URL}/icon-192.png`,
       },
     },
     citation: article.sources.map((source) => source.url),
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://astroneo.space/blog/${slug}`,
+      '@id': `${SITE_URL}/blog/${slug}`,
     },
   };
 

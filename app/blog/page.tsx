@@ -5,17 +5,18 @@ import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { getAllArticles } from '@/lib/blog';
+import { SITE_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Space Science & Stargazing Blog | Astroneo',
   description: 'Read the latest astronomy guides, telescope reviews, deep space discoveries, and educational articles about the cosmos on Astroneo.',
   alternates: {
-    canonical: 'https://astroneo.space/blog',
+    canonical: `${SITE_URL}/blog`,
   },
   openGraph: {
     title: 'Space Science & Stargazing Blog | Astroneo',
     description: 'Read the latest astronomy guides, telescope reviews, deep space discoveries, and educational articles about the cosmos on Astroneo.',
-    url: 'https://astroneo.space/blog',
+    url: `${SITE_URL}/blog`,
   },
 };
 
@@ -30,13 +31,13 @@ export default async function BlogListPage() {
     '@type': 'Blog',
     name: 'Astroneo Space Blog',
     description: 'Detailed guides and articles about space exploration, stars, black holes, and stargazing equipment.',
-    url: 'https://astroneo.space/blog',
+    url: `${SITE_URL}/blog`,
     publisher: {
       '@type': 'Organization',
       name: 'Astroneo',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://astroneo.space/icon-192.png'
+        url: `${SITE_URL}/icon-192.png`
       }
     },
     blogPost: articles.map(a => ({
@@ -44,7 +45,7 @@ export default async function BlogListPage() {
       headline: a.title,
       datePublished: a.date,
       description: a.excerpt,
-      url: `https://astroneo.space/blog/${a.slug}`
+      url: `${SITE_URL}/blog/${a.slug}`
     }))
   };
 

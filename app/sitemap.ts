@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { isIndexableStar } from '@/lib/indexable';
 import { getAllArticles } from '@/lib/blog';
 import { getAllStars } from '@/lib/starCatalog';
+import { SITE_URL } from '@/lib/site';
 
 /**
  * The single sitemap for the site.
@@ -17,7 +18,7 @@ import { getAllStars } from '@/lib/starCatalog';
  * and scaled-content guidelines target. See lib/indexable.js.
  */
 
-const BASE = 'https://astroneo.space';
+const BASE = SITE_URL;
 
 async function readBlackHoleSlugs(): Promise<string[]> {
   try {
