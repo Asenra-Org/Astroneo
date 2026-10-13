@@ -1,40 +1,22 @@
 'use client';
 
 /**
- * AR sky map.
+ * Sky map renderer.
  *
- * Rewritten to fix a set of defects that compounded into the map looking flat,
- * washed out and unreliable:
+ * Draws the sky as a planetarium does: an azimuthal-equidistant projection, a
+ * procedural landscape silhouette, the Milky Way, IAU constellation figures and
+ * the catalogue stars, under a deliberately sparse interface.
  *
- *  1. The canvas ignored devicePixelRatio, so on a phone every star and label
- *     was drawn at a third of the native resolution and came out soft.
- *  2. The sky was a fixed top-to-bottom screen-space gradient that never moved
- *     with the view, leaving a permanent bright band along the bottom edge
- *     however far up you looked. See `lib/sky-model.ts`.
- *  3. The horizon used a small-angle approximation while stars used a real
- *     perspective projection. They disagree by ~12% at 45 degrees of tilt, so
- *     stars sat on the wrong side of the horizon line. See `lib/sky-projection.ts`.
- *  4. Everything below the horizon was hard-culled, so tilting down showed an
- *     empty slab. The ground is now translucent and the sky below it stays visible.
- *  5. Device-orientation listeners were registered with a fresh closure on every
- *     render, so `removeEventListener` never matched and the sensors kept firing
- *     after AR was switched off — while `deviceorientation` and
- *     `deviceorientationabsolute` fought each other for the same state.
- *  6. Phone roll was discarded entirely: only heading and pitch were read, so
- *     tilting the handset sideways left the sky upright.
- *  7. `arError` and `errorMsg` were assigned but never rendered, so permission
- *     failures were silent.
- *  8. Star colour was derived from apparent magnitude — brightness, not colour —
- *     so Rigel came out yellow-white instead of blue.
- *  9. Only ~200 catalogue stars were drawn; the rest of the sky was 3,000
- *     randomly placed fake dots that did not move with sidereal time.
- * 10. Per-frame work included re-deriving alt/az trigonometry for every object
- *     and rebuilding the constellation grouping from scratch, every frame.
+ * Projection note: every direction maps to a finite radius, so the horizon is
+ * always a closed curve. The sky is drawn by clipping to that curve over a black
+ * background, which handles every camera orientation — including looking
+ * straight down, and the all-sky view past a 180° field of view — without any
+ * per-pitch special cases.
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, Sliders, X, RefreshCw, RotateCcw, Camera, AlertTriangle, Eye, Share2 } from 'lucide-react';
+import { Menu, Search, Layers, X, Compass as CompassIcon, Camera, Check } from 'lucide-react';
 import { lst as localSiderealTime } from '@/lib/astronomy';
 import { getSunCoords, getMoonCoords, getPlanetCoords } from '@/lib/solar-system';
 import {
@@ -48,228 +30,180 @@ import {
   blendBasis,
   worldToCamera,
   matApply,
-  projectCameraSpace,
-  focalLength,
-  horizonLine,
-  halfPlanePolygon,
-  directionAtPixel,
-  altitudeAtPixel,
+  fisheyeScale,
+  projectFisheye,
   angularSeparation,
   dot,
 } from '@/lib/sky-projection';
-import {
-  skyColor,
-  groundColors,
-  limitingMagnitude,
-  moonIlluminatedFraction,
-  rgbCss,
-  type SkyConditions,
-  type RGB,
-} from '@/lib/sky-model';
 import { apparentStarRGB, starDisplayTemperature } from '@/lib/star-color';
+import { buildMilkyWay, buildMagellanicClouds, HorizonProfile, type MilkyWayBlob } from '@/lib/sky-scene';
+import {
+  renderSky, SKY_COLORS as C, SOLAR_BODIES, isProperName,
+  MILKY_WAY_SPRITE_LEVELS, milkyWaySpriteColor,
+  type SkyStar, type PreparedConstellation, type SkyLayers,
+} from '@/lib/sky-renderer';
 
 interface RawStar {
-  slug: string;
-  commonName: string;
-  type?: string;
-  apparentMag?: number;
-  distanceLy?: number;
-  constellation?: string;
-  spectralClass?: string;
-  colorIndex?: number;
-  tempK?: number;
-  ra: number;
-  dec: number;
+  slug: string; commonName: string; type?: string;
+  apparentMag?: number; constellation?: string; spectralClass?: string;
+  colorIndex?: number; tempK?: number; ra: number; dec: number;
 }
 
-/** A catalogue star, preprocessed once at load. */
-interface SkyStar {
-  slug: string;
-  name: string;
-  mag: number;
-  constellation: string;
-  /** Equatorial unit vector — fixed, so it never needs recomputing. */
-  vec: Vec3;
-  /** Display colour, 0–255, from the star's derived temperature. */
-  color: RGB;
-  /** Index into the quantised colour palette, for batched drawing. */
-  bucket: number;
+interface Constellation {
+  id: string; name: string; rank: number;
+  label: [number, number] | null;
+  lines: [number, number][][];
 }
 
-const SOLAR_BODIES = [
-  { slug: 'sun', name: 'Sun', color: '#fff3c4', size: 30 },
-  { slug: 'moon', name: 'Moon', color: '#e8eaf0', size: 28 },
-  { slug: 'mercury', name: 'Mercury', color: '#c8b8a0', size: 4.5 },
-  { slug: 'venus', name: 'Venus', color: '#fffbf0', size: 7 },
-  { slug: 'mars', name: 'Mars', color: '#ff7044', size: 5.5 },
-  { slug: 'jupiter', name: 'Jupiter', color: '#e8c090', size: 7 },
-  { slug: 'saturn', name: 'Saturn', color: '#f0d898', size: 6 },
-  { slug: 'uranus', name: 'Uranus', color: '#9fe3e8', size: 3.5 },
-  { slug: 'neptune', name: 'Neptune', color: '#6f8ef0', size: 3.5 },
-] as const;
-
-/** Quantised star-colour palette. Batching by bucket keeps the draw fast. */
-const COLOR_BUCKETS = 14;
+const COLOR_BUCKETS = 12;
 const BUCKET_TEMPS = Array.from({ length: COLOR_BUCKETS }, (_, i) =>
-  2600 * Math.pow(30000 / 2600, i / (COLOR_BUCKETS - 1)),
-);
+  2800 * Math.pow(28000 / 2800, i / (COLOR_BUCKETS - 1)));
+const bucketForTemp = (t: number) => {
+  const n = Math.log(Math.min(28000, Math.max(2800, t)) / 2800) / Math.log(28000 / 2800);
+  return Math.max(0, Math.min(COLOR_BUCKETS - 1, Math.round(n * (COLOR_BUCKETS - 1))));
+};
 
-function bucketForTemp(tempK: number): number {
-  const t = Math.log(Math.min(30000, Math.max(2600, tempK)) / 2600) / Math.log(30000 / 2600);
-  return Math.max(0, Math.min(COLOR_BUCKETS - 1, Math.round(t * (COLOR_BUCKETS - 1))));
-}
-
-interface SkyMapARProps {
-  latitude: number;
-  longitude: number;
-}
-
-export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
+export default function SkyMapAR({ latitude, longitude }: { latitude: number; longitude: number }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [stars, setStars] = useState<SkyStar[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [constellations, setConstellations] = useState<PreparedConstellation[]>([]);
+  const [ready, setReady] = useState(false);
+  const [clock, setClock] = useState('');
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const [arMode, setArMode] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [isCalibrating, setIsCalibrating] = useState(false);
-  const [headingOffset, setHeadingOffset] = useState(0);
-  const [lightPollution, setLightPollution] = useState(0.25);
-  const [showBelowHorizon, setShowBelowHorizon] = useState(true);
-  const [currentTime, setCurrentTime] = useState('');
-  const [hudInfo, setHudInfo] = useState({ dir: 'S', heading: 180, pitch: 15, fov: 70 });
+  const [layers, setLayers] = useState<SkyLayers>({
+    constellations: true, labels: true, dso: true, milkyWay: true, ground: true,
+  });
 
-  // ── Mutable render state. Kept in refs so the animation loop never restarts. ──
-  const manualAngles = useRef({ heading: 180, pitch: 20, roll: 0 });
-  /** Basis reported by the device sensors while AR is on. */
+  // Render state lives in refs so the animation loop never restarts.
+  const angles = useRef({ heading: 180, pitch: 42, roll: 0 });
   const sensorBasis = useRef<CameraBasis | null>(null);
-  /** Smoothed basis actually used for rendering. */
-  const renderBasis = useRef<CameraBasis>(basisFromAngles(180, 20, 0));
-  const fovRef = useRef(70);
-  const headingOffsetRef = useRef(0);
-  const lightPollutionRef = useRef(0.25);
-  const showBelowRef = useRef(true);
-  const arModeRef = useRef(false);
-  const cameraModeRef = useRef(false);
-
-  const dragStart = useRef<{ x: number; y: number; heading: number; pitch: number } | null>(null);
-  const pinchStart = useRef<{ dist: number; fov: number } | null>(null);
-  const pickTargets = useRef<{ slug: string; x: number; y: number }[]>([]);
-  const mediaStream = useRef<MediaStream | null>(null);
-
-  useEffect(() => { headingOffsetRef.current = headingOffset; }, [headingOffset]);
-  useEffect(() => { lightPollutionRef.current = lightPollution; }, [lightPollution]);
-  useEffect(() => { showBelowRef.current = showBelowHorizon; }, [showBelowHorizon]);
-  useEffect(() => { arModeRef.current = arMode; }, [arMode]);
-  useEffect(() => { cameraModeRef.current = cameraMode; }, [cameraMode]);
-
-  // ── Clock ────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const update = () =>
-      setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
-    update();
-    const id = setInterval(update, 20000);
-    return () => clearInterval(id);
-  }, []);
-
-  // ── Catalogue load ───────────────────────────────────────────────────────
-  // The whole catalogue is loaded and preprocessed once: equatorial unit
-  // vectors and colours never change, so the render loop only has to rotate
-  // them. The previous version loaded 200 stars and faked the rest with random
-  // dots that did not move with the sky.
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/data/stars-massive.json')
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data: RawStar[]) => {
-        if (cancelled) return;
-        const solar = new Set<string>(SOLAR_BODIES.map((b) => b.slug));
-        const prepared: SkyStar[] = [];
-        for (const s of data) {
-          if (s.type && s.type !== 'Star') continue;
-          if (solar.has(s.slug) || s.slug === 'earth') continue;
-          if (!Number.isFinite(s.ra) || !Number.isFinite(s.dec)) continue;
-          const mag = s.apparentMag ?? 6.5;
-          const temp = starDisplayTemperature(s);
-          const rgb = apparentStarRGB(temp, 0.32);
-          prepared.push({
-            slug: s.slug,
-            name: s.commonName,
-            mag,
-            constellation: s.constellation ?? '',
-            vec: equatorialVector(s.ra, s.dec),
-            color: [rgb[0] * 255, rgb[1] * 255, rgb[2] * 255],
-            bucket: bucketForTemp(temp),
-          });
-        }
-        // Brightest last, so they paint over the faint field.
-        prepared.sort((a, b) => b.mag - a.mag);
-        setStars(prepared);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('[sky-map] catalogue load failed', err);
-        setLoadError('Could not load the star catalogue. Check your connection and reload.');
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  // ── Device orientation ───────────────────────────────────────────────────
-  // A single stable handler stored in a ref. The previous code created a new
-  // function on every render, so removeEventListener never matched it and the
-  // listeners accumulated instead of being cleaned up.
+  const viewBasis = useRef<CameraBasis>(basisFromAngles(180, 42, 0));
+  const fov = useRef(70);
+  const layersRef = useRef(layers);
+  const arRef = useRef(false);
+  const camRef = useRef(false);
+  const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
   const screenAngle = useRef(0);
+  const drag = useRef<{ x: number; y: number; h: number; p: number } | null>(null);
+  const pinch = useRef<{ d: number; fov: number } | null>(null);
+  const picks = useRef<{ slug: string; x: number; y: number }[]>([]);
+  const stream = useRef<MediaStream | null>(null);
+  const horizon = useRef(new HorizonProfile());
+  const milkyWay = useRef<MilkyWayBlob[]>([]);
+  const starSprites = useRef<HTMLCanvasElement[]>([]);
+  const mwSprites = useRef<HTMLCanvasElement[]>([]);
+  const flyTo = useRef<{ h: number; p: number; t: number } | null>(null);
+
+  useEffect(() => { layersRef.current = layers; }, [layers]);
+  useEffect(() => { arRef.current = arMode; }, [arMode]);
+  useEffect(() => { camRef.current = cameraMode; }, [cameraMode]);
+
+  useEffect(() => {
+    const t = () => setClock(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+    t(); const id = setInterval(t, 15000); return () => clearInterval(id);
+  }, []);
+
+  // ── Scene assets ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    milkyWay.current = [...buildMilkyWay(), ...buildMagellanicClouds()];
+    starSprites.current = BUCKET_TEMPS.map((temp) => {
+      const c = document.createElement('canvas');
+      const S = 48; c.width = c.height = S;
+      const g = c.getContext('2d')!;
+      const [r, gg, b] = apparentStarRGB(temp, 0.22).map((v) => Math.round(v * 255));
+      const grad = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+      grad.addColorStop(0, 'rgba(255,255,255,1)');
+      grad.addColorStop(0.14, `rgba(${r},${gg},${b},0.92)`);
+      grad.addColorStop(0.34, `rgba(${r},${gg},${b},0.26)`);
+      grad.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+      g.fillStyle = grad; g.fillRect(0, 0, S, S);
+      return c;
+    });
+    mwSprites.current = Array.from({ length: MILKY_WAY_SPRITE_LEVELS }, (_, i) => {
+      const c = document.createElement('canvas');
+      const S = 64; c.width = c.height = S;
+      const g = c.getContext('2d')!;
+      const [r, gg, b] = milkyWaySpriteColor(i);
+      const grad = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+      grad.addColorStop(0, `rgba(${r},${gg},${b},1)`);
+      grad.addColorStop(0.5, `rgba(${r},${gg},${b},0.42)`);
+      grad.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+      g.fillStyle = grad; g.fillRect(0, 0, S, S);
+      return c;
+    });
+  }, []);
+
+  // ── Catalogue + constellation figures ──────────────────────────────────────
+  useEffect(() => {
+    let dead = false;
+    Promise.all([
+      fetch('/data/stars-massive.json').then((r) => r.json()),
+      fetch('/data/sky/constellations.min.json').then((r) => r.json()),
+    ]).then(([data, cons]: [RawStar[], Constellation[]]) => {
+      if (dead) return;
+      const solar = new Set<string>(SOLAR_BODIES.map((b) => b.slug));
+      const prepared: SkyStar[] = [];
+      for (const s of data) {
+        if (s.type && s.type !== 'Star') continue;
+        if (solar.has(s.slug) || s.slug === 'earth') continue;
+        if (!Number.isFinite(s.ra) || !Number.isFinite(s.dec)) continue;
+        const temp = starDisplayTemperature(s);
+        const [r, g, b] = apparentStarRGB(temp, 0.26);
+        prepared.push({
+          slug: s.slug, name: s.commonName, mag: s.apparentMag ?? 6.5,
+          vec: equatorialVector(s.ra, s.dec),
+          color: `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`,
+          bucket: bucketForTemp(temp),
+        });
+      }
+      prepared.sort((a, b) => b.mag - a.mag);
+      setStars(prepared);
+      setConstellations(cons.map((c) => ({
+        name: c.name, rank: c.rank,
+        labelVec: c.label ? equatorialVector(c.label[0], c.label[1]) : null,
+        segments: c.lines.map((seg) => seg.map(([ra, dec]) => equatorialVector(ra, dec))),
+      })));
+      setReady(true);
+    }).catch(() => { if (!dead) setNotice('Could not load the sky catalogue.'); });
+    return () => { dead = true; };
+  }, []);
+
+  // ── Device orientation ─────────────────────────────────────────────────────
   useEffect(() => {
     const read = () => {
-      const so = (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0);
-      screenAngle.current = typeof so === 'number' ? so : 0;
+      const a = window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0;
+      screenAngle.current = typeof a === 'number' ? a : 0;
     };
-    read();
-    window.addEventListener('orientationchange', read);
+    read(); window.addEventListener('orientationchange', read);
     return () => window.removeEventListener('orientationchange', read);
   }, []);
 
-  // One stable handler for the lifetime of the component. This identity is what
-  // makes removeEventListener actually match: the previous implementation built
-  // a new closure on every render, so every detach silently missed and the
-  // sensors kept firing after AR was switched off.
-  const handleOrientation = useCallback((event: DeviceOrientationEvent) => {
-    if (!arModeRef.current) return;
-    const webkitHeading = (event as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
-
-    let alpha = event.alpha ?? 0;
-    // iOS reports a relative alpha but supplies a true-north compass heading
-    // separately; Android exposes an absolute alpha on the "absolute" event.
-    if (typeof webkitHeading === 'number' && Number.isFinite(webkitHeading)) {
-      alpha = 360 - webkitHeading;
-    }
-
-    sensorBasis.current = basisFromDeviceOrientation(
-      alpha + headingOffsetRef.current,
-      event.beta ?? 0,
-      event.gamma ?? 0,
-      screenAngle.current,
-    );
+  const handleOrientation = useCallback((e: DeviceOrientationEvent) => {
+    if (!arRef.current) return;
+    const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
+    const alpha = typeof wk === 'number' && Number.isFinite(wk) ? 360 - wk : (e.alpha ?? 0);
+    sensorBasis.current = basisFromDeviceOrientation(alpha, e.beta ?? 0, e.gamma ?? 0, screenAngle.current);
   }, []);
 
-  const detachOrientation = useCallback(() => {
+  const detach = useCallback(() => {
     const h = handleOrientation as EventListener;
     window.removeEventListener('deviceorientationabsolute', h, true);
     window.removeEventListener('deviceorientation', h, true);
   }, [handleOrientation]);
 
   const stopCamera = useCallback(() => {
-    mediaStream.current?.getTracks().forEach((t) => t.stop());
-    mediaStream.current = null;
+    stream.current?.getTracks().forEach((t) => t.stop());
+    stream.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
@@ -277,809 +211,360 @@ export default function SkyMapAR({ latitude, longitude }: SkyMapARProps) {
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof DOE?.requestPermission === 'function') {
       try {
-        const state = await DOE.requestPermission();
-        if (state !== 'granted') {
-          setNotice('Motion access was denied. Enable it in Settings → Safari → Motion & Orientation Access.');
+        if ((await DOE.requestPermission()) !== 'granted') {
+          setNotice('Motion access denied. Enable it in Settings → Safari → Motion & Orientation.');
           return false;
         }
-      } catch {
-        setNotice('This device did not allow motion access.');
-        return false;
-      }
+      } catch { setNotice('This device did not allow motion access.'); return false; }
     }
     if (typeof window.DeviceOrientationEvent === 'undefined') {
-      setNotice('This device has no orientation sensor. Drag to look around instead.');
-      return false;
+      setNotice('No orientation sensor here — drag to look around.'); return false;
     }
-
     const h = handleOrientation as EventListener;
-    // Prefer the absolute event where it exists; only one is ever attached, so
-    // the two cannot fight over the same state as they used to.
-    const hasAbsolute = typeof (window as unknown as Record<string, unknown>)
-      .ondeviceorientationabsolute !== 'undefined';
-    if (hasAbsolute) {
-      window.addEventListener('deviceorientationabsolute', h, true);
-    } else {
+    const hasAbs = typeof (window as unknown as Record<string, unknown>).ondeviceorientationabsolute !== 'undefined';
+    if (hasAbs) window.addEventListener('deviceorientationabsolute', h, true);
+    else {
       window.addEventListener('deviceorientation', h, true);
-      setNotice('Compass is relative on this device — use the calibration slider to line the sky up with your view.');
+      setNotice('Compass is relative on this device; alignment may drift.');
     }
-    setArMode(true);
-    return true;
+    setArMode(true); return true;
   }, [handleOrientation]);
 
   const toggleAR = useCallback(async () => {
     if (arMode) {
-      setArMode(false);
-      detachOrientation();
-      sensorBasis.current = null;
+      setArMode(false); detach(); sensorBasis.current = null;
       if (cameraMode) { setCameraMode(false); stopCamera(); }
       return;
     }
-    setNotice(null);
-    await enableAR();
-  }, [arMode, cameraMode, enableAR, detachOrientation, stopCamera]);
+    setNotice(null); await enableAR();
+  }, [arMode, cameraMode, enableAR, detach, stopCamera]);
 
   const toggleCamera = useCallback(async () => {
-    if (cameraMode) {
-      setCameraMode(false);
-      stopCamera();
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setNotice('Camera access needs a secure (https) connection.');
-      return;
-    }
+    if (cameraMode) { setCameraMode(false); stopCamera(); return; }
+    if (!navigator.mediaDevices?.getUserMedia) { setNotice('Camera needs a secure (https) connection.'); return; }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-        audio: false,
-      });
-      mediaStream.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-      }
-      setCameraMode(true);
-      setNotice(null);
-      // Camera passthrough is only meaningful when the view tracks the device.
-      if (!arModeRef.current) await enableAR();
-    } catch (err) {
-      const name = (err as DOMException)?.name;
-      setNotice(
-        name === 'NotAllowedError'
-          ? 'Camera permission denied. Allow camera access to overlay the sky on your surroundings.'
-          : 'Could not start the camera on this device.',
-      );
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+      stream.current = s;
+      if (videoRef.current) { videoRef.current.srcObject = s; await videoRef.current.play().catch(() => {}); }
+      setCameraMode(true); setNotice(null);
+      if (!arRef.current) await enableAR();
+    } catch (e) {
+      setNotice((e as DOMException)?.name === 'NotAllowedError'
+        ? 'Camera permission denied.' : 'Could not start the camera.');
     }
   }, [cameraMode, stopCamera, enableAR]);
 
-  // Detach sensors and camera when the component goes away.
-  useEffect(() => () => { detachOrientation(); stopCamera(); }, [detachOrientation, stopCamera]);
+  useEffect(() => () => { detach(); stopCamera(); }, [detach, stopCamera]);
 
-  // ── Canvas sizing, device-pixel aware ────────────────────────────────────
-  const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
+  // ── Canvas sizing ──────────────────────────────────────────────────────────
   useEffect(() => {
     const resize = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      // Cap DPR at 2: beyond that the extra pixels cost fill rate without being
-      // visible, and phones with DPR 3+ are exactly where the budget is tightest.
+      const c = canvasRef.current; if (!c) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
+      const w = window.innerWidth, h = window.innerHeight;
+      c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+      c.style.width = `${w}px`; c.style.height = `${h}px`;
       sizeRef.current = { w, h, dpr };
     };
     resize();
     window.addEventListener('resize', resize);
     window.addEventListener('orientationchange', resize);
-    return () => {
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('orientationchange', resize);
-    };
+    return () => { window.removeEventListener('resize', resize); window.removeEventListener('orientationchange', resize); };
   }, []);
 
-  // ── Glow sprite cache ────────────────────────────────────────────────────
-  // One pre-rendered radial glow per colour bucket. Building a radial gradient
-  // per star per frame was the single most expensive thing the old renderer did.
-  const spritesRef = useRef<HTMLCanvasElement[] | null>(null);
-  useEffect(() => {
-    const sprites = BUCKET_TEMPS.map((temp) => {
-      const c = document.createElement('canvas');
-      const S = 64;
-      c.width = c.height = S;
-      const g = c.getContext('2d')!;
-      const rgb = apparentStarRGB(temp, 0.3);
-      const [r, gg, b] = rgb.map((v) => Math.round(v * 255));
-      const grad = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-      grad.addColorStop(0, `rgba(255,255,255,1)`);
-      grad.addColorStop(0.18, `rgba(${r},${gg},${b},0.95)`);
-      grad.addColorStop(0.42, `rgba(${r},${gg},${b},0.30)`);
-      grad.addColorStop(1, `rgba(${r},${gg},${b},0)`);
-      g.fillStyle = grad;
-      g.fillRect(0, 0, S, S);
-      return c;
-    });
-    spritesRef.current = sprites;
-  }, []);
-
-  // ── Pointer interaction ──────────────────────────────────────────────────
-  const pointerDown = useCallback((cx: number, cy: number, touches: number) => {
-    if (touches === 2) return;
-    dragStart.current = {
-      x: cx, y: cy,
-      heading: manualAngles.current.heading,
-      pitch: manualAngles.current.pitch,
-    };
-  }, []);
-
-  const pointerMove = useCallback((cx: number, cy: number) => {
-    const d = dragStart.current;
-    if (!d || arModeRef.current) return;
-    // Drag sensitivity follows the field of view, so a swipe moves the same
-    // angular distance whether zoomed in or out.
-    const perPixel = fovRef.current / sizeRef.current.w;
-    manualAngles.current.heading = (d.heading - (cx - d.x) * perPixel + 360) % 360;
-    manualAngles.current.pitch = Math.max(-90, Math.min(90, d.pitch + (cy - d.y) * perPixel));
-  }, []);
-
-  const pointerUp = useCallback((cx: number, cy: number) => {
-    const d = dragStart.current;
-    dragStart.current = null;
-    if (!d) return;
-    if (Math.abs(cx - d.x) > 8 || Math.abs(cy - d.y) > 8) return; // a drag, not a tap
-    // Tap: pick the nearest labelled object.
-    let best: string | null = null;
-    let bestDist = 40;
-    for (const t of pickTargets.current) {
-      const dist = Math.hypot(t.x - cx, t.y - cy);
-      if (dist < bestDist) { bestDist = dist; best = t.slug; }
+  // ── Interaction ────────────────────────────────────────────────────────────
+  const down = (x: number, y: number) => {
+    drag.current = { x, y, h: angles.current.heading, p: angles.current.pitch };
+    flyTo.current = null;
+  };
+  const move = (x: number, y: number) => {
+    const d = drag.current; if (!d || arRef.current) return;
+    const per = fov.current / sizeRef.current.w;
+    angles.current.heading = (d.h - (x - d.x) * per + 360) % 360;
+    angles.current.pitch = Math.max(-90, Math.min(90, d.p + (y - d.y) * per));
+  };
+  const up = (x: number, y: number) => {
+    const d = drag.current; drag.current = null;
+    if (!d || Math.abs(x - d.x) > 8 || Math.abs(y - d.y) > 8) return;
+    let best: string | null = null, bd = 34;
+    for (const t of picks.current) {
+      const dist = Math.hypot(t.x - x, t.y - y);
+      if (dist < bd) { bd = dist; best = t.slug; }
     }
     if (best) router.push(`/star/${best}`);
-  }, [router]);
+  };
+  const zoom = (factor: number) => { fov.current = Math.max(8, Math.min(235, fov.current * factor)); };
 
-  const onWheel = useCallback((e: React.WheelEvent) => {
-    fovRef.current = Math.max(6, Math.min(110, fovRef.current * (1 + e.deltaY * 0.0012)));
-  }, []);
-
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      const [a, b] = [e.touches[0], e.touches[1]];
-      pinchStart.current = {
-        dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
-        fov: fovRef.current,
-      };
-      dragStart.current = null;
-      return;
-    }
-    pointerDown(e.touches[0].clientX, e.touches[0].clientY, e.touches.length);
-  }, [pointerDown]);
-
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2 && pinchStart.current) {
-      const [a, b] = [e.touches[0], e.touches[1]];
-      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-      if (dist > 8) {
-        fovRef.current = Math.max(6, Math.min(110, pinchStart.current.fov * (pinchStart.current.dist / dist)));
-      }
-      return;
-    }
-    if (e.touches.length === 1) pointerMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, [pointerMove]);
-
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length < 2) pinchStart.current = null;
-    const t = e.changedTouches[0];
-    if (t) pointerUp(t.clientX, t.clientY);
-  }, [pointerUp]);
-
-  // ── Render loop ──────────────────────────────────────────────────────────
+  // ── Render loop ────────────────────────────────────────────────────────────
+  // The drawing itself lives in lib/sky-renderer so the identical code can be
+  // run headlessly against a Node canvas and inspected as an image.
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || stars.length === 0) return;
-    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!canvas || !ready) return;
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
-
     let raf = 0;
-    let hudTick = 0;
-    let lastTimeMs = performance.now();
 
-    const render = (nowMs: number) => {
-      raf = requestAnimationFrame(render);
-      const dt = Math.min((nowMs - lastTimeMs) / 1000, 0.1);
-      lastTimeMs = nowMs;
-
+    const frame = () => {
+      raf = requestAnimationFrame(frame);
       const { w, h, dpr } = sizeRef.current;
-      if (w === 0 || h === 0) return;
+      if (!w || !h) return;
 
-      const timeSec = nowMs / 1000;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h);
+      if (flyTo.current) {
+        const f = flyTo.current;
+        angles.current.heading += (((f.h - angles.current.heading + 540) % 360) - 180) * 0.12;
+        angles.current.pitch += (f.p - angles.current.pitch) * 0.12;
+        if (--f.t <= 0) flyTo.current = null;
+      }
 
-      const date = new Date();
-
-      // ── Orientation ────────────────────────────────────────────────────────
-      const target = arModeRef.current && sensorBasis.current
+      const target = arRef.current && sensorBasis.current
         ? sensorBasis.current
-        : basisFromAngles(
-            manualAngles.current.heading + (arModeRef.current ? 0 : headingOffsetRef.current),
-            manualAngles.current.pitch,
-            manualAngles.current.roll,
-          );
-          
-      // Proper delta-time based exponential smoothing.
-      // A speed of 1.5 gives a heavy 'gimbal' stabilization effect, hiding violent sensor noise.
-      const blendFactor = arModeRef.current ? (1 - Math.exp(-25.0 * dt)) : (1 - Math.exp(-15.0 * dt));
-      renderBasis.current = blendBasis(renderBasis.current, target, blendFactor);
-      const basis = renderBasis.current;
+        : basisFromAngles(angles.current.heading, angles.current.pitch, angles.current.roll);
+      viewBasis.current = blendBasis(viewBasis.current, target, 0.2);
 
-      const fov = fovRef.current;
-      const focal = focalLength(w, fov);
-      const cx = w / 2, cy = h / 2;
-
-      // ── Sky state ────────────────────────────────────────────────────
-      const lstHours = localSiderealTime(date, longitude);
-      const eqToHor = equatorialToHorizontal(lstHours, latitude);
-      const M = worldToCamera(basis, eqToHor);
-
-      const sunEq = getSunCoords(date);
-      const sunENU = matApply(eqToHor, equatorialVector(sunEq.ra, sunEq.dec));
-      const moonEq = getMoonCoords(date);
-      const moonENU = matApply(eqToHor, equatorialVector(moonEq.ra, moonEq.dec));
-
-      const sunAlt = Math.asin(Math.max(-1, Math.min(1, sunENU[2]))) * 180 / Math.PI;
-      const moonAlt = Math.asin(Math.max(-1, Math.min(1, moonENU[2]))) * 180 / Math.PI;
-      const elongation = angularSeparation(sunENU, moonENU);
-      const moonPhase = moonIlluminatedFraction(elongation);
-
-      const cond: SkyConditions = {
-        sunAltitude: sunAlt,
-        moonAltitude: moonAlt,
-        moonPhase,
-        lightPollution: lightPollutionRef.current,
-      };
-
-      const hz = horizonLine(basis, focal, cx, cy);
-      const limitMag = limitingMagnitude(cond, fov);
-
-      // ── 1. Sky ───────────────────────────────────────────────────────
-      // Painted along the true vertical, sampling the model at each stop's
-      // real altitude. When the camera pass-through is on the sky is skipped
-      // so the video shows through.
-      if (!cameraModeRef.current) {
-        // Screen-space direction of increasing altitude, from the horizon normal.
-        let nx = hz.a, ny = -hz.b;
-        const nlen = Math.hypot(nx, ny);
-        if (nlen < 1e-6) {
-          // Looking straight up or down: altitude is uniform across the screen.
-          const alt = altitudeAtPixel(basis, focal, cx, cy, cx, cy);
-          const d = directionAtPixel(basis, focal, cx, cy, cx, cy);
-          ctx.fillStyle = rgbCss(skyColor(alt, angularSeparation(d, sunENU), angularSeparation(d, moonENU), cond));
-          ctx.fillRect(0, 0, w, h);
-        } else {
-          nx /= nlen; ny /= nlen;
-          const span = Math.hypot(w, h) * 0.75;
-          const x0 = cx - nx * span, y0 = cy - ny * span;
-          const x1 = cx + nx * span, y1 = cy + ny * span;
-          const grad = ctx.createLinearGradient(x0, y0, x1, y1);
-          const STOPS = 16;
-          for (let i = 0; i <= STOPS; i++) {
-            const t = i / STOPS;
-            const px = x0 + (x1 - x0) * t;
-            const py = y0 + (y1 - y0) * t;
-            const dir = directionAtPixel(basis, focal, cx, cy, px, py);
-            const alt = Math.asin(Math.max(-1, Math.min(1, dir[2]))) * 180 / Math.PI;
-            grad.addColorStop(t, rgbCss(skyColor(
-              alt,
-              angularSeparation(dir, sunENU),
-              angularSeparation(dir, moonENU),
-              cond,
-            )));
-          }
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, w, h);
-        }
-      }
-
-      // ── 2. Stars ─────────────────────────────────────────────────────
-      // Drawn before the ground so that the translucent ground dims the
-      // below-horizon ones instead of hiding them.
-      const sprites = spritesRef.current;
-      const twinkle = timeSec * 2.2;
-
-      // Faint stars are batched by colour bucket: one path and one fill per
-      // bucket instead of a state change per star.
-      const batches: number[][] = Array.from({ length: COLOR_BUCKETS }, () => []);
-      const bright: { s: SkyStar; x: number; y: number; r: number; a: number }[] = [];
-
-      const margin = 40;
-              for (let i = 0; i < stars.length; i++) {
-          const s = stars[i];
-          // Cap the limiting magnitude so the background doesn't get swamped with "dummy" looking noisy dots
-          const effectiveLimit = Math.min(limitMag, 3.5);
-          if (s.mag > effectiveLimit) continue;
-          const v = matApply(M, s.vec);
-          if (v[2] <= 1e-4) continue;
-          const inv = focal / v[2];
-          const x = cx + v[0] * inv;
-          const y = cy - v[1] * inv;
-          if (x < -margin || x > w + margin || y < -margin || y > h + margin) continue;
-  
-          // Make faint stars much smaller and dimmer so they don't look like noise.
-          const rel = Math.max(0, effectiveLimit - s.mag);
-          const r = 0.35 + Math.pow(rel, 1.35) * 0.45;
-          const alpha = Math.min(1, 0.20 + rel * 0.35);
-
-
-        if (r < 1.5) {
-          const b = batches[s.bucket];
-          b.push(x, y, r, alpha);
-        } else {
-          bright.push({ s, x, y, r, a: alpha });
-        }
-      }
-
-      // Faint field.
-      ctx.save();
-      for (let bkt = 0; bkt < COLOR_BUCKETS; bkt++) {
-        const arr = batches[bkt];
-        if (arr.length === 0) continue;
-        const rgb = apparentStarRGB(BUCKET_TEMPS[bkt], 0.32);
-        ctx.fillStyle = `rgb(${Math.round(rgb[0] * 255)},${Math.round(rgb[1] * 255)},${Math.round(rgb[2] * 255)})`;
-        // Alpha is quantised into four passes so the whole bucket fills at once.
-        for (let band = 0; band < 4; band++) {
-          const lo = band / 4, hi = (band + 1) / 4;
-          let opened = false;
-          for (let i = 0; i < arr.length; i += 4) {
-            const a = arr[i + 3];
-            if (a < lo || a >= hi) continue;
-            if (!opened) { ctx.beginPath(); opened = true; }
-            const r = arr[i + 2];
-            ctx.rect(arr[i] - r, arr[i + 1] - r, r * 2, r * 2);
-          }
-          if (opened) {
-            ctx.globalAlpha = (lo + hi) / 2;
-            ctx.fill();
-          }
-        }
-      }
-      ctx.globalAlpha = 1;
-      ctx.restore();
-
-      // Bright stars, with a cached glow sprite and atmospheric scintillation.
-      ctx.save();
-      for (const b of bright) {
-        // Twinkling is strongest near the horizon, where the air path is longest.
-        const alt = hz.signedAltitude(b.x, b.y);
-        const lowSky = alt > 0 ? Math.max(0, 1 - alt / (focal * 0.6)) : 0;
-        const scint = 1 - lowSky * 0.22 * (0.5 + 0.5 * Math.sin(twinkle + b.x * 0.07 + b.y * 0.03));
-        const glowR = b.r * 4.2;
-        if (sprites) {
-          ctx.globalAlpha = Math.min(1, b.a * 0.85 * scint);
-          ctx.drawImage(sprites[b.s.bucket], b.x - glowR, b.y - glowR, glowR * 2, glowR * 2);
-        }
-        ctx.globalAlpha = Math.min(1, b.a * scint);
-        ctx.fillStyle = `rgb(${Math.round(b.s.color[0])},${Math.round(b.s.color[1])},${Math.round(b.s.color[2])})`;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r * 0.8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      ctx.restore();
-
-      // ── 3. Sun, Moon and planets ─────────────────────────────────────
-      const targets: { slug: string; x: number; y: number }[] = [];
-      const labels: { text: string; sub: string; x: number; y: number; strong: boolean }[] = [];
-
-      for (const body of SOLAR_BODIES) {
-        const eq =
-          body.slug === 'sun' ? sunEq :
-          body.slug === 'moon' ? moonEq :
-          getPlanetCoords(body.slug, date);
-        const vec = equatorialVector(eq.ra, eq.dec);
-        const v = matApply(M, vec);
-        const p = projectCameraSpace(v, focal, cx, cy);
-        if (!p.visible) continue;
-        if (p.x < -60 || p.x > w + 60 || p.y < -60 || p.y > h + 60) continue;
-
-        // Angular size scales with zoom, so the Sun and Moon keep their real
-        // half-degree footprint instead of being fixed pixel blobs.
-        const halfDeg = body.slug === 'sun' || body.slug === 'moon' ? 0.26 : 0.004;
-        const px = Math.max(body.slug === 'sun' || body.slug === 'moon' ? 6 : 2.2,
-          Math.tan(halfDeg * Math.PI / 180) * focal);
-
-        ctx.save();
-        if (body.slug === 'moon') {
-          drawMoon(ctx, p.x, p.y, px, moonPhase, sunENU, moonENU, basis, focal, cx, cy);
-        } else if (body.slug === 'sun') {
-          const g = ctx.createRadialGradient(p.x, p.y, px * 0.2, p.x, p.y, px * 9);
-          g.addColorStop(0, 'rgba(255,250,225,0.95)');
-          g.addColorStop(0.12, 'rgba(255,238,180,0.35)');
-          g.addColorStop(1, 'rgba(255,220,150,0)');
-          ctx.fillStyle = g;
-          ctx.beginPath(); ctx.arc(p.x, p.y, px * 9, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#fffdf2';
-          ctx.beginPath(); ctx.arc(p.x, p.y, px, 0, Math.PI * 2); ctx.fill();
-        } else {
-          ctx.fillStyle = body.color;
-          ctx.shadowColor = body.color;
-          ctx.shadowBlur = 10;
-          ctx.beginPath(); ctx.arc(p.x, p.y, px, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.restore();
-
-        targets.push({ slug: body.slug, x: p.x, y: p.y });
-        labels.push({ text: body.name, sub: body.slug === 'moon' ? `${Math.round(moonPhase * 100)}% lit` : 'Solar System', x: p.x, y: p.y + px + 14, strong: true });
-      }
-
-      // ── 4. Ground ────────────────────────────────────────────────────
-      // Filled over exactly the below-horizon half-plane at any pitch and roll.
-      // Translucent by design: the sky below the horizon stays readable, which
-      // is what makes "look down to see what is beneath you" work.
-      const poly = halfPlanePolygon(w, h, hz.signedAltitude, true);
-      if (poly.length >= 3) {
-        const g = groundColors(cond);
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(poly[0][0], poly[0][1]);
-        for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i][0], poly[i][1]);
-        ctx.closePath();
-
-        if (showBelowRef.current) {
-          // Fade with depth below the horizon so the ground reads as solid at
-          // the horizon and opens up as you tilt further down.
-          let nx = -hz.a, ny = hz.b;
-          const nl = Math.hypot(nx, ny) || 1;
-          nx /= nl; ny /= nl;
-          const reach = Math.hypot(w, h) * 0.6;
-          const gg = ctx.createLinearGradient(cx, cy, cx + nx * reach, cy + ny * reach);
-          gg.addColorStop(0, rgbCss(g.near, cameraModeRef.current ? 0.18 : 0.88));
-          gg.addColorStop(0.45, rgbCss(g.far, cameraModeRef.current ? 0.12 : 0.62));
-          gg.addColorStop(1, rgbCss(g.far, cameraModeRef.current ? 0.05 : 0.34));
-          ctx.fillStyle = gg;
-        } else {
-          ctx.fillStyle = rgbCss(g.far, cameraModeRef.current ? 0.35 : 1);
-        }
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Horizon line.
-      const seg = hz.segment(w, h);
-      if (seg) {
-        ctx.save();
-        ctx.strokeStyle = sunAlt > 0 ? 'rgba(150,190,235,0.55)' : 'rgba(110,150,205,0.42)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(seg[0], seg[1]);
-        ctx.lineTo(seg[2], seg[3]);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // ── 5. Cardinal points ───────────────────────────────────────────
-      ctx.save();
-      ctx.textAlign = 'center';
-      for (let az = 0; az < 360; az += 22.5) {
-        const isMain = az % 90 === 0;
-        const isMid = az % 45 === 0;
-        if (!isMid && fov > 70) continue;
-        const a = az * Math.PI / 180;
-        const dir: Vec3 = [Math.sin(a), Math.cos(a), 0];
-        // Cardinals live in the horizontal frame, so they skip the equatorial stage.
-        const cam: Vec3 = [
-          dot(dir, basis.right), dot(dir, basis.up), dot(dir, basis.forward),
-        ];
-        const p = projectCameraSpace(cam, focal, cx, cy);
-        if (!p.visible || p.x < 0 || p.x > w) continue;
-        const label = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'][Math.round(az / 22.5) % 16];
-        ctx.globalAlpha = isMain ? 0.92 : isMid ? 0.6 : 0.34;
-        ctx.strokeStyle = '#8fb4dd';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x, p.y - (isMain ? 22 : 12));
-        ctx.stroke();
-        ctx.fillStyle = isMain ? '#cfe2f7' : '#89aacc';
-        ctx.font = `${isMain ? 'bold 14px' : '10px'} var(--font-inter), system-ui, sans-serif`;
-        ctx.fillText(label, p.x, p.y - (isMain ? 27 : 16));
-      }
-      ctx.globalAlpha = 1;
-      ctx.restore();
-
-      // ── 6. Labels, with decluttering ─────────────────────────────────
-      // Only named stars, only when they are bright enough to matter at the
-      // current zoom, and never two in the same screen cell.
-      const labelMagLimit = Math.min(limitMag - 1.2, fov > 60 ? 2.2 : fov > 30 ? 3.4 : 4.6);
-      const occupied = new Set<string>();
-      const CELL = 76;
-      for (const b of bright) {
-        if (b.s.mag > labelMagLimit) continue;
-        if (!b.s.name || /^(HD|HIP|HR|TYC|BD)\s*\d/i.test(b.s.name)) continue;
-        const key = `${Math.round(b.x / CELL)},${Math.round(b.y / CELL)}`;
-        if (occupied.has(key)) continue;
-        occupied.add(key);
-        labels.push({ text: b.s.name.replace(/\s+/g, ' ').trim(), sub: b.s.constellation, x: b.x, y: b.y + b.r + 13, strong: false });
-        targets.push({ slug: b.s.slug, x: b.x, y: b.y });
-      }
-
-      ctx.save();
-      ctx.textAlign = 'center';
-      for (const l of labels) {
-        if (l.y < 12 || l.y > h - 12) continue;
-        ctx.fillStyle = l.strong ? 'rgba(255,255,255,0.92)' : 'rgba(206,222,244,0.78)';
-        ctx.font = `${l.strong ? 'bold ' : ''}12px var(--font-inter), system-ui, sans-serif`;
-        ctx.fillText(l.text, l.x, l.y);
-        if (l.sub) {
-          ctx.fillStyle = 'rgba(160,185,220,0.5)';
-          ctx.font = '9px var(--font-inter), system-ui, sans-serif';
-          ctx.fillText(l.sub, l.x, l.y + 11);
-        }
-      }
-      ctx.restore();
-
-      pickTargets.current = targets;
-
-      // ── HUD, throttled ───────────────────────────────────────────────
-      if (++hudTick % 12 === 0) {
-        const { heading, pitch } = basisToHeadingPitch(basis);
-        const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-        setHudInfo({
-          dir: dirs[Math.round(heading / 22.5) % 16],
-          heading: Math.round(heading),
-          pitch: Math.round(pitch),
-          fov: Math.round(fov),
-        });
-      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const out = renderSky(ctx, {
+        width: w, height: h,
+        basis: viewBasis.current,
+        fovDegrees: fov.current,
+        date: new Date(),
+        latitude, longitude,
+        stars, constellations,
+        milkyWay: milkyWay.current,
+        horizon: horizon.current,
+        layers: layersRef.current,
+        starSprites: starSprites.current,
+        milkyWaySprites: mwSprites.current,
+        cameraMode: camRef.current,
+      });
+      picks.current = out.picks;
     };
 
-    raf = requestAnimationFrame(render);
+    raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [stars, latitude, longitude]);
+  }, [ready, stars, constellations, latitude, longitude]);
 
-  
+  // ── Search ─────────────────────────────────────────────────────────────────
+  const results = query.trim().length < 2 ? [] : stars
+    .filter((s) => isProperName(s.name) && s.name.toLowerCase().includes(query.trim().toLowerCase()))
+    .slice(0, 8);
 
-  const handleSnap = async () => { if (!canvasRef.current) return; const canvas = canvasRef.current; const tempCanvas = document.createElement('canvas'); tempCanvas.width = canvas.width; tempCanvas.height = canvas.height; const ctx = tempCanvas.getContext('2d'); if (!ctx) return; if (cameraMode && videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) { const v = videoRef.current; const vRatio = v.videoWidth / v.videoHeight; const cRatio = canvas.width / canvas.height; let sx = 0, sy = 0, sw = v.videoWidth, sh = v.videoHeight; if (vRatio > cRatio) { sw = v.videoHeight * cRatio; sx = (v.videoWidth - sw) / 2; } else { sh = v.videoWidth / cRatio; sy = (v.videoHeight - sh) / 2; } ctx.drawImage(v, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height); } else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height); } ctx.drawImage(canvas, 0, 0); ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = 'bold 32px var(--font-display), sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('AstroNeo', canvas.width - 32, canvas.height - 32); try { const dataUrl = tempCanvas.toDataURL('image/png'); const blob = await (await fetch(dataUrl)).blob(); const file = new File([blob], 'astroneo-sky.png', { type: 'image/png' }); if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ title: 'AstroNeo Sky Map', text: 'Check out the stars I found with AstroNeo!', files: [file] }); } else { const link = document.createElement('a'); link.download = 'astroneo-sky.png'; link.href = dataUrl; link.click(); } } catch (err) { console.error('Share failed', err); } };
-
-const recenter = () => {
-    manualAngles.current = { heading: 180, pitch: 20, roll: 0 };
-    fovRef.current = 55;
+  const goTo = (s: SkyStar) => {
+    const eqToHor = equatorialToHorizontal(localSiderealTime(new Date(), longitude), latitude);
+    const enu = matApply(eqToHor, s.vec);
+    let hdg = Math.atan2(enu[0], enu[1]) * 180 / Math.PI; if (hdg < 0) hdg += 360;
+    flyTo.current = { h: hdg, p: Math.asin(Math.max(-1, Math.min(1, enu[2]))) * 180 / Math.PI, t: 40 };
+    if (arMode) { setArMode(false); detach(); }
+    setSearchOpen(false); setQuery('');
   };
+
+  const Btn = ({ on, label, onClick }: { on: boolean; label: string; onClick: () => void }) => (
+    <button onClick={onClick}
+      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition">
+      <span className="text-[13px] text-white/80 font-body">{label}</span>
+      <span className={`w-5 h-5 rounded flex items-center justify-center border ${on ? 'bg-white border-white' : 'border-white/25'}`}>
+        {on && <Check className="w-3.5 h-3.5 text-black" strokeWidth={3} />}
+      </span>
+    </button>
+  );
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden select-none">
-      {/* Camera pass-through sits behind the canvas. */}
-      <video
-        ref={videoRef}
-        playsInline
-        muted
-        autoPlay
-        className={`absolute inset-0 w-full h-full object-cover z-0 ${cameraMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      />
+      <video ref={videoRef} playsInline muted autoPlay
+        className={`absolute inset-0 w-full h-full object-cover z-0 ${cameraMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} />
 
-      {loading && (
-        <div className="absolute inset-0 bg-[#010108]/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center">
-          <RefreshCw className="w-10 h-10 text-white/20 animate-spin mb-4" />
-          <p className="text-white/40 font-body text-sm font-medium">Loading the star catalogue…</p>
-        </div>
-      )}
+      <canvas ref={canvasRef}
+        onMouseDown={(e) => down(e.clientX, e.clientY)}
+        onMouseMove={(e) => move(e.clientX, e.clientY)}
+        onMouseUp={(e) => up(e.clientX, e.clientY)}
+        onMouseLeave={() => { drag.current = null; }}
+        onWheel={(e) => zoom(1 + e.deltaY * 0.0014)}
+        onTouchStart={(e) => {
+          if (e.touches.length === 2) {
+            const [a, b] = [e.touches[0], e.touches[1]];
+            pinch.current = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), fov: fov.current };
+            drag.current = null;
+          } else down(e.touches[0].clientX, e.touches[0].clientY);
+        }}
+        onTouchMove={(e) => {
+          if (e.touches.length === 2 && pinch.current) {
+            const [a, b] = [e.touches[0], e.touches[1]];
+            const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+            if (d > 8) fov.current = Math.max(8, Math.min(235, pinch.current.fov * (pinch.current.d / d)));
+          } else if (e.touches.length === 1) move(e.touches[0].clientX, e.touches[0].clientY);
+        }}
+        onTouchEnd={(e) => {
+          if (e.touches.length < 2) pinch.current = null;
+          const t = e.changedTouches[0]; if (t) up(t.clientX, t.clientY);
+        }}
+        className="absolute inset-0 z-10 block touch-none" />
 
-      {loadError && (
-        <div className="absolute inset-0 bg-[#010108]/95 z-50 flex flex-col items-center justify-center p-6 text-center">
-          <AlertTriangle className="w-9 h-9 text-amber-300/70 mb-4" />
-          <p className="text-white/70 font-body text-sm max-w-xs">{loadError}</p>
-        </div>
-      )}
+      {/* ── Chrome ──────────────────────────────────────────────────────── */}
+      <button onClick={() => setMenuOpen(true)} aria-label="Menu"
+        style={{ top: 'calc(38px + env(safe-area-inset-top, 0px))' }}
+        className="absolute left-5 z-20 p-1.5 active:scale-90 transition">
+        <Menu className="w-8 h-8" style={{ color: C.hud }} strokeWidth={1.6} />
+      </button>
 
-      <canvas
-        ref={canvasRef}
-        onMouseDown={(e) => pointerDown(e.clientX, e.clientY, 1)}
-        onMouseMove={(e) => pointerMove(e.clientX, e.clientY)}
-        onMouseUp={(e) => pointerUp(e.clientX, e.clientY)}
-        onMouseLeave={() => { dragStart.current = null; }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onWheel={onWheel}
-        className="absolute inset-0 z-10 block cursor-grab active:cursor-grabbing touch-none"
-      />
+      <button onClick={() => setSearchOpen(true)} aria-label="Search"
+        style={{ top: 'calc(38px + env(safe-area-inset-top, 0px))' }}
+        className="absolute right-5 z-20 p-1.5 active:scale-90 transition">
+        <Search className="w-7 h-7" style={{ color: C.hud }} strokeWidth={1.8} />
+      </button>
 
-      {/* Notices — these used to be set in state and never rendered. */}
+      <button onClick={() => setLayersOpen((v) => !v)} aria-label="Layers"
+        style={{ bottom: 'calc(30px + env(safe-area-inset-bottom, 0px))' }}
+        className="absolute left-5 z-20 p-1.5 active:scale-90 transition">
+        <Layers className="w-8 h-8" style={{ color: C.hud }} strokeWidth={1.5} />
+      </button>
+
+      <div style={{ bottom: 'calc(26px + env(safe-area-inset-bottom, 0px))', color: C.hud }}
+        className="absolute right-6 z-20 font-body text-[34px] leading-none tracking-tight tabular-nums pointer-events-none">
+        {clock}
+      </div>
+
       {notice && (
-        <div className="absolute top-20 left-4 right-4 z-30 flex justify-center pointer-events-none">
-          <div className="max-w-sm bg-black/80 border border-amber-300/25 backdrop-blur-md py-2.5 px-4 rounded-xl text-amber-100/90 text-xs font-body flex items-start gap-2 pointer-events-auto shadow-lg">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-px opacity-70" />
+        <div className="absolute top-28 left-5 right-5 z-30 flex justify-center">
+          <div className="max-w-sm bg-black/85 border border-white/10 backdrop-blur py-2.5 px-4 rounded-xl text-white/80 text-xs font-body flex items-start gap-2">
             <span className="flex-1">{notice}</span>
-            <button onClick={() => setNotice(null)} className="opacity-50 hover:opacity-100 shrink-0" aria-label="Dismiss">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setNotice(null)} aria-label="Dismiss"><X className="w-3.5 h-3.5 opacity-60" /></button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Layers ──────────────────────────────────────────────────────── */}
+      {layersOpen && (
+        <div style={{ bottom: 'calc(86px + env(safe-area-inset-bottom, 0px))' }}
+          className="absolute left-5 z-30 w-56 bg-[#0b0d12]/95 border border-white/10 rounded-2xl backdrop-blur-xl overflow-hidden shadow-2xl">
+          <Btn on={layers.constellations} label="Constellations" onClick={() => setLayers((l: SkyLayers) => ({ ...l, constellations: !l.constellations }))} />
+          <Btn on={layers.labels} label="Labels" onClick={() => setLayers((l: SkyLayers) => ({ ...l, labels: !l.labels }))} />
+          <Btn on={layers.dso} label="Deep sky" onClick={() => setLayers((l: SkyLayers) => ({ ...l, dso: !l.dso }))} />
+          <Btn on={layers.milkyWay} label="Milky Way" onClick={() => setLayers((l: SkyLayers) => ({ ...l, milkyWay: !l.milkyWay }))} />
+          <Btn on={layers.ground} label="Landscape" onClick={() => setLayers((l: SkyLayers) => ({ ...l, ground: !l.ground }))} />
+        </div>
+      )}
+
+      {/* ── Search ──────────────────────────────────────────────────────── */}
+      {searchOpen && (
+        <div className="absolute inset-0 z-40 bg-black/80 backdrop-blur-sm flex flex-col">
+          <div className="flex items-center gap-3 px-5 pt-14 pb-3">
+            <Search className="w-5 h-5 text-white/40" />
+            {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search stars and planets"
+              className="flex-1 bg-transparent outline-none text-white text-base font-body placeholder:text-white/30" />
+            <button onClick={() => { setSearchOpen(false); setQuery(''); }} aria-label="Close search">
+              <X className="w-6 h-6 text-white/50" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-2">
+            {results.map((s) => (
+              <button key={s.slug} onClick={() => goTo(s)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-left">
+                <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                <span className="text-white/90 text-sm font-body flex-1">{s.name}</span>
+                <span className="text-white/35 text-xs font-mono">{s.mag.toFixed(1)}</span>
+              </button>
+            ))}
+            {query.trim().length >= 2 && results.length === 0 && (
+              <p className="text-white/35 text-sm font-body text-center mt-8">No match.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Menu ────────────────────────────────────────────────────────── */}
+      {menuOpen && (
+        <div className="absolute inset-0 z-40 bg-black/70 backdrop-blur-sm" onClick={() => setMenuOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}
+            className="absolute left-0 top-0 bottom-0 w-72 bg-[#0b0d12] border-r border-white/10 p-6 pt-14 flex flex-col gap-1">
+            <h2 className="text-white/90 font-display text-xl mb-5">Sky Map</h2>
+            <button onClick={() => { toggleAR(); setMenuOpen(false); }}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 text-left">
+              <CompassIcon className="w-5 h-5 text-white/50" />
+              <span className="text-white/85 text-sm font-body flex-1">Compass tracking</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${arMode ? 'bg-[#e0706c]/20 text-[#e0706c]' : 'bg-white/10 text-white/40'}`}>
+                {arMode ? 'ON' : 'OFF'}
+              </span>
+            </button>
+            <button onClick={() => { toggleCamera(); setMenuOpen(false); }}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 text-left">
+              <Camera className="w-5 h-5 text-white/50" />
+              <span className="text-white/85 text-sm font-body flex-1">Camera view</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${cameraMode ? 'bg-[#e0706c]/20 text-[#e0706c]' : 'bg-white/10 text-white/40'}`}>
+                {cameraMode ? 'ON' : 'OFF'}
+              </span>
+            </button>
+            <button onClick={() => { fov.current = 70; angles.current = { heading: 180, pitch: 42, roll: 0 }; setMenuOpen(false); }}
+              className="px-3 py-3 rounded-xl hover:bg-white/5 text-left text-white/85 text-sm font-body">
+              Reset view
+            </button>
+            <div className="flex-1" />
+            <button onClick={() => router.push('/')}
+              className="px-3 py-3 rounded-xl hover:bg-white/5 text-left text-white/50 text-sm font-body">
+              Exit to Astroneo
             </button>
           </div>
         </div>
       )}
-
-      {/* Top bar */}
-      <div
-        style={{ top: 'calc(16px + env(safe-area-inset-top, 0px))' }}
-        className="absolute left-4 right-4 z-20 flex items-center justify-between gap-3 pointer-events-none"
-      >
-        <div className="bg-black/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-mono text-white/80 shadow-lg pointer-events-auto">
-          <Compass className="w-3.5 h-3.5 text-white/40" />
-          <span className="font-bold text-white uppercase">{hudInfo.dir}</span>
-          <span className="text-white/10">|</span>
-          <span>H {hudInfo.heading}°</span>
-          <span className="text-white/10">|</span>
-          <span>T {hudInfo.pitch}°</span>
-          <span className="text-white/10">|</span>
-          <span>{hudInfo.fov}°</span>
-        </div>
-
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <button
-            onClick={toggleCamera}
-            className={`p-2 rounded-full border transition duration-200 backdrop-blur-md shadow-lg ${
-              cameraMode
-                ? 'bg-[#e0ff40]/20 text-[#e0ff40] border-[#e0ff40]/50'
-                : 'bg-black/40 text-white/80 border-white/10 hover:bg-black/60'
-            }`}
-            title={cameraMode ? 'Turn off camera view' : 'Overlay the sky on your camera'}
-          >
-            <Camera className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={toggleAR}
-            className={`px-3 py-1.5 rounded-full border transition duration-200 backdrop-blur-md shadow-lg text-[10px] font-bold tracking-wide uppercase ${
-              arMode
-                ? 'bg-[#e0ff40]/20 text-[#e0ff40] border-[#e0ff40]/50 shadow-[0_0_10px_rgba(224,255,64,0.3)]'
-                : 'bg-black/40 text-white/80 border-white/10 hover:bg-black/60'
-            }`}
-            title="Follow the phone's compass"
-          >
-            {arMode ? 'AR On' : 'AR Off'}
-          </button>
-
-          <button
-            onClick={() => setIsCalibrating((v) => !v)}
-            className={`p-2 rounded-full border transition duration-200 backdrop-blur-md shadow-lg ${
-              isCalibrating ? 'bg-white text-black border-white' : 'bg-black/40 text-white/80 border-white/10 hover:bg-black/60'
-            }`}
-            title="Settings"
-          >
-            <Sliders className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => router.push('/')}
-            className="p-2 rounded-full bg-black/40 text-white/80 border border-white/10 backdrop-blur-md hover:bg-black/60 transition shadow-lg"
-            title="Exit map"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Settings panel */}
-      {isCalibrating && (
-        <div
-          style={{ top: 'calc(70px + env(safe-area-inset-top, 0px))' }}
-          className="absolute right-4 z-30 w-72 bg-black/90 border border-white/10 p-4 rounded-2xl backdrop-blur-lg text-white space-y-4"
-        >
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-body font-medium text-white/80">Compass offset</span>
-              <span className="text-xs font-mono text-white">{headingOffset > 0 ? `+${headingOffset}` : headingOffset}°</span>
-            </div>
-            <input
-              type="range" min="-180" max="180" value={headingOffset}
-              onChange={(e) => setHeadingOffset(parseInt(e.target.value, 10))}
-              className="w-full accent-white bg-white/20 h-1 rounded-lg cursor-pointer"
-            />
-            <p className="text-[10px] text-white/30 font-body mt-1.5 leading-relaxed">
-              If the stars do not line up with what you see, nudge this until they do.
-            </p>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-body font-medium text-white/80">Light pollution</span>
-              <span className="text-xs font-mono text-white">{Math.round(lightPollution * 100)}%</span>
-            </div>
-            <input
-              type="range" min="0" max="100" value={Math.round(lightPollution * 100)}
-              onChange={(e) => setLightPollution(parseInt(e.target.value, 10) / 100)}
-              className="w-full accent-white bg-white/20 h-1 rounded-lg cursor-pointer"
-            />
-            <p className="text-[10px] text-white/30 font-body mt-1.5 leading-relaxed">
-              Rural sky on the left, city centre on the right. Brighter skies hide faint stars, exactly as they do outdoors.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setShowBelowHorizon((v) => !v)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition"
-          >
-            <span className="text-xs font-body text-white/80 flex items-center gap-2">
-              <Eye className="w-3.5 h-3.5 opacity-60" />
-              See through the ground
-            </span>
-            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${showBelowHorizon ? 'bg-[#e0ff40]/20 text-[#e0ff40]' : 'bg-white/10 text-white/50'}`}>
-              {showBelowHorizon ? 'ON' : 'OFF'}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* Bottom bar */}
-      <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-center pointer-events-none text-white/70 font-mono text-xs">
-        <button onClick={handleSnap} className="p-3 rounded-full bg-black/60 border border-white/10 hover:bg-black/80 pointer-events-auto backdrop-blur-md active:scale-95 transition shadow-lg mr-4" title="Snap and Share"><Share2 className="w-4 h-4 text-white/70" /></button>
-          <button
-            onClick={recenter}
-          className="p-3 rounded-full bg-black/60 border border-white/10 hover:bg-black/80 pointer-events-auto backdrop-blur-md active:scale-95 transition shadow-lg"
-          title="Recenter"
-        >
-          <RotateCcw className="w-4 h-4 text-white/70" />
-        </button>
-        <div className="px-4 py-2 rounded-xl bg-black/60 border border-white/10 backdrop-blur-md shadow-lg font-bold tracking-wider text-white/90">
-          {currentTime}
-        </div>
-      </div>
     </div>
   );
 }
 
-/**
- * Draws the Moon with its actual phase.
- *
- * The terminator is the projection of the day/night great circle, which is a
- * half-ellipse whose semi-minor axis is |1 − 2k| for an illuminated fraction k.
- * The whole disc is rotated so the bright limb faces the Sun on screen, which is
- * what makes a low crescent correctly appear to "lie on its back".
- */
-function drawMoon(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, r: number,
-  phase: number,
-  sunENU: Vec3,
-  moonENU: Vec3,
-  basis: CameraBasis,
-  focal: number, cx: number, cy: number,
-) {
-  // Screen direction from the Moon toward the Sun.
-  const sunCam: Vec3 = [dot(sunENU, basis.right), dot(sunENU, basis.up), dot(sunENU, basis.forward)];
-  const moonCam: Vec3 = [dot(moonENU, basis.right), dot(moonENU, basis.up), dot(moonENU, basis.forward)];
-  let angle = 0;
-  if (sunCam[2] > 1e-4 && moonCam[2] > 1e-4) {
-    const sx = cx + sunCam[0] * focal / sunCam[2];
-    const sy = cy - sunCam[1] * focal / sunCam[2];
-    angle = Math.atan2(sy - y, sx - x);
-  } else {
-    // Sun behind the camera: fall back on the 3-D direction difference.
-    angle = Math.atan2(-(sunCam[1] - moonCam[1]), sunCam[0] - moonCam[0]);
+/** Ray-casting point-in-polygon, used to decide which side of the horizon is sky. */
+function pointInPolygon(x: number, y: number, poly: { x: number; y: number }[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
   }
+  return inside;
+}
 
+/** Compass rosette: the direction being faced sits at the top and the ring turns under it. */
+function drawRosette(ctx: CanvasRenderingContext2D, cx: number, cy: number, heading: number) {
   ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle);
-
-  // Earthshine — the dark limb is never truly black.
-  ctx.fillStyle = 'rgba(70,80,105,0.55)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const R = 22;
+  for (const [label, az] of [['N', 0], ['E', 90], ['S', 180], ['W', 270]] as [string, number][]) {
+    const a = ((az - heading) * Math.PI) / 180;
+    const x = cx + Math.sin(a) * R, y = cy - Math.cos(a) * R;
+    ctx.fillStyle = C.hudDim;
+    ctx.font = `500 10px var(--font-inter), system-ui, sans-serif`;
+    ctx.fillText(label, x, y);
+    // Tick dots on the diagonals.
+    const d = a + Math.PI / 4;
+    ctx.beginPath();
+    ctx.arc(cx + Math.sin(d) * R * 0.78, cy - Math.cos(d) * R * 0.78, 1.1, 0, 6.2832);
+    ctx.fill();
+  }
+  // Needle: a slim diamond pointing at the view direction.
   ctx.beginPath();
-  ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.fill();
-
-  const k = Math.min(1, Math.max(0, phase));
-  ctx.fillStyle = '#eef1f7';
-  ctx.beginPath();
-  // Lit limb: the semicircle facing the Sun (+x after rotation).
-  ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);
-  // Terminator: half-ellipse, bulging toward the Sun when gibbous.
-  ctx.ellipse(0, 0, Math.abs(r * (1 - 2 * k)), r, 0, Math.PI / 2, -Math.PI / 2, k <= 0.5);
+  ctx.moveTo(cx, cy - 11); ctx.lineTo(cx + 4.5, cy); ctx.lineTo(cx, cy + 11); ctx.lineTo(cx - 4.5, cy);
   ctx.closePath();
+  ctx.fillStyle = 'rgba(176,182,189,0.55)';
   ctx.fill();
-
   ctx.restore();
 }
 
+/** The Moon at its real phase, with the bright limb turned toward the Sun. */
+function drawMoon(
+  ctx: CanvasRenderingContext2D, x: number, y: number, r: number, phase: number,
+  sunENU: Vec3, moonENU: Vec3, basis: CameraBasis, scale: number, cx: number, cy: number,
+) {
+  const sc: Vec3 = [dot(sunENU, basis.right), dot(sunENU, basis.up), dot(sunENU, basis.forward)];
+  const sp = projectFisheye(sc, scale, cx, cy);
+  const angle = Math.atan2(sp.y - y, sp.x - x);
+
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(angle);
+  ctx.fillStyle = 'rgba(58,66,86,0.5)';
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.2832); ctx.fill();
+  const k = Math.min(1, Math.max(0, phase));
+  ctx.fillStyle = '#eef1f7';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);
+  ctx.ellipse(0, 0, Math.abs(r * (1 - 2 * k)), r, 0, Math.PI / 2, -Math.PI / 2, k <= 0.5);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}

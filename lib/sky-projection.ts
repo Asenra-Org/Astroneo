@@ -267,9 +267,57 @@ export interface Projected {
   z: number;
 }
 
-/** Focal length in pixels for a horizontal field of view. */
+/** Focal length in pixels for a horizontal field of view (gnomonic/pinhole). */
 export function focalLength(widthPx: number, fovDegrees: number): number {
   return widthPx / 2 / Math.tan((fovDegrees * DEG) / 2);
+}
+
+/**
+ * Pixels per radian for an azimuthal-equidistant (fisheye) projection.
+ *
+ * This is the projection the map renders with, rather than the pinhole one.
+ * Two properties matter:
+ *
+ *  - EVERY direction maps to a finite radius (at most f·π, the antipode), so
+ *    the horizon is always a closed curve on screen and can be used directly as
+ *    a clip path. Under a pinhole projection the horizon runs off to infinity
+ *    as soon as the camera tilts toward it, which makes filling the ground a
+ *    special case at every pitch.
+ *  - Past a 180° field of view the whole sky fits inside a disc, which is what
+ *    produces the all-sky view where the horizon reads as a ring.
+ *
+ * Below about 60° it is visually indistinguishable from a pinhole camera, so
+ * narrow views still look natural.
+ */
+export function fisheyeScale(widthPx: number, fovDegrees: number): number {
+  return widthPx / (Math.max(1, fovDegrees) * DEG);
+}
+
+/**
+ * Azimuthal-equidistant projection of a camera-space vector.
+ * Radius from the screen centre is proportional to the angle from the view axis.
+ */
+export function projectFisheye(
+  v: Vec3,
+  scale: number,
+  cx: number,
+  cy: number,
+): Projected {
+  const s = Math.hypot(v[0], v[1]);
+  const theta = Math.atan2(s, v[2]);
+  if (s < 1e-12) {
+    // Exactly on the view axis (or its antipode).
+    return { visible: v[2] > 0, x: cx, y: cy, z: v[2] };
+  }
+  const r = scale * theta;
+  return {
+    // Everything is "visible" in the sense of having a finite position; callers
+    // cull on screen bounds instead.
+    visible: true,
+    x: cx + (v[0] / s) * r,
+    y: cy - (v[1] / s) * r,
+    z: v[2],
+  };
 }
 
 /**
