@@ -16,7 +16,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, Layers, X, Compass as CompassIcon, Camera, Check } from 'lucide-react';
+import { Menu, Search, Layers, X, Compass as CompassIcon, Camera, Check, Activity, Copy } from 'lucide-react';
 import { lst as localSiderealTime } from '@/lib/astronomy';
 import { getSunCoords, getMoonCoords, getPlanetCoords } from '@/lib/solar-system';
 import {
@@ -42,6 +42,19 @@ import {
   MILKY_WAY_SPRITE_LEVELS, milkyWaySpriteColor,
   type SkyStar, type PreparedConstellation, type SkyLayers,
 } from '@/lib/sky-renderer';
+
+/** One sampled reading of the orientation pipeline, for the diagnostics panel. */
+interface DiagSnapshot {
+  alpha: number; beta: number; gamma: number;
+  absolute: boolean | null;
+  events: number;
+  rawJitter: number;
+  filtJitter: number;
+  fps: number;
+  screenAngle: number;
+  heading: number;
+  pitch: number;
+}
 
 interface RawStar {
   slug: string; commonName: string; type?: string;
@@ -80,6 +93,8 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const [arMode, setArMode] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [diagOpen, setDiagOpen] = useState(false);
+  const [diag, setDiag] = useState<DiagSnapshot | null>(null);
   const [layers, setLayers] = useState<SkyLayers>({
     constellations: true, labels: true, dso: true, milkyWay: true, ground: true,
   });
@@ -91,6 +106,23 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const smoother = useRef(new OrientationSmoother());
   /** Null until the first sensor event says whether the heading is true north. */
   const absoluteHeading = useRef<boolean | null>(null);
+  /**
+   * Live sensor telemetry.
+   *
+   * A screen recording cannot separate sensor noise from the hand actually
+   * moving, because the phone is not in frame. Measuring the input directly
+   * removes the guesswork: raw jitter is what the sensor delivers, filtered
+   * jitter is what reaches the view, and the gap between them is the filter
+   * doing its job.
+   */
+  const diagRef = useRef({
+    alpha: 0, beta: 0, gamma: 0, absolute: null as boolean | null,
+    events: 0, rawJitter: 0, filtJitter: 0, fps: 0,
+  });
+  const diagOpenRef = useRef(false);
+  const lastRawFwd = useRef<Vec3 | null>(null);
+  const lastFiltFwd = useRef<Vec3 | null>(null);
+  const jitterWindow = useRef<{ raw: number[]; filt: number[]; frames: number[] }>({ raw: [], filt: [], frames: [] });
   const fov = useRef(70);
   const layersRef = useRef(layers);
   const arRef = useRef(false);
@@ -111,6 +143,24 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   useEffect(() => { layersRef.current = layers; }, [layers]);
   useEffect(() => { arRef.current = arMode; }, [arMode]);
   useEffect(() => { camRef.current = cameraMode; }, [cameraMode]);
+  useEffect(() => { diagOpenRef.current = diagOpen; }, [diagOpen]);
+
+  // Sampled at 2 Hz. Reading the refs on every frame would re-render the whole
+  // component sixty times a second to update a text panel.
+  useEffect(() => {
+    if (!diagOpen) return;
+    const id = setInterval(() => {
+      const d = diagRef.current;
+      const hp = basisToHeadingPitch(viewBasis.current);
+      setDiag({
+        ...d,
+        screenAngle: screenAngle.current,
+        heading: hp.heading,
+        pitch: hp.pitch,
+      });
+    }, 500);
+    return () => clearInterval(id);
+  }, [diagOpen]);
 
   useEffect(() => {
     const t = () => setClock(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
@@ -216,6 +266,9 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     }
 
     const alpha = hasCompass ? 360 - wk : (e.alpha ?? 0);
+    const d = diagRef.current;
+    d.alpha = alpha; d.beta = e.beta ?? 0; d.gamma = e.gamma ?? 0;
+    d.absolute = absoluteHeading.current; d.events++;
     sensorBasis.current = basisFromDeviceOrientation(alpha, e.beta ?? 0, e.gamma ?? 0, screenAngle.current);
   }, []);
 
@@ -352,6 +405,24 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
       // swept, and identical at 60 or 120 Hz because it works from elapsed time.
       viewBasis.current = smoother.current.update(target, nowMs);
 
+      if (diagOpenRef.current) {
+        const ang = (a: Vec3, b: Vec3) =>
+          Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]))) * 180 / Math.PI;
+        const jw = jitterWindow.current;
+        if (lastRawFwd.current) jw.raw.push(ang(lastRawFwd.current, target.forward));
+        if (lastFiltFwd.current) jw.filt.push(ang(lastFiltFwd.current, viewBasis.current.forward));
+        jw.frames.push(nowMs);
+        while (jw.frames.length > 90) { jw.frames.shift(); jw.raw.shift(); jw.filt.shift(); }
+        lastRawFwd.current = target.forward;
+        lastFiltFwd.current = viewBasis.current.forward;
+        const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+        const span = jw.frames.length > 1 ? (jw.frames[jw.frames.length - 1] - jw.frames[0]) / 1000 : 0;
+        const d = diagRef.current;
+        d.rawJitter = mean(jw.raw);
+        d.filtJitter = mean(jw.filt);
+        d.fps = span > 0 ? (jw.frames.length - 1) / span : 0;
+      }
+
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const out = renderSky(ctx, {
         width: w, height: h,
@@ -463,6 +534,77 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
         </div>
       )}
 
+      {/* ── Sensor diagnostics ──────────────────────────────────────────── */}
+      {diagOpen && (
+        <div style={{ top: 'calc(96px + env(safe-area-inset-top, 0px))' }}
+          className="absolute left-4 right-4 z-30 mx-auto max-w-xs bg-black/88 border border-white/15 rounded-2xl backdrop-blur-xl p-4 font-mono text-[11px] text-white/80 shadow-2xl">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-white font-semibold tracking-wide">SENSOR DIAGNOSTICS</span>
+            <button onClick={() => setDiagOpen(false)} aria-label="Close diagnostics">
+              <X className="w-3.5 h-3.5 opacity-60" />
+            </button>
+          </div>
+
+          {!arMode && (
+            <p className="text-amber-200/80 leading-relaxed mb-2.5">
+              Compass tracking is off — turn it on in the menu, then hold the phone still.
+            </p>
+          )}
+
+          {diag ? (
+            <>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                <span className="opacity-55">absolute</span>
+                <span className={diag.absolute === false ? 'text-amber-300' : 'text-emerald-300'}>
+                  {diag.absolute === null ? 'waiting…' : diag.absolute ? 'yes (true north)' : 'no (relative)'}
+                </span>
+                <span className="opacity-55">events</span><span>{diag.events}</span>
+                <span className="opacity-55">alpha</span><span>{diag.alpha.toFixed(1)}°</span>
+                <span className="opacity-55">beta</span><span>{diag.beta.toFixed(1)}°</span>
+                <span className="opacity-55">gamma</span><span>{diag.gamma.toFixed(1)}°</span>
+                <span className="opacity-55">screen</span><span>{diag.screenAngle}°</span>
+                <span className="opacity-55">heading</span><span>{diag.heading.toFixed(1)}°</span>
+                <span className="opacity-55">pitch</span><span>{diag.pitch.toFixed(1)}°</span>
+                <span className="opacity-55">fps</span><span>{diag.fps.toFixed(0)}</span>
+              </div>
+
+              <div className="mt-2.5 pt-2.5 border-t border-white/10 grid grid-cols-2 gap-x-3 gap-y-1">
+                <span className="opacity-55">raw jitter</span>
+                <span className={diag.rawJitter > 0.5 ? 'text-amber-300' : ''}>{diag.rawJitter.toFixed(3)}°/f</span>
+                <span className="opacity-55">view jitter</span>
+                <span className={diag.filtJitter > 0.35 ? 'text-[#e0706c]' : 'text-emerald-300'}>
+                  {diag.filtJitter.toFixed(3)}°/f
+                </span>
+              </div>
+              <p className="opacity-45 leading-relaxed mt-2">
+                Hold the phone still. View jitter should stay under about 0.1°/f.
+              </p>
+
+              <button
+                onClick={() => {
+                  const txt = [
+                    `absolute=${diag.absolute}`, `events=${diag.events}`,
+                    `alpha=${diag.alpha.toFixed(1)}`, `beta=${diag.beta.toFixed(1)}`, `gamma=${diag.gamma.toFixed(1)}`,
+                    `screenAngle=${diag.screenAngle}`, `heading=${diag.heading.toFixed(1)}`, `pitch=${diag.pitch.toFixed(1)}`,
+                    `fps=${diag.fps.toFixed(0)}`,
+                    `rawJitter=${diag.rawJitter.toFixed(3)}`, `viewJitter=${diag.filtJitter.toFixed(3)}`,
+                    `ua=${navigator.userAgent}`,
+                  ].join(String.fromCharCode(10));
+                  navigator.clipboard?.writeText(txt).then(
+                    () => setNotice('Diagnostics copied.'),
+                    () => setNotice('Could not copy — read the values off the panel.'),
+                  );
+                }}
+                className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white/85 transition">
+                <Copy className="w-3.5 h-3.5" /> Copy readings
+              </button>
+            </>
+          ) : (
+            <p className="opacity-55">sampling…</p>
+          )}
+        </div>
+      )}
+
       {/* ── Layers ──────────────────────────────────────────────────────── */}
       {layersOpen && (
         <div style={{ bottom: 'calc(86px + env(safe-area-inset-bottom, 0px))' }}
@@ -529,6 +671,14 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
             <button onClick={() => { fov.current = 70; angles.current = { heading: 180, pitch: 42, roll: 0 }; setMenuOpen(false); }}
               className="px-3 py-3 rounded-xl hover:bg-white/5 text-left text-white/85 text-sm font-body">
               Reset view
+            </button>
+            <button onClick={() => { setDiagOpen((v) => !v); setMenuOpen(false); }}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 text-left">
+              <Activity className="w-5 h-5 text-white/50" />
+              <span className="text-white/85 text-sm font-body flex-1">Sensor diagnostics</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${diagOpen ? 'bg-[#e0706c]/20 text-[#e0706c]' : 'bg-white/10 text-white/40'}`}>
+                {diagOpen ? 'ON' : 'OFF'}
+              </span>
             </button>
             <div className="flex-1" />
             <button onClick={() => router.push('/')}
