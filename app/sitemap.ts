@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { isIndexableStar } from '@/lib/indexable';
 import { getAllArticles } from '@/lib/blog';
 import { getAllStars } from '@/lib/starCatalog';
+import { getAllConstellations } from '@/lib/constellations';
 import { SITE_URL } from '@/lib/site';
 
 /**
@@ -38,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${BASE}/explore`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE}/constellations`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE}/blackholes`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/sky-map`, lastModified: now, changeFrequency: 'weekly', priority: 0.95 },
@@ -64,6 +66,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // All 88 carry data-derived content, so all 88 are indexable — unlike the
+  // templated star stubs, which stay out of the sitemap.
+  const constellationPages: MetadataRoute.Sitemap = getAllConstellations().map((c) => ({
+    url: `${BASE}/constellation/${c.slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+
   const blackHoleSlugs = await readBlackHoleSlugs();
   const blackHolePages: MetadataRoute.Sitemap = blackHoleSlugs.map((slug) => ({
     url: `${BASE}/blackhole/${slug}`,
@@ -72,5 +83,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...blogPages, ...starPages, ...blackHolePages];
+  return [...staticPages, ...blogPages, ...constellationPages, ...starPages, ...blackHolePages];
 }

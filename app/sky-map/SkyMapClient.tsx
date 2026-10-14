@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { Compass, MapPin, Lock, Sparkles } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Compass, MapPin } from 'lucide-react';
 
 const SkyMapAR = dynamic(() => import('@/components/sky-map/SkyMapAR'), {
   ssr: false,
@@ -17,20 +15,20 @@ const SkyMapAR = dynamic(() => import('@/components/sky-map/SkyMapAR'), {
 });
 
 export default function SkyMapClient() {
-  const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
 
-  // No redirect when signed out. The signed-out state renders a sign-in card in
-  // place instead: `router.replace('/auth/login')` sent crawlers into /auth/,
-  // which robots.txt disallows, so /sky-map could never be indexed at all.
+  // The map is open to everyone, signed in or not.
+  //
+  // It used to require an account, which cost three things at once: visitors
+  // could not try the thing the site is built around, Google could not index
+  // the page (the gate redirected crawlers into /auth/, which robots.txt
+  // disallows), and the page's own claim of "no account needed to look" was
+  // untrue. An account still unlocks saving stars and logging observations.
 
   // --- Location Detection ---
   useEffect(() => {
-    if (!user) return; // Don't fetch location until user is logged in
-
     let resolved = false;
 
     const fetchIpLocation = async () => {
@@ -89,40 +87,7 @@ export default function SkyMapClient() {
         }
       );
     }
-  }, [user]);
-
-  // --- Auth Loading Spinner ---
-  if (authLoading) {
-    return (
-      <div className="h-[60vh] bg-[#020208] flex items-center justify-center">
-        <Compass className="w-8 h-8 text-white/30 animate-spin" />
-      </div>
-    );
-  }
-
-  // --- Not Logged In: sign-in card, rendered in place ---
-  if (!user) {
-    return (
-      <div className="min-h-[70vh] bg-[#020208] flex flex-col items-center justify-center p-6 text-center">
-        <div className="max-w-sm w-full bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-lg flex flex-col items-center shadow-2xl">
-          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
-            <Lock className="w-7 h-7 text-white/40" />
-          </div>
-          <h2 className="text-xl font-display font-medium text-white mb-2">Sign In Required</h2>
-          <p className="text-white/40 font-body text-xs leading-relaxed mb-6">
-            The Sky Map is available exclusively for registered users. Sign in to explore the universe.
-          </p>
-          <button
-            onClick={() => router.push('/auth/login?redirect=/sky-map')}
-            className="w-full px-5 py-3 bg-white text-black font-body font-semibold text-sm rounded-xl hover:bg-white/90 active:scale-[0.98] transition duration-200 flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            Sign In to Continue
-          </button>
-        </div>
-      </div>
-    );
-  }
+  }, []);
 
   // --- Location Loading ---
   if (locationLoading) {
