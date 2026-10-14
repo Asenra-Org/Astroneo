@@ -16,7 +16,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, Layers, X, Compass as CompassIcon, Camera, Check, Activity, Copy } from 'lucide-react';
+import { Menu, Search, Layers, X, Compass as CompassIcon, Camera, Check, Activity, Copy, AlertTriangle } from 'lucide-react';
 import { lst as localSiderealTime } from '@/lib/astronomy';
 import { getSunCoords, getMoonCoords, getPlanetCoords } from '@/lib/solar-system';
 import {
@@ -95,6 +95,9 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const [notice, setNotice] = useState<string | null>(null);
   const [diagOpen, setDiagOpen] = useState(false);
   const [diag, setDiag] = useState<DiagSnapshot | null>(null);
+  /** First runtime error from the draw loop, surfaced instead of a black screen. */
+  const [fatal, setFatal] = useState<string | null>(null);
+  const [loadPct, setLoadPct] = useState(0);
   const [layers, setLayers] = useState<SkyLayers>({
     constellations: true, labels: true, dso: true, milkyWay: true, ground: true,
   });
@@ -218,9 +221,34 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   // ── Catalogue + constellation figures ──────────────────────────────────────
   useEffect(() => {
     let dead = false;
+    // The star catalogue is 2.2MB. On mobile data that is several seconds, and
+    // without feedback a slow download is indistinguishable from a failure.
+    const fetchStars = async () => {
+      const res = await fetch('/data/stars-massive.json');
+      if (!res.ok) throw new Error(`catalogue HTTP ${res.status}`);
+      const total = Number(res.headers.get('content-length')) || 0;
+      if (!res.body || !total) return res.json();
+      const reader = res.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let got = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value); got += value.length;
+        if (!dead) setLoadPct(Math.min(99, Math.round((got / total) * 100)));
+      }
+      const buf = new Uint8Array(got);
+      let off = 0;
+      for (const c of chunks) { buf.set(c, off); off += c.length; }
+      return JSON.parse(new TextDecoder().decode(buf));
+    };
+
     Promise.all([
-      fetch('/data/stars-massive.json').then((r) => r.json()),
-      fetch('/data/sky/constellations.min.json').then((r) => r.json()),
+      fetchStars(),
+      fetch('/data/sky/constellations.min.json').then((r) => {
+        if (!r.ok) throw new Error(`constellations HTTP ${r.status}`);
+        return r.json();
+      }),
     ]).then(([data, cons]: [RawStar[], Constellation[]]) => {
       if (dead) return;
       const solar = new Set<string>(SOLAR_BODIES.map((b) => b.slug));
@@ -248,7 +276,10 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
         segments: c.lines.map((seg) => seg.map(([ra, dec]) => equatorialVector(ra, dec))),
       })));
       setReady(true);
-    }).catch(() => { if (!dead) setNotice('Could not load the sky catalogue.'); });
+    }).catch((err: unknown) => {
+      if (dead) return;
+      setFatal(`Could not load the sky catalogue — ${err instanceof Error ? err.message : String(err)}`);
+    });
     return () => { dead = true; };
   }, []);
 
@@ -404,10 +435,28 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     if (!ctx) return;
     let raf = 0;
 
+    let failed = false;
+
     const frame = (nowMs: number) => {
+      if (failed) return;              // stop re-throwing every frame
       raf = requestAnimationFrame(frame);
       const { w, h, dpr } = sizeRef.current;
       if (!w || !h) return;
+      try {
+        drawFrame(nowMs, w, h, dpr);
+      } catch (err) {
+        // A throw inside the draw would otherwise repeat sixty times a second
+        // behind a black canvas, which is indistinguishable from the map simply
+        // not working. Report it once, in words, on screen.
+        failed = true;
+        cancelAnimationFrame(raf);
+        const e = err instanceof Error ? err : new Error(String(err));
+        setFatal(`Rendering stopped: ${e.message}`);
+        console.error('[sky-map] render failed', e);
+      }
+    };
+
+    const drawFrame = (nowMs: number, w: number, h: number, dpr: number) => {
 
       if (flyTo.current) {
         const f = flyTo.current;
@@ -563,6 +612,50 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
           <div className="max-w-sm bg-black/85 border border-white/10 backdrop-blur py-2.5 px-4 rounded-xl text-white/80 text-xs font-body flex items-start gap-2">
             <span className="flex-1">{notice}</span>
             <button onClick={() => setNotice(null)} aria-label="Dismiss"><X className="w-3.5 h-3.5 opacity-60" /></button>
+          </div>
+        </div>
+      )}
+
+      {/* Loading progress: a slow 2.2MB download should not look like a hang. */}
+      {!ready && !fatal && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black pointer-events-none">
+          <CompassIcon className="w-9 h-9 text-white/25 animate-spin mb-5" strokeWidth={1.4} />
+          <p className="text-white/45 font-body text-sm mb-3">Loading the sky…</p>
+          <div className="w-44 h-0.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-full bg-white/50 transition-[width] duration-200"
+              style={{ width: `${Math.max(4, loadPct)}%` }} />
+          </div>
+          <p className="text-white/25 font-mono text-[10px] mt-2">{loadPct}%</p>
+        </div>
+      )}
+
+      {/* A failure states what went wrong rather than leaving a black screen. */}
+      {fatal && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/95 px-6">
+          <div className="max-w-sm w-full text-center">
+            <AlertTriangle className="w-9 h-9 text-amber-300/75 mx-auto mb-4" />
+            <h2 className="text-white font-display text-lg mb-2">The sky map stopped</h2>
+            <p className="text-white/55 font-body text-xs leading-relaxed mb-1">
+              Something failed while drawing. The exact message is below — sending it on is the
+              fastest way to get it fixed.
+            </p>
+            <pre className="text-left text-[10px] font-mono text-amber-200/85 bg-white/5 border border-white/10 rounded-xl p-3 my-4 whitespace-pre-wrap break-words">
+              {fatal}
+            </pre>
+            <div className="flex gap-2">
+              <button onClick={() => window.location.reload()}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-white text-black font-body text-sm font-semibold active:scale-95 transition">
+                Reload
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText(`${fatal}${String.fromCharCode(10)}ua=${navigator.userAgent}`)
+                    .then(() => setNotice('Error copied.'), () => {});
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-white/10 border border-white/15 text-white/85 font-body text-sm active:scale-95 transition">
+                Copy error
+              </button>
+            </div>
           </div>
         </div>
       )}
