@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Compass, MapPin } from 'lucide-react';
 
@@ -14,8 +14,28 @@ const SkyMapAR = dynamic(() => import('@/components/sky-map/SkyMapAR'), {
   ),
 });
 
+/** Roughly how far apart two fixes must be to be worth re-rendering, in degrees. */
+const MIN_MOVE_DEG = 0.05; // about 5 km
+
 export default function SkyMapClient() {
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  /**
+   * Accepts a fix only when it actually moves the observer.
+   *
+   * The position arrives in stages — IP lookup, its fallback, a timeout
+   * default, then GPS — and each setState previously rebuilt the map. For stars
+   * a few kilometres makes no visible difference, so near-identical fixes are
+   * dropped.
+   */
+  const applyCoords = useCallback((latitude: number, longitude: number) => {
+    setCoords((prev) => {
+      if (prev
+        && Math.abs(prev.latitude - latitude) < MIN_MOVE_DEG
+        && Math.abs(prev.longitude - longitude) < MIN_MOVE_DEG) return prev;
+      return { latitude, longitude };
+    });
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
 
@@ -37,7 +57,7 @@ export default function SkyMapClient() {
         const data = await res.json();
         if (data.latitude && data.longitude && !resolved) {
           resolved = true;
-          setCoords({ latitude: data.latitude, longitude: data.longitude });
+          applyCoords(data.latitude, data.longitude);
           setLocationLoading(false);
           return;
         }
@@ -47,7 +67,7 @@ export default function SkyMapClient() {
           const data = await res.json();
           if (data.latitude && data.longitude && !resolved) {
             resolved = true;
-            setCoords({ latitude: data.latitude, longitude: data.longitude });
+            applyCoords(data.latitude, data.longitude);
             setLocationLoading(false);
             return;
           }
@@ -59,7 +79,7 @@ export default function SkyMapClient() {
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          setCoords({ latitude: 28.6139, longitude: 77.209 });
+          applyCoords(28.6139, 77.209);
           setLocationLoading(false);
         }
       }, 3000);
@@ -71,10 +91,7 @@ export default function SkyMapClient() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           resolved = true;
-          setCoords({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
+          applyCoords(position.coords.latitude, position.coords.longitude);
           setLocationLoading(false);
         },
         (err) => {
@@ -87,7 +104,7 @@ export default function SkyMapClient() {
         }
       );
     }
-  }, []);
+  }, [applyCoords]);
 
   // --- Location Loading ---
   if (locationLoading) {
@@ -102,7 +119,7 @@ export default function SkyMapClient() {
           <button
             onClick={() => {
               setError('Skipped location detection. Using default horizon.');
-              setCoords({ latitude: 28.6139, longitude: 77.209 });
+              applyCoords(28.6139, 77.209);
               setLocationLoading(false);
             }}
             className="px-5 py-2.5 bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 active:scale-[0.98] font-body text-xs rounded-xl transition duration-200"

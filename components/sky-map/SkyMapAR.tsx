@@ -134,6 +134,15 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const picks = useRef<{ slug: string; x: number; y: number }[]>([]);
   const stream = useRef<MediaStream | null>(null);
   const horizon = useRef(new HorizonProfile());
+  /**
+   * Observer position, held in a ref.
+   *
+   * These used to be render-loop dependencies, and the location is resolved in
+   * several stages — IP lookup, its fallback, a timeout default, then GPS — so
+   * each stage tore down the animation loop and rebuilt it. That is what made
+   * the map repeatedly stall a few seconds after opening.
+   */
+  const site = useRef({ lat: latitude, lon: longitude });
   const milkyWay = useRef<MilkyWayBlob[]>([]);
   const starSprites = useRef<HTMLCanvasElement[]>([]);
   const mwSprites = useRef<HTMLCanvasElement[]>([]);
@@ -141,9 +150,14 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const flyTo = useRef<{ h: number; p: number; t: number } | null>(null);
 
   useEffect(() => { layersRef.current = layers; }, [layers]);
+  // arRef is set synchronously wherever arMode changes, never only here. The
+  // sensor handler bails on !arRef.current, so leaving the ref to an effect
+  // meant every orientation event between the tap and the next render was
+  // discarded — which is why the toggle appeared to take a moment to catch.
   useEffect(() => { arRef.current = arMode; }, [arMode]);
   useEffect(() => { camRef.current = cameraMode; }, [cameraMode]);
   useEffect(() => { diagOpenRef.current = diagOpen; }, [diagOpen]);
+  useEffect(() => { site.current = { lat: latitude, lon: longitude }; }, [latitude, longitude]);
 
   // Sampled at 2 Hz. Reading the refs on every frame would re-render the whole
   // component sixty times a second to update a text panel.
@@ -308,11 +322,15 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     } else {
       window.addEventListener('deviceorientation', h, true);
     }
-    setArMode(true); return true;
+    arRef.current = true;        // before React re-renders, so no events are lost
+    smoother.current.reset();
+    setArMode(true);
+    return true;
   }, [handleOrientation]);
 
   const toggleAR = useCallback(async () => {
     if (arMode) {
+      arRef.current = false;
       setArMode(false); detach(); sensorBasis.current = null;
       if (cameraMode) { setCameraMode(false); stopCamera(); }
       return;
@@ -429,7 +447,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
         basis: viewBasis.current,
         fovDegrees: fov.current,
         date: new Date(),
-        latitude, longitude,
+        latitude: site.current.lat, longitude: site.current.lon,
         stars, constellations,
         milkyWay: milkyWay.current,
         horizon: horizon.current,
@@ -444,7 +462,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
 
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [ready, stars, constellations, latitude, longitude]);
+  }, [ready, stars, constellations]);
 
   // ── Search ─────────────────────────────────────────────────────────────────
   const results = query.trim().length < 2 ? [] : stars
@@ -452,7 +470,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     .slice(0, 8);
 
   const goTo = (s: SkyStar) => {
-    const eqToHor = equatorialToHorizontal(localSiderealTime(new Date(), longitude), latitude);
+    const eqToHor = equatorialToHorizontal(localSiderealTime(new Date(), site.current.lon), site.current.lat);
     const enu = matApply(eqToHor, s.vec);
     let hdg = Math.atan2(enu[0], enu[1]) * 180 / Math.PI; if (hdg < 0) hdg += 360;
     flyTo.current = { h: hdg, p: Math.asin(Math.max(-1, Math.min(1, enu[2]))) * 180 / Math.PI, t: 40 };
@@ -512,6 +530,21 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
         style={{ top: 'calc(38px + env(safe-area-inset-top, 0px))' }}
         className="absolute right-5 z-20 p-1.5 active:scale-90 transition">
         <Search className="w-7 h-7" style={{ color: C.hud }} strokeWidth={1.8} />
+      </button>
+
+      {/* Compass tracking: the control people reach for most, so it lives on
+          screen rather than behind the menu. */}
+      <button onClick={toggleAR} aria-label={arMode ? 'Turn off compass tracking' : 'Turn on compass tracking'}
+        style={{ bottom: 'calc(28px + env(safe-area-inset-bottom, 0px))' }}
+        className={`absolute left-[76px] z-20 flex items-center gap-1.5 pl-2.5 pr-3 py-2 rounded-full border transition active:scale-95 ${
+          arMode
+            ? 'bg-[#e0706c]/18 border-[#e0706c]/55 text-[#e0706c]'
+            : 'bg-black/45 border-white/15 text-white/75'
+        }`}>
+        <CompassIcon className={`w-5 h-5 ${arMode ? 'animate-pulse' : ''}`} strokeWidth={1.8} />
+        <span className="text-[10px] font-mono font-bold tracking-wide">
+          {arMode ? 'ON' : 'AR'}
+        </span>
       </button>
 
       <button onClick={() => setLayersOpen((v) => !v)} aria-label="Layers"
