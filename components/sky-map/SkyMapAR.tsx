@@ -27,7 +27,7 @@ import {
   basisFromAngles,
   basisFromDeviceOrientation,
   basisToHeadingPitch,
-  blendBasis,
+  OrientationSmoother,
   worldToCamera,
   matApply,
   fisheyeScale,
@@ -88,6 +88,9 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const angles = useRef({ heading: 180, pitch: 42, roll: 0 });
   const sensorBasis = useRef<CameraBasis | null>(null);
   const viewBasis = useRef<CameraBasis>(basisFromAngles(180, 42, 0));
+  const smoother = useRef(new OrientationSmoother());
+  /** Null until the first sensor event says whether the heading is true north. */
+  const absoluteHeading = useRef<boolean | null>(null);
   const fov = useRef(70);
   const layersRef = useRef(layers);
   const arRef = useRef(false);
@@ -198,7 +201,21 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const handleOrientation = useCallback((e: DeviceOrientationEvent) => {
     if (!arRef.current) return;
     const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
-    const alpha = typeof wk === 'number' && Number.isFinite(wk) ? 360 - wk : (e.alpha ?? 0);
+    const hasCompass = typeof wk === 'number' && Number.isFinite(wk);
+
+    // Whether the heading is true north can only be known from the event. iOS
+    // never exposes `ondeviceorientationabsolute` — the Chromium-only property
+    // the previous check sniffed for — but it does supply webkitCompassHeading,
+    // which IS absolute. Sniffing meant every iPhone was told its compass was
+    // relative when it was not.
+    if (absoluteHeading.current === null) {
+      absoluteHeading.current = hasCompass || e.absolute === true;
+      if (!absoluteHeading.current) {
+        setNotice('This device reports a relative compass. Use the offset slider in the menu to line the sky up.');
+      }
+    }
+
+    const alpha = hasCompass ? 360 - wk : (e.alpha ?? 0);
     sensorBasis.current = basisFromDeviceOrientation(alpha, e.beta ?? 0, e.gamma ?? 0, screenAngle.current);
   }, []);
 
@@ -228,11 +245,15 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
       setNotice('No orientation sensor here — drag to look around.'); return false;
     }
     const h = handleOrientation as EventListener;
-    const hasAbs = typeof (window as unknown as Record<string, unknown>).ondeviceorientationabsolute !== 'undefined';
-    if (hasAbs) window.addEventListener('deviceorientationabsolute', h, true);
-    else {
+    absoluteHeading.current = null;
+    smoother.current.reset();
+    // Prefer the absolute event where the platform has it; otherwise the plain
+    // one, which on iOS still carries a true-north heading. Whether the result
+    // is absolute is decided from the first event, not from this check.
+    if (typeof (window as unknown as Record<string, unknown>).ondeviceorientationabsolute !== 'undefined') {
+      window.addEventListener('deviceorientationabsolute', h, true);
+    } else {
       window.addEventListener('deviceorientation', h, true);
-      setNotice('Compass is relative on this device; alignment may drift.');
     }
     setArMode(true); return true;
   }, [handleOrientation]);
@@ -312,7 +333,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     if (!ctx) return;
     let raf = 0;
 
-    const frame = () => {
+    const frame = (nowMs: number) => {
       raf = requestAnimationFrame(frame);
       const { w, h, dpr } = sizeRef.current;
       if (!w || !h) return;
@@ -327,7 +348,9 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
       const target = arRef.current && sensorBasis.current
         ? sensorBasis.current
         : basisFromAngles(angles.current.heading, angles.current.pitch, angles.current.roll);
-      viewBasis.current = blendBasis(viewBasis.current, target, 0.2);
+      // One-euro filtered: steady when the phone is still, responsive when it is
+      // swept, and identical at 60 or 120 Hz because it works from elapsed time.
+      viewBasis.current = smoother.current.update(target, nowMs);
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const out = renderSky(ctx, {

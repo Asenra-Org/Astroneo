@@ -563,6 +563,81 @@ export function angleDelta(from: number, to: number): number {
 }
 
 /**
+ * Adaptive smoothing for device-orientation input.
+ *
+ * THE PROBLEM
+ * -----------
+ * Holding a phone up to look at the sky drives `beta` toward 90 degrees, and at
+ * that pose the device's Y axis points at the zenith: `alpha` and `gamma` become
+ * degenerate, describing the same rotation. One degree of sensor noise in gamma
+ * then swings the computed heading by tens of degrees, which is felt as the view
+ * suddenly whipping around. It is gimbal lock in the W3C Euler convention, and
+ * it is worst in exactly the pose an AR sky map is used in.
+ *
+ * A fixed per-frame interpolation cannot fix this. It also behaves differently
+ * on a 120 Hz display than a 60 Hz one, because "20% of the way there each
+ * frame" is twice as fast when there are twice as many frames.
+ *
+ * THE FIX
+ * -------
+ * A one-euro filter. The smoothing constant is derived from how fast the view is
+ * actually moving: nearly still means heavy smoothing, which erases sensor
+ * jitter; a deliberate sweep means light smoothing, which keeps it responsive.
+ * That combination is what removes jitter without the view feeling laggy, and
+ * the cutoff is expressed in Hz against real elapsed time, so the behaviour is
+ * identical at any refresh rate.
+ *
+ * Reference: Casiez, Roussel & Vogel, "1 euro filter" (CHI 2012).
+ */
+export class OrientationSmoother {
+  private basis: CameraBasis | null = null;
+  private lastMs = 0;
+
+  /** Cutoff when stationary, Hz. Lower is steadier and laggier. */
+  private minCutoffHz: number;
+  /** How much speed raises the cutoff. Higher is more responsive. */
+  private beta: number;
+
+  constructor(minCutoffHz = 0.65, beta = 0.012) {
+    this.minCutoffHz = minCutoffHz;
+    this.beta = beta;
+  }
+
+  /** Drops the filter state, so the next sample is adopted immediately. */
+  reset() {
+    this.basis = null;
+  }
+
+  update(target: CameraBasis, nowMs: number): CameraBasis {
+    if (!this.basis) {
+      this.basis = target;
+      this.lastMs = nowMs;
+      return target;
+    }
+
+    // Clamp dt: a backgrounded tab can deliver an enormous gap, and a doubled
+    // frame can deliver zero.
+    const dt = Math.min(Math.max((nowMs - this.lastMs) / 1000, 1 / 240), 0.2);
+    this.lastMs = nowMs;
+
+    const cos = Math.max(-1, Math.min(1, dot(this.basis.forward, target.forward)));
+    const deltaDeg = Math.acos(cos) / DEG;
+    const speedDegPerSec = deltaDeg / dt;
+
+    // A single frame cannot contain a real 60-degree turn at this rate; that is
+    // a sensor glitch, and adopting it is what produces a visible snap.
+    if (deltaDeg > 60 && speedDegPerSec > 1500) return this.basis;
+
+    const cutoff = this.minCutoffHz + this.beta * speedDegPerSec;
+    const tau = 1 / (2 * Math.PI * cutoff);
+    const alpha = Math.min(1, Math.max(0.02, 1 / (1 + tau / dt)));
+
+    this.basis = blendBasis(this.basis, target, alpha);
+    return this.basis;
+  }
+}
+
+/**
  * Spherical interpolation between two camera bases.
  *
  * Smoothing orientation component-wise then re-orthonormalising keeps the basis
