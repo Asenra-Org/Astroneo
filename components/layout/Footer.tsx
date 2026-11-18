@@ -93,7 +93,7 @@ export default function Footer() {
               <Globe size={18} />
             </a>
             <a
-              href="mailto:contact@asenra.in"
+              href="mailto:contact@astroneo.space"
               className="text-muted hover:text-text-primary transition-colors"
               aria-label="Email"
             >

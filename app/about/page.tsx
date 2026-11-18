@@ -55,14 +55,14 @@ export default function AboutPage() {
     description: 'A free astronomy platform for exploring the universe through interactive star maps, 3D models, and real astronomical data.',
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'contact@asenra.in',
+      email: 'contact@astroneo.space',
       contactType: 'customer support',
     },
     founder: {
       '@type': 'Person',
       '@id': `${SITE_URL}/about#author`,
       name: 'Karan Patil',
-      email: 'contact@asenra.in',
+      email: 'contact@astroneo.space',
       url: `${SITE_URL}/about#author`,
     },
     publishingPrinciples: `${SITE_URL}/about#editorial-policy`,
@@ -203,11 +203,11 @@ export default function AboutPage() {
                     </p>
                   </div>
                   <a
-                    href="mailto:contact@asenra.in"
+                    href="mailto:contact@astroneo.space"
                     className="inline-flex items-center gap-2 mt-6 text-accent hover:underline font-body text-sm"
                   >
                     <Mail size={15} />
-                    contact@asenra.in
+                    contact@astroneo.space
                   </a>
                 </div>
               </div>
@@ -245,8 +245,8 @@ export default function AboutPage() {
               <p className="leading-relaxed">
                 <strong className="text-text-primary">Corrections.</strong> Errors are fixed on discovery and
                 the review date updated. Write to{' '}
-                <a href="mailto:contact@asenra.in" className="text-accent hover:underline">
-                  contact@asenra.in
+                <a href="mailto:contact@astroneo.space" className="text-accent hover:underline">
+                  contact@astroneo.space
                 </a>{' '}
                 if you spot one.
               </p>
@@ -280,11 +280,11 @@ export default function AboutPage() {
               Our team typically responds within 1–2 business days.
             </p>
             <a
-              href="mailto:contact@asenra.in"
+              href="mailto:contact@astroneo.space"
               className="inline-flex items-center gap-2 bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 rounded-xl px-6 py-3 font-body font-medium text-sm transition-all"
             >
               <Mail size={16} />
-              contact@asenra.in
+              contact@astroneo.space
             </a>
           </div>
 

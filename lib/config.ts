@@ -15,7 +15,7 @@
  */
 export const config = {
   /** AdSense publisher ID, e.g. "ca-pub-0000000000000000". Must match /ads.txt. */
-  adsenseId: process.env.ADSENSE_ID,
+  adsenseId: process.env.ADSENSE_ID || 'ca-pub-8875670540225414',
 
   /**
    * Google Analytics measurement ID. Deliberately left on the public prefix: it is
