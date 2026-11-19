@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import PushNotificationToggle from '@/components/ui/PushNotificationToggle';
-import { Search, Sparkles, Bell, Compass, Filter, RefreshCw } from 'lucide-react';
+import { Search, Bell, Compass, Filter, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 const CATEGORIES = [
@@ -17,10 +17,10 @@ const CATEGORIES = [
   { id: 'eclipse', label: 'Eclipses' },
   { id: 'conjunction', label: 'Conjunctions & Planets' },
   { id: 'close_approach', label: 'Asteroid Passes' },
-  { id: 'other', label: 'Deep Space & Missions' },
+  { id: 'other', label: 'Deep Space' },
 ];
 
-export default function FeedPage() {
+export default function FeedClient() {
   const [events, setEvents] = useState<SpaceEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -48,7 +48,7 @@ export default function FeedPage() {
     fetchEvents();
   };
 
-  // Filter events based on active category and search
+  // Filter events based on active category and search query
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const matchesCategory =
@@ -68,76 +68,74 @@ export default function FeedPage() {
   }, [events, activeCategory, searchQuery]);
 
   return (
-    <div className="relative min-h-screen bg-[#07070d] text-white selection:bg-cyan-500/30 overflow-x-hidden">
-      {/* Background ambient lighting */}
+    <div className="relative min-h-screen bg-bg text-text-primary selection:bg-white/20 overflow-x-hidden flex flex-col justify-between">
+      {/* Background ambient lighting matching Astroneo hero aesthetic */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-cyan-600/10 via-blue-600/5 to-transparent blur-3xl rounded-full" />
-        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-violet-600/5 blur-3xl rounded-full" />
-        <div className="absolute top-2/3 -right-40 w-[500px] h-[500px] bg-cyan-600/5 blur-3xl rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[450px] bg-[radial-gradient(ellipse_at_center,_rgba(137,170,204,0.06)_0%,_transparent_70%)]" />
       </div>
 
       <div className="relative z-50">
         <Navbar />
       </div>
 
-      <main className="relative z-10 flex flex-col min-h-screen pt-28 pb-20 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+      <main className="relative z-10 flex-1 flex flex-col pt-28 pb-20 px-4 sm:px-6 max-w-6xl mx-auto w-full">
         {/* HEADER SECTION */}
-        <div className="text-center mb-10 max-w-3xl mx-auto">
+        <div className="text-center mb-12 max-w-3xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 text-cyan-300 text-xs font-mono font-medium mb-4 shadow-[0_0_20px_rgba(0,212,255,0.15)]"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex items-center justify-center gap-3 mb-4"
           >
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span>Live Astronomical Feed & Space Radar</span>
+            <div className="w-8 h-px bg-stroke" />
+            <span className="text-xs text-muted uppercase tracking-[0.3em]">Celestial Almanac</span>
+            <div className="w-8 h-px bg-stroke" />
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="text-4xl sm:text-5xl md:text-6xl font-display font-medium text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/70 tracking-tight mb-4"
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="text-4xl sm:text-6xl md:text-7xl font-display text-text-primary tracking-tight mb-4"
           >
-            Celestial Events & Sky Feed
+            Upcoming <em className="italic text-text-primary/70">Events</em>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-            className="text-base sm:text-lg text-white/60 font-body font-light leading-relaxed max-w-2xl mx-auto"
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="text-sm sm:text-base text-muted font-body leading-relaxed max-w-xl mx-auto"
           >
-            Real-time tracking of upcoming meteor showers, planetary alignments, eclipses, and near-Earth asteroids
-            with observing coordinates.
+            Live astronomical radar tracking meteor showers, planetary conjunctions, eclipses, and near-Earth discoveries.
           </motion.p>
         </div>
 
-        {/* INTERACTIVE ALERT & CONTROLS BANNER */}
-        <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-purple-950/30 border border-white/10 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+        {/* ALERTS & RADAR BANNER */}
+        <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-stroke/70 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface/40 hover:bg-surface/60 transition-colors">
           <div className="flex items-center gap-3.5 text-left w-full sm:w-auto">
-            <div className="w-10 h-10 rounded-xl bg-cyan-400/15 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(0,212,255,0.2)]">
-              <Bell className="w-5 h-5 animate-bounce-slow" />
+            <div className="w-9 h-9 rounded-full liquid-glass border border-stroke flex items-center justify-center text-text-primary shrink-0">
+              <Bell className="w-4 h-4 text-muted" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">Live Celestial Alert Notifications</h3>
-              <p className="text-xs text-white/60">Get instant phone & browser alerts before major events peak.</p>
+              <h3 className="font-display text-lg text-text-primary tracking-tight">Celestial Alerts</h3>
+              <p className="text-xs text-muted font-body">Receive notifications before celestial events peak over your horizon.</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <PushNotificationToggle />
             <Link
               href="/sky-map"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/15 border border-white/15 text-white transition-all shadow-md"
+              className="liquid-glass inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-body text-text-primary border border-white/15 hover:border-white/30 hover:bg-white/5 transition-all"
             >
-              <Compass className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Launch AR Sky Map</span>
+              <Compass className="w-3.5 h-3.5 text-muted" />
+              <span>Launch Sky Map</span>
             </Link>
           </div>
         </div>
 
-        {/* SEARCH AND FILTER BAR */}
+        {/* SEARCH AND CATEGORY FILTER BAR */}
         <div className="mb-8 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
           {/* Category Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -147,10 +145,10 @@ export default function FeedPage() {
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all border ${
+                  className={`px-4 py-2 rounded-full text-xs font-body whitespace-nowrap transition-all duration-300 ${
                     isActive
-                      ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200 shadow-[0_0_15px_rgba(0,212,255,0.15)] font-semibold'
-                      : 'bg-white/5 border-white/8 text-white/60 hover:text-white hover:bg-white/10'
+                      ? 'bg-text-primary text-bg font-medium shadow-[0_0_15px_rgba(255,255,255,0.1)]'
+                      : 'text-muted hover:text-text-primary hover:bg-white/5 border border-transparent'
                   }`}
                 >
                   {cat.label}
@@ -162,22 +160,22 @@ export default function FeedPage() {
           {/* Search Input & Refresh Button */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted/60" />
               <input
                 type="text"
-                placeholder="Search events, planets..."
+                placeholder="Search celestial events..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400/50 transition-colors"
+                className="w-full pl-9 pr-4 py-2 bg-surface/50 border border-stroke rounded-full text-xs text-text-primary placeholder:text-muted/50 focus:outline-none focus:border-white/30 transition-colors font-body"
               />
             </div>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="liquid-glass p-2 rounded-full border border-stroke text-muted hover:text-text-primary hover:border-white/20 transition-colors"
               title="Refresh feed"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-cyan-400' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-text-primary' : ''}`} />
             </button>
           </div>
         </div>
@@ -188,13 +186,13 @@ export default function FeedPage() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="w-full h-96 bg-white/[0.03] border border-white/8 rounded-2xl animate-pulse overflow-hidden flex flex-col"
+                className="w-full h-96 liquid-glass border border-stroke/50 rounded-3xl animate-pulse overflow-hidden flex flex-col bg-surface/30"
               >
-                <div className="h-56 bg-white/5 w-full" />
+                <div className="h-56 bg-white/[0.03] w-full" />
                 <div className="p-6 space-y-3 flex-1">
-                  <div className="w-1/3 h-4 bg-white/10 rounded" />
-                  <div className="w-3/4 h-6 bg-white/10 rounded" />
-                  <div className="w-full h-12 bg-white/5 rounded" />
+                  <div className="w-1/3 h-4 bg-white/5 rounded-full" />
+                  <div className="w-3/4 h-6 bg-white/5 rounded-full" />
+                  <div className="w-full h-12 bg-white/[0.02] rounded-2xl" />
                 </div>
               </div>
             ))}
@@ -211,19 +209,19 @@ export default function FeedPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center p-12 bg-white/[0.02] rounded-2xl border border-white/10 backdrop-blur-md my-8"
+            className="liquid-glass text-center p-12 rounded-3xl border border-stroke bg-surface/30 my-8"
           >
-            <Filter className="w-10 h-10 text-white/30 mx-auto mb-3" />
-            <h3 className="text-lg font-display text-white mb-1">No matching events found</h3>
-            <p className="text-sm text-white/50 max-w-md mx-auto mb-4">
-              Try adjusting your search terms or selecting a different phenomenon category above.
+            <Filter className="w-8 h-8 text-muted/40 mx-auto mb-3" />
+            <h3 className="text-xl font-display text-text-primary mb-1">No matching phenomena found</h3>
+            <p className="text-xs text-muted font-body max-w-sm mx-auto mb-5 leading-relaxed">
+              No astronomical events match your active filters. Try clearing your search or switching categories.
             </p>
             <button
               onClick={() => {
                 setActiveCategory('all');
                 setSearchQuery('');
               }}
-              className="px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/30 transition-all"
+              className="liquid-glass px-5 py-2 rounded-full border border-stroke text-xs font-body text-text-primary hover:bg-white/10 transition-colors"
             >
               Reset Filters
             </button>

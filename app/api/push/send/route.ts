@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
     let subscriptionsSnapshot;
     try {
       subscriptionsSnapshot = await adminDb.collection('push_subscriptions').get();
-    } catch (dbErr) {
+    } catch (dbErr: any) {
       console.warn('adminDb not accessible for push subscriptions:', dbErr);
-      return NextResponse.json({ message: 'No subscriptions accessible', sent: 0 });
+      return NextResponse.json({ message: 'No subscriptions accessible', error: dbErr?.message || String(dbErr), sent: 0 });
     }
 
     if (!subscriptionsSnapshot || subscriptionsSnapshot.empty) {
