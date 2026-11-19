@@ -353,33 +353,28 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   }, []);
 
   const enableAR = useCallback(async () => {
-    // 1. iOS permission
+    // 1. iOS Safari permission (synchronous check if not iOS)
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof DOE?.requestPermission === 'function') {
       try {
         if ((await DOE.requestPermission()) !== 'granted') {
           setNotice('Motion access denied. Enable it in Settings → Safari → Motion & Orientation.');
+          arRef.current = false;
+          setArMode(false);
           return false;
         }
       } catch {
         setNotice('This device did not allow motion access.');
+        arRef.current = false;
+        setArMode(false);
         return false;
       }
     }
 
-    // 2. Android Chrome Sensor permissions check
-    if (typeof navigator !== 'undefined' && 'permissions' in navigator && navigator.permissions.query) {
-      try {
-        await Promise.allSettled([
-          navigator.permissions.query({ name: 'accelerometer' as PermissionName }),
-          navigator.permissions.query({ name: 'gyroscope' as PermissionName }),
-          navigator.permissions.query({ name: 'magnetometer' as PermissionName }),
-        ]);
-      } catch {}
-    }
-
     if (typeof window.DeviceOrientationEvent === 'undefined') {
       setNotice('No orientation sensor here — drag to look around.');
+      arRef.current = false;
+      setArMode(false);
       return false;
     }
 
@@ -391,9 +386,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     window.removeEventListener('deviceorientationabsolute', h, true);
     window.removeEventListener('deviceorientation', h, true);
 
-    // Single unified orientation stream:
-    // 'deviceorientation' activates Android hardware gyroscope + accelerometer at native 60-120Hz
-    // with 0 latency, and carries webkitCompassHeading on iOS.
+    // Instant zero-latency attachment without any blocking IPC calls
     window.addEventListener('deviceorientation', h, true);
 
     arRef.current = true; // before React re-renders, so no events are lost
@@ -405,11 +398,16 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   const toggleAR = useCallback(async () => {
     if (arMode) {
       arRef.current = false;
-      setArMode(false); detach(); sensorBasis.current = null;
+      setArMode(false);
+      detach();
+      sensorBasis.current = null;
       if (cameraMode) { setCameraMode(false); stopCamera(); }
       return;
     }
-    setNotice(null); await enableAR();
+    setNotice(null);
+    arRef.current = true; // Immediately update state with 0ms latency
+    setArMode(true);
+    await enableAR();
   }, [arMode, cameraMode, enableAR, detach, stopCamera]);
 
   const toggleCamera = useCallback(async () => {
