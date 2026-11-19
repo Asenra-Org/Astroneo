@@ -293,17 +293,31 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     return () => window.removeEventListener('orientationchange', read);
   }, []);
 
+  const hasAbsoluteEvents = useRef(false);
+
   const handleOrientation = useCallback((e: DeviceOrientationEvent) => {
     if (!arRef.current) return;
+
+    const isAbsolute = e.type === 'deviceorientationabsolute' || e.absolute === true;
     const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
     const hasCompass = typeof wk === 'number' && Number.isFinite(wk);
 
-    // Whether the heading is true north can only be known from the event. iOS
-    // never exposes `ondeviceorientationabsolute` — the Chromium-only property
-    // the previous check sniffed for — but it does supply webkitCompassHeading,
-    // which IS absolute. Sniffing meant every iPhone was told its compass was
-    // relative when it was not.
-    if (absoluteHeading.current === null) {
+    if (isAbsolute || hasCompass) {
+      hasAbsoluteEvents.current = true;
+      absoluteHeading.current = true;
+    }
+
+    // If an absolute compass feed is actively streaming, ignore relative orientation events
+    if (!isAbsolute && !hasCompass && hasAbsoluteEvents.current) {
+      return;
+    }
+
+    // Skip blank readings before hardware sensors wake up
+    if (e.beta === null && e.gamma === null && !hasCompass && e.alpha === null) {
+      return;
+    }
+
+    if (absoluteHeading.current === null && !hasAbsoluteEvents.current) {
       absoluteHeading.current = hasCompass || e.absolute === true;
       if (!absoluteHeading.current) {
         setNotice('This device reports a relative compass. Use the offset slider in the menu to line the sky up.');
@@ -311,16 +325,42 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
     }
 
     const alpha = hasCompass ? 360 - wk : (e.alpha ?? 0);
+    const beta = e.beta ?? 0;
+    const gamma = e.gamma ?? 0;
+
     const d = diagRef.current;
-    d.alpha = alpha; d.beta = e.beta ?? 0; d.gamma = e.gamma ?? 0;
-    d.absolute = absoluteHeading.current; d.events++;
-    sensorBasis.current = basisFromDeviceOrientation(alpha, e.beta ?? 0, e.gamma ?? 0, screenAngle.current);
+    d.alpha = alpha;
+    d.beta = beta;
+    d.gamma = gamma;
+    d.absolute = absoluteHeading.current;
+    d.events++;
+
+    sensorBasis.current = basisFromDeviceOrientation(alpha, beta, gamma, screenAngle.current);
   }, []);
 
   const detach = useCallback(() => {
     const h = handleOrientation as EventListener;
     window.removeEventListener('deviceorientationabsolute', h, true);
     window.removeEventListener('deviceorientation', h, true);
+    hasAbsoluteEvents.current = false;
+  }, [handleOrientation]);
+
+  // Keep sensors active when phone is locked/unlocked or tab resumed
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && arRef.current) {
+        smoother.current.reset();
+        const h = handleOrientation as EventListener;
+        window.removeEventListener('deviceorientationabsolute', h, true);
+        window.removeEventListener('deviceorientation', h, true);
+        window.addEventListener('deviceorientation', h, true);
+        if (typeof (window as unknown as Record<string, unknown>).ondeviceorientationabsolute !== 'undefined') {
+          window.addEventListener('deviceorientationabsolute', h, true);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [handleOrientation]);
 
   const stopCamera = useCallback(() => {
@@ -330,6 +370,7 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
   }, []);
 
   const enableAR = useCallback(async () => {
+    // 1. iOS permission
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof DOE?.requestPermission === 'function') {
       try {
@@ -337,23 +378,49 @@ export default function SkyMapAR({ latitude, longitude }: { latitude: number; lo
           setNotice('Motion access denied. Enable it in Settings → Safari → Motion & Orientation.');
           return false;
         }
-      } catch { setNotice('This device did not allow motion access.'); return false; }
+      } catch {
+        setNotice('This device did not allow motion access.');
+        return false;
+      }
     }
+
+    // 2. Android Chrome Sensor permissions check
+    if (typeof navigator !== 'undefined' && 'permissions' in navigator && navigator.permissions.query) {
+      try {
+        await Promise.allSettled([
+          navigator.permissions.query({ name: 'accelerometer' as PermissionName }),
+          navigator.permissions.query({ name: 'gyroscope' as PermissionName }),
+          navigator.permissions.query({ name: 'magnetometer' as PermissionName }),
+        ]);
+      } catch {}
+    }
+
     if (typeof window.DeviceOrientationEvent === 'undefined') {
-      setNotice('No orientation sensor here — drag to look around.'); return false;
+      setNotice('No orientation sensor here — drag to look around.');
+      return false;
     }
+
     const h = handleOrientation as EventListener;
     absoluteHeading.current = null;
+    hasAbsoluteEvents.current = false;
     smoother.current.reset();
-    // Prefer the absolute event where the platform has it; otherwise the plain
-    // one, which on iOS still carries a true-north heading. Whether the result
-    // is absolute is decided from the first event, not from this check.
+
+    // Remove any stale listeners first
+    window.removeEventListener('deviceorientationabsolute', h, true);
+    window.removeEventListener('deviceorientation', h, true);
+
+    // CRITICAL: Always attach 'deviceorientation'.
+    // In Android Chrome, 'deviceorientationabsolute' will often remain dormant
+    // until 'deviceorientation' activates the underlying HAL sensor pipeline,
+    // or until the screen locks and unlocks. Attaching 'deviceorientation'
+    // guarantees immediate orientation streaming without needing to lock/unlock!
+    window.addEventListener('deviceorientation', h, true);
+
     if (typeof (window as unknown as Record<string, unknown>).ondeviceorientationabsolute !== 'undefined') {
       window.addEventListener('deviceorientationabsolute', h, true);
-    } else {
-      window.addEventListener('deviceorientation', h, true);
     }
-    arRef.current = true;        // before React re-renders, so no events are lost
+
+    arRef.current = true; // before React re-renders, so no events are lost
     smoother.current.reset();
     setArMode(true);
     return true;
