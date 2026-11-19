@@ -45,6 +45,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Explore', href: '/explore' },
+    { name: 'Events & News', href: '/upcoming-events' },
     { name: 'About Us', href: '/about' },
     { name: 'Privacy Policy', href: '/privacy-policy' },
   ];

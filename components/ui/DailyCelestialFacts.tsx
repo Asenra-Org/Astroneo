@@ -46,9 +46,22 @@ export default function DailyCelestialFacts() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-stroke/50">
-          <h4 className="text-sm font-medium text-text-primary mb-3">Space Event Alerts</h4>
+        <div className="pt-4 border-t border-stroke/50 flex items-center justify-between">
+          <div>
+            <h4 className="text-sm font-medium text-text-primary">Space Event Alerts</h4>
+            <p className="text-xs text-muted">Get real-time push notifications</p>
+          </div>
           <PushNotificationToggle />
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-white/5 flex justify-end">
+          <a
+            href="/upcoming-events"
+            className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+          >
+            <span>View Full Live Sky Feed</span>
+            <span>&rarr;</span>
+          </a>
         </div>
       </div>
     </div>

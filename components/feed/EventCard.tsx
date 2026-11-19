@@ -1,7 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Heart, Share2, Bookmark, Clock, CalendarDays, Lock } from 'lucide-react';
+import {
+  Heart,
+  Share2,
+  Bookmark,
+  Clock,
+  Calendar,
+  Compass,
+  Eye,
+  ExternalLink,
+  Lock,
+  Sparkles,
+} from 'lucide-react';
 import { SpaceEvent } from '@/types/event';
 import { toggleLikeEvent, hasUserLikedEvent, toggleSaveEvent, hasUserSavedEvent } from '@/lib/events';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,32 +20,37 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
-// Event type config — color, label
-const typeConfig: Record<string, { color: string; glow: string; label: string }> = {
+// Event type color & glow configuration
+const typeConfig: Record<string, { color: string; badgeBg: string; border: string; label: string }> = {
   meteor_shower: {
-    color: 'text-cyan-300 bg-cyan-400/10 border-cyan-400/20',
-    glow: 'shadow-[0_0_40px_rgba(34,211,238,0.12)]',
+    color: 'text-cyan-300',
+    badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40',
+    border: 'hover:border-cyan-400/40',
     label: 'Meteor Shower',
   },
   eclipse: {
-    color: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
-    glow: 'shadow-[0_0_40px_rgba(251,191,36,0.12)]',
+    color: 'text-amber-300',
+    badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-400/40',
+    border: 'hover:border-amber-400/40',
     label: 'Eclipse',
   },
   conjunction: {
-    color: 'text-violet-300 bg-violet-400/10 border-violet-400/20',
-    glow: 'shadow-[0_0_40px_rgba(167,139,250,0.12)]',
+    color: 'text-violet-300',
+    badgeBg: 'bg-violet-500/20 text-violet-300 border-violet-400/40',
+    border: 'hover:border-violet-400/40',
     label: 'Conjunction',
   },
   close_approach: {
-    color: 'text-sky-300 bg-sky-400/10 border-sky-400/20',
-    glow: 'shadow-[0_0_40px_rgba(125,211,252,0.12)]',
-    label: 'Close Approach',
+    color: 'text-sky-300',
+    badgeBg: 'bg-sky-500/20 text-sky-300 border-sky-400/40',
+    border: 'hover:border-sky-400/40',
+    label: 'Asteroid Pass',
   },
   other: {
-    color: 'text-white/60 bg-white/5 border-white/10',
-    glow: '',
+    color: 'text-emerald-300',
+    badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
     label: 'Space Event',
+    border: 'hover:border-emerald-400/40',
   },
 };
 
@@ -54,7 +70,7 @@ function useCountdown(dateStr: string) {
       const h = Math.floor((dist % 86400000) / 3600000);
       const m = Math.floor((dist % 3600000) / 60000);
       const s = Math.floor((dist % 60000) / 1000);
-      setTimeLeft(d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${s}s`);
+      setTimeLeft(d > 0 ? `${d}d ${h}h remaining` : `${h}h ${m}m ${s}s`);
     };
     update();
     const id = setInterval(update, 1000);
@@ -69,6 +85,7 @@ export function EventCard({ event }: { event: SpaceEvent }) {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(Math.max(0, event.likesCount || 0));
   const [isSaved, setIsSaved] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { timeLeft, isPast } = useCountdown(event.date);
 
   useEffect(() => {
@@ -80,7 +97,7 @@ export function EventCard({ event }: { event: SpaceEvent }) {
 
   const requireLogin = (action: string) => {
     toast.error(`Sign in to ${action}`, {
-      action: { label: 'Sign In', onClick: () => window.location.href = '/auth/login' },
+      action: { label: 'Sign In', onClick: () => (window.location.href = '/auth/login') },
     });
   };
 
@@ -88,12 +105,12 @@ export function EventCard({ event }: { event: SpaceEvent }) {
     if (!user) return requireLogin('like events');
     const next = !isLiked;
     setIsLiked(next);
-    setLikesCount(p => Math.max(0, next ? p + 1 : p - 1));
+    setLikesCount((p) => Math.max(0, next ? p + 1 : p - 1));
     try {
       await toggleLikeEvent(event.id, user.uid);
     } catch {
       setIsLiked(!next);
-      setLikesCount(p => Math.max(0, !next ? p + 1 : p - 1));
+      setLikesCount((p) => Math.max(0, !next ? p + 1 : p - 1));
       toast.error('Failed to update like');
     }
   };
@@ -112,54 +129,92 @@ export function EventCard({ event }: { event: SpaceEvent }) {
   };
 
   const handleShare = () => {
+    const url = typeof window !== 'undefined' ? window.location.href : 'https://astroneo.space/upcoming-events';
     if (navigator.share) {
-      navigator.share({ title: event.title, text: event.description, url: window.location.href }).catch(() => {});
+      navigator.share({ title: event.title, text: event.description, url }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied!');
+      navigator.clipboard.writeText(url);
+      toast.success('Event link copied to clipboard!');
     }
+  };
+
+  // Google Calendar prefilled link
+  const getCalendarLink = () => {
+    const start = new Date(event.date);
+    const end = new Date(start.getTime() + 2 * 3600000); // 2 hours duration
+    const formatTime = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+    const dates = `${formatTime(start)}/${formatTime(end)}`;
+    const title = encodeURIComponent(event.title);
+    const details = encodeURIComponent(`${event.description}\n\nTracked with Astroneo: https://astroneo.space/upcoming-events`);
+    const location = encodeURIComponent((event as any).location || 'Night Sky');
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
   };
 
   const cleanTitle = event.title.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
   const cfg = typeConfig[event.type] ?? typeConfig.other;
-  const dateStr = new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const eventDate = new Date(event.date);
+  const dateStr = eventDate.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const timeStr = eventDate.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const fallbackImg = 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80';
+  const displayImage = !imageError && event.imageUrl ? event.imageUrl : fallbackImg;
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={`relative rounded-2xl overflow-hidden border border-white/8 bg-white/[0.03] backdrop-blur-md ${cfg.glow}`}
+      viewport={{ once: true, margin: '-20px' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className={`group relative rounded-2xl overflow-hidden border border-white/10 bg-[#0c0c16]/90 backdrop-blur-xl shadow-xl transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,212,255,0.08)] ${cfg.border} flex flex-col`}
     >
-      {/* Top accent line */}
-      <div className={`absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-current to-transparent opacity-40 ${cfg.color.split(' ')[0]}`} />
+      {/* 1. FILLED CORNER IMAGE HEADER */}
+      <div className="relative w-full h-52 sm:h-64 overflow-hidden bg-black/60 select-none">
+        <img
+          src={displayImage}
+          alt={cleanTitle}
+          onError={() => setImageError(true)}
+          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          loading="lazy"
+        />
+        {/* Cinematic gradient overlays that blend seamlessly into the card */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c16] via-transparent to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30" />
 
-      <div className="p-5">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          {/* Type badge */}
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-widest uppercase border ${cfg.color}`}>
+        {/* Top Left: Category Badge */}
+        <div className="absolute top-3.5 left-3.5 flex items-center gap-2 z-10">
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase border backdrop-blur-md shadow-md ${cfg.badgeBg}`}>
+            <Sparkles className="w-3 h-3 mr-1.5 opacity-90" />
             {cfg.label}
           </span>
+        </div>
 
-          {/* Save button — blurred lock if not logged in */}
+        {/* Top Right: Save Bookmark Button */}
+        <div className="absolute top-3.5 right-3.5 z-10">
           {user ? (
             <button
               onClick={handleSave}
-              className={`p-2 rounded-full transition-all duration-200 border ${
+              className={`p-2.5 rounded-full transition-all duration-200 border backdrop-blur-md shadow-md ${
                 isSaved
-                  ? 'bg-cyan-400/20 border-cyan-400/30 text-cyan-300'
-                  : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10'
+                  ? 'bg-cyan-500/30 border-cyan-400 text-cyan-300 scale-105'
+                  : 'bg-black/40 border-white/20 text-white/70 hover:text-white hover:bg-black/60'
               }`}
-              aria-label={isSaved ? 'Saved' : 'Save event'}
+              aria-label={isSaved ? 'Saved to Space' : 'Save event'}
+              title={isSaved ? 'Saved in My Space' : 'Save to My Space'}
             >
-              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} strokeWidth={1.5} />
+              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} strokeWidth={2} />
             </button>
           ) : (
             <Link
               href="/auth/login"
-              className="p-2 rounded-full bg-white/5 border border-white/10 text-white/30 hover:text-white/60 transition-colors"
+              className="p-2.5 rounded-full bg-black/40 border border-white/20 text-white/60 hover:text-white backdrop-blur-md transition-colors flex items-center justify-center shadow-md"
               title="Sign in to save"
             >
               <Lock className="w-4 h-4" strokeWidth={1.5} />
@@ -167,75 +222,138 @@ export function EventCard({ event }: { event: SpaceEvent }) {
           )}
         </div>
 
-        {/* Title */}
-        <h2 className="font-display text-[1.4rem] leading-tight text-white mb-3 tracking-tight">
-          {cleanTitle}
-        </h2>
-
-        {/* Description — clamped to 3 lines on mobile */}
-        <p className="font-body text-white/50 text-sm leading-relaxed line-clamp-3 mb-5">
-          {event.description}
-        </p>
-
-        {/* Countdown + Date chips */}
-        <div className="flex gap-2 mb-5 flex-wrap">
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium ${
-            isPast ? 'bg-emerald-400/10 border-emerald-400/20 text-emerald-300' : 'bg-white/5 border-white/10 text-white/70'
-          }`}>
-            <Clock className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
-            <span className="tabular-nums font-mono">{timeLeft}</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/50">
-            <CalendarDays className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
-            <span>{dateStr}</span>
+        {/* Bottom Left: Live Countdown Pill */}
+        <div className="absolute bottom-3.5 left-3.5 z-10 flex items-center gap-2">
+          <div
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium border backdrop-blur-md shadow-lg ${
+              isPast
+                ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+                : 'bg-black/70 border-white/20 text-white'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" strokeWidth={2} />
+            <span>{timeLeft}</span>
           </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="flex items-center gap-3 pt-4 border-t border-white/8">
-          {/* Like */}
-          {user ? (
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
-                isLiked
-                  ? 'bg-rose-400/15 border-rose-400/25 text-rose-300'
-                  : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'
-              }`}
+        {/* Bottom Right: Date Badge */}
+        <div className="absolute bottom-3.5 right-3.5 z-10 hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-white/80 bg-black/70 border border-white/20 backdrop-blur-md shadow-lg">
+          <Calendar className="w-3.5 h-3.5 text-white/60" />
+          <span>{dateStr}</span>
+        </div>
+      </div>
+
+      {/* 2. CARD BODY */}
+      <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+        <div>
+          {/* Mobile date line */}
+          <div className="flex sm:hidden items-center gap-2 text-xs text-white/60 mb-2 font-mono">
+            <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{dateStr} • {timeStr}</span>
+          </div>
+
+          {/* Title */}
+          <h2 className="font-display text-xl sm:text-2xl text-white mb-2.5 tracking-tight group-hover:text-cyan-200 transition-colors leading-snug">
+            {cleanTitle}
+          </h2>
+
+          {/* Description */}
+          <p className="font-body text-white/70 text-sm leading-relaxed mb-4 line-clamp-3">
+            {event.description}
+          </p>
+
+          {/* Astronomical Observation Details Pill Bar */}
+          <div className="flex flex-wrap gap-2 mb-5">
+            {(event as any).visibility && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/80">
+                <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>{(event as any).visibility}</span>
+              </div>
+            )}
+            {(event as any).constellation && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/80">
+                <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Constellation: {(event as any).constellation}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3. INTERACTIVE ACTIONS FOOTER */}
+        <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {/* Like Button */}
+            {user ? (
+              <button
+                onClick={handleLike}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                  isLiked
+                    ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+                title="Like this event"
+              >
+                <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} strokeWidth={2} />
+                <span>{likesCount}</span>
+              </button>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-white/50 hover:text-white/80 transition-colors"
+              >
+                <Heart className="w-3.5 h-3.5" />
+                <span>{likesCount}</span>
+              </Link>
+            )}
+
+            {/* Add to Google Calendar */}
+            <a
+              href={getCalendarLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-cyan-300 transition-colors"
+              title="Add reminder to Google Calendar"
             >
-              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} strokeWidth={1.5} />
-              <span>{likesCount}</span>
-            </button>
-          ) : (
+              <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden xs:inline">Remind Me</span>
+            </a>
+
+            {/* View on AR Sky Map */}
             <Link
-              href="/auth/login"
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white/5 border border-white/10 text-white/30 hover:text-white/60 transition-colors"
+              href="/sky-map"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 transition-colors"
+              title="Locate in live 3D AR Sky Map"
             >
-              <Lock className="w-4 h-4" strokeWidth={1.5} />
-              <span>Like</span>
+              <Compass className="w-3.5 h-3.5" />
+              <span>Sky Map</span>
             </Link>
-          )}
+          </div>
 
-          {/* Share */}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 ml-auto"
-          >
-            <Share2 className="w-4 h-4" strokeWidth={1.5} />
-            <span className="hidden xs:inline">Share</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Source Reference if available */}
+            {(event as any).sourceUrl && (
+              <a
+                href={(event as any).sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                title="Read official NASA/source briefing"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors"
+              title="Share event"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Share</span>
+            </button>
+          </div>
         </div>
-
-        {/* Not logged in CTA strip */}
-        {!user && (
-          <Link
-            href="/auth/login"
-            className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-400/15 text-xs text-cyan-300/80 hover:text-cyan-200 hover:border-cyan-400/30 transition-all duration-200"
-          >
-            <Lock className="w-3 h-3" />
-            Sign in to like, save & get personalized alerts
-          </Link>
-        )}
       </div>
     </motion.article>
   );
